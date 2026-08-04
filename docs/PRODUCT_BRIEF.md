@@ -1,0 +1,70 @@
+# Product brief
+
+## The idea
+
+Most garden-planning products show plants as static objects or at their most marketable moment. Real gardens are compositions in time: one shrub flowers while another is leafing out, a summer mass becomes fall structure, and winter exposes form that peak-bloom photography hides.
+
+Garden Through Time makes that fourth dimension visible.
+
+## Primary audience
+
+Design-conscious homeowners and garden planners who want confidence before buying and planting a group of shrubs. They care about beauty but do not necessarily know botanical terminology or professional landscape software.
+
+## Desired outcome
+
+The user lands in a realistic planted scene, moves through the year, and can explain why the cluster works—or where it does not. The experience should create the feeling: “I can finally see the whole year, not just the nursery photo.”
+
+## Core experience
+
+1. Open directly on a composed grouping of three compatible flowering shrubs.
+2. Keep the garden visually dominant and make the date control immediately available.
+3. Allow continuous movement from January 1 through December 31.
+4. Update each plant according to its own regional phenology: buds, leaf emergence, bloom progression, fruit, fall color, leaf drop, and dormant form.
+5. Let the user identify or focus a plant without permanently covering the composition.
+6. Reveal decision-supporting information and compatible substitutions only when requested.
+
+## Initial data model
+
+Each plant record should be able to express:
+
+- botanical and common name;
+- regional or hardiness applicability;
+- mature height, width, habit, and growth behavior;
+- light, soil, moisture, and resilience requirements;
+- date ranges and confidence for leaf emergence, bloom phases, fruit, fall color, and dormancy;
+- seasonal visual-state references and source provenance;
+- compatibility signals used by substitution filters.
+
+Seasonal events are ranges, not universal dates. A representative-year visualization must say which region it represents and distinguish sourced facts from visual interpolation.
+
+## Visual direction
+
+Calm, cinematic, tactile, and observant. Natural light, believable atmosphere, grounded plants, varied material response, and enough stillness to study the composition. Avoid generic dashboard styling, game-like reward language, glossy plastic foliage, or ornamental controls that compete with the garden.
+
+## Working defaults
+
+- Geography: Upper Midwest / Chicago-area conditions.
+- Experience model: representative year rather than live forecasting.
+- Initial content: one deeply authored composition plus a small substitution set.
+- Primary surface: desktop browser, followed by tablet.
+- Phone: a useful simplified seasonal view; full 3D parity is not required initially.
+
+## Out of scope for the first proof
+
+- accounts and saved gardens;
+- purchasing or nursery inventory;
+- augmented-reality placement;
+- drawing or importing a full yard;
+- long-term plant growth by age;
+- live weather or phenology forecasting;
+- a comprehensive plant catalog;
+- sun and shadow simulation.
+
+## Open product decisions
+
+- Final name and visual identity.
+- Exact starter composition and horticultural reviewers.
+- Rendering and seasonal-transition strategy.
+- Whether substitutions happen in-scene or in a separate comparison mode.
+- The evidence threshold for expanding beyond the initial region.
+
