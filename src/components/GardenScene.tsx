@@ -15,6 +15,9 @@ import type { Group } from "three";
 import type { PlantId, PlantProfile } from "../data/plants";
 import { mulberry32, plantState, smoothstep } from "../lib/season";
 
+const assetPath = (path: string) =>
+  `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+
 type GardenSceneProps = {
   day: number;
   selectedId: PlantId;
@@ -372,7 +375,7 @@ function PhotographicCanopy({ profile, day }: { profile: PlantProfile; day: numb
       "/textures/dogwood-fall.webp",
     ],
   };
-  const textures = useTexture(stagePaths[profile.id]) as THREE.Texture[];
+  const textures = useTexture(stagePaths[profile.id].map(assetPath)) as THREE.Texture[];
   const weights = photographicWeights(profile, day);
   const height = photoHeightByPlant[profile.id];
   const geometry = useMemo(() => {
@@ -531,11 +534,13 @@ function TexturedLeaves({
   fall: number;
 }) {
   const summerTextures = useTexture(
-    [1, 2, 3].map((variant) => `/textures/${profile.id}-leaf-${variant}.webp`),
+    [1, 2, 3].map((variant) =>
+      assetPath(`/textures/${profile.id}-leaf-${variant}.webp`),
+    ),
   ) as THREE.Texture[];
   const fallTextures = useTexture(
     [1, 2, 3].map(
-      (variant) => `/textures/${profile.id}-leaf-${variant}-fall.webp`,
+      (variant) => assetPath(`/textures/${profile.id}-leaf-${variant}-fall.webp`),
     ),
   ) as THREE.Texture[];
   const geometry = useMemo(() => makeCurvedPlaneGeometry(), []);
@@ -643,7 +648,7 @@ function TexturedBlooms({
 }) {
   const textureName =
     profile.id === "hydrangea" ? "hydrangea-bloom-clean" : `${profile.id}-bloom`;
-  const texture = useTexture(`/textures/${textureName}.webp`) as THREE.Texture;
+  const texture = useTexture(assetPath(`/textures/${textureName}.webp`)) as THREE.Texture;
   const geometry = useMemo(() => makeCurvedPlaneGeometry(), []);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
@@ -703,7 +708,7 @@ function TexturedBlooms({
 }
 
 function TexturedFruit({ particles, opacity }: { particles: Particle[]; opacity: number }) {
-  const texture = useTexture("/textures/dogwood-fruit.webp") as THREE.Texture;
+  const texture = useTexture(assetPath("/textures/dogwood-fruit.webp")) as THREE.Texture;
   const geometry = useMemo(() => makeCurvedPlaneGeometry(), []);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
