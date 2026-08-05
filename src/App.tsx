@@ -62,7 +62,7 @@ const seasonNarrative = (day: number) => {
     return {
       eyebrow: "The second bloom",
       title: "Foliage becomes the flower.",
-      copy: "Orange fothergilla, burgundy hydrangea, and wine-red dogwood foliage create a staggered fall handoff.",
+      copy: "Golden fothergilla, dark-mahogany hydrangea, and thinning dogwood reveal a staggered fall handoff.",
     };
   return {
     eyebrow: "The reveal",

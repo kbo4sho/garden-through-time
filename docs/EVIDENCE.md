@@ -27,9 +27,19 @@ This record captures repeatable checks for the current interactive proof. It doe
 - May: fothergilla blooms while hydrangea and dogwood remain in leaf-out foliage states.
 - June: fothergilla has moved to foliage; hydrangea and dogwood bloom states take over.
 - August: hydrangea panicles age pink and dogwood fruit appears against full foliage.
-- October: species-specific orange, burgundy, and wine-red fall states remain visually distinct.
+- October: gold and amber fothergilla, green-to-dark-mahogany hydrangea, and a thinning russet-purple dogwood remain visually distinct.
 
 The seasonal windows and plant facts are maintained in [`src/data/plants.ts`](../src/data/plants.ts). The rendered keyframes interpolate continuously inside those sourced windows and remain explicitly representative rather than predictive.
+
+### Fall-color correction
+
+The first fall art pass pushed all three plants into saturated red states at the same time. The corrected pass deliberately separates both palette and timing:
+
+- Mount Airy fothergilla is predominantly gold and yellow with amber, orange, and limited scarlet variation, following [NC State Extension's yellow-orange-red description](https://plants.ces.ncsu.edu/plants/fothergilla-mount-airy/common-name/mt-airy-fothergilla/).
+- Ruby Slippers oakleaf hydrangea transitions from lingering dark green into restrained mahogany, following the [U.S. National Arboretum cultivar release](https://www.usna.usda.gov/assets/images/as_standard_image/Hydrangea_quercifolia_Ruby_Slippers.pdf).
+- Arctic Fire redtwig dogwood uses muted russet-purple foliage, loses visual leaf mass earlier, and exposes its red stems, following [NC State Extension's red-orange-to-purple description](https://plants.ces.ncsu.edu/plants/cornus-sericea/common-name/redtwig-dogwood/).
+
+October 1, October 18, and November 11 production captures verify that these states hand off independently rather than reaching one synchronized peak-red frame.
 
 ## Gauntlet trail
 
