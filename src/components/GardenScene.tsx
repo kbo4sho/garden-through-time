@@ -1,18 +1,9 @@
-import {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Suspense, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   Billboard,
   Instance,
   Instances,
-  OrbitControls,
   PerspectiveCamera,
   SoftShadows,
   useTexture,
@@ -32,10 +23,36 @@ type GardenSceneProps = {
   onSelect: (id: PlantId) => void;
   reducedMotion: boolean;
   instances: PlantInstance[];
-  splatExperiment: boolean;
+  viewId: GardenViewId;
+  primary?: boolean;
 };
 
-const HydrangeaSplatLayer = lazy(() => import("./HydrangeaSplatLayer"));
+export const gardenViews = [
+  { id: "portrait", number: "01", label: "Garden portrait", note: "The whole composition" },
+  { id: "left-three-quarter", number: "02", label: "Left three-quarter", note: "Low-to-tall layering" },
+  { id: "right-three-quarter", number: "03", label: "Right three-quarter", note: "Depth through the border" },
+  { id: "detail", number: "04", label: "Planting detail", note: "Habit and overlap" },
+] as const;
+
+export type GardenViewId = (typeof gardenViews)[number]["id"];
+
+const cameraPresets: Record<
+  GardenViewId,
+  { position: [number, number, number]; target: [number, number, number]; fov: number }
+> = {
+  portrait: { position: [5.45, 3.05, 6.25], target: [0, 1.2, 0], fov: 32 },
+  "left-three-quarter": {
+    position: [2.2, 3.05, 7.25],
+    target: [-0.14, 1.18, 0.04],
+    fov: 32,
+  },
+  "right-three-quarter": {
+    position: [6.85, 3, 3.45],
+    target: [0.08, 1.2, -0.08],
+    fov: 32,
+  },
+  detail: { position: [4.25, 2.55, 4.85], target: [0.04, 1.38, -0.04], fov: 29 },
+};
 
 type Branch = {
   start: [number, number, number];
@@ -778,8 +795,6 @@ function Shrub({
   selected,
   onSelect,
   reducedMotion,
-  splatExperiment,
-  splatReady,
 }: {
   profile: PlantProfile;
   position: [number, number, number];
@@ -789,15 +804,8 @@ function Shrub({
   selected: boolean;
   onSelect: () => void;
   reducedMotion: boolean;
-  splatExperiment: boolean;
-  splatReady: boolean;
 }) {
   const group = useRef<Group>(null);
-  const photoWeights = photographicWeights(profile, day);
-  const splatOpacity =
-    splatExperiment && profile.id === "hydrangea"
-      ? clampRange(photoWeights[2] + photoWeights[3], 0, 1)
-      : 0;
 
   useFrame(({ clock }) => {
     if (!group.current || reducedMotion) return;
@@ -822,11 +830,7 @@ function Shrub({
       }}
     >
       <GroundingShadow profile={profile} />
-      <PhotographicCanopy
-        profile={profile}
-        day={day}
-        opacity={1 - (splatReady ? splatOpacity : 0)}
-      />
+      <PhotographicCanopy profile={profile} day={day} />
       {selected && (
         <mesh position={[0, 0.024, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.34, 0.37, 64]} />
@@ -839,6 +843,26 @@ function Shrub({
         </mesh>
       )}
     </group>
+  );
+}
+
+function SnapshotCamera({
+  viewId,
+}: {
+  viewId: GardenViewId;
+}) {
+  const camera = useRef<THREE.PerspectiveCamera>(null);
+  const preset = cameraPresets[viewId];
+  const target = useMemo(() => new THREE.Vector3(...preset.target), [preset]);
+
+  return (
+    <PerspectiveCamera
+      ref={camera}
+      makeDefault
+      position={preset.position}
+      fov={preset.fov}
+      onUpdate={(activeCamera) => activeCamera.lookAt(target)}
+    />
   );
 }
 
@@ -863,33 +887,9 @@ function Scene({
   onSelect,
   reducedMotion,
   instances,
-  splatExperiment,
+  viewId,
+  primary = false,
 }: GardenSceneProps) {
-  const [splatReady, setSplatReady] = useState(false);
-  const [splatRequested, setSplatRequested] = useState(false);
-  const handleSplatReady = useCallback(() => setSplatReady(true), []);
-  const hydrangea = instances.find((instance) => instance.profile.id === "hydrangea");
-  const hydrangeaSplatOpacity = hydrangea
-    ? clampRange(
-        photographicWeights(hydrangea.profile, day)[2] +
-          photographicWeights(hydrangea.profile, day)[3],
-        0,
-        1,
-      )
-    : 0;
-
-  useEffect(() => {
-    if (!splatExperiment) return;
-    if ("requestIdleCallback" in window) {
-      const idleId = window.requestIdleCallback(() => setSplatRequested(true), {
-        timeout: 1800,
-      });
-      return () => window.cancelIdleCallback(idleId);
-    }
-    const timeoutId = globalThis.setTimeout(() => setSplatRequested(true), 1200);
-    return () => globalThis.clearTimeout(timeoutId);
-  }, [splatExperiment]);
-
   const seasonalWarmth =
     (1 + Math.cos(((day - 188) / 365) * Math.PI * 2)) / 2;
   const sky = new THREE.Color("#aeb9b2").lerp(
@@ -905,8 +905,8 @@ function Scene({
     <>
       <color attach="background" args={[sky]} />
       <fog attach="fog" args={[haze, 8.8, 18]} />
-      <PerspectiveCamera makeDefault position={[6.9, 3.65, 7.8]} fov={34} />
-      <SoftShadows size={18} samples={12} focus={0.48} />
+      <SnapshotCamera viewId={viewId} />
+      {primary && <SoftShadows size={18} samples={12} focus={0.48} />}
       <hemisphereLight
         args={["#dbe3d9", "#29352b", 1.7 + seasonalWarmth * 0.3]}
       />
@@ -915,8 +915,8 @@ function Scene({
         color={seasonalWarmth > 0.4 ? "#fff0cf" : "#e5edf0"}
         intensity={2.25}
         castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
+        shadow-mapSize-width={primary ? 2048 : 1024}
+        shadow-mapSize-height={primary ? 2048 : 1024}
         shadow-camera-near={0.5}
         shadow-camera-far={18}
         shadow-camera-left={-6}
@@ -936,37 +936,14 @@ function Scene({
           selected={selectedId === instance.profile.id}
           onSelect={() => onSelect(instance.profile.id)}
           reducedMotion={reducedMotion}
-          splatExperiment={splatExperiment}
-          splatReady={splatReady}
         />
       ))}
-      {splatExperiment && splatRequested && (
-        <Suspense fallback={null}>
-          <HydrangeaSplatLayer
-            instances={instances}
-            opacity={hydrangeaSplatOpacity}
-            onReady={handleSplatReady}
-          />
-        </Suspense>
+      {primary && (
+        <EffectComposer multisampling={4}>
+          <Bloom luminanceThreshold={0.96} mipmapBlur intensity={0.07} />
+          <Vignette eskil={false} offset={0.12} darkness={0.34} />
+        </EffectComposer>
       )}
-      <OrbitControls
-        makeDefault
-        enablePan={false}
-        enableZoom
-        minDistance={6.5}
-        maxDistance={11.5}
-        minPolarAngle={Math.PI * 0.27}
-        maxPolarAngle={Math.PI * 0.48}
-        minAzimuthAngle={0.22}
-        maxAzimuthAngle={1.22}
-        target={[0, 1.15, 0]}
-        dampingFactor={0.045}
-        enableDamping
-      />
-      <EffectComposer multisampling={4}>
-        <Bloom luminanceThreshold={0.93} mipmapBlur intensity={0.18} />
-        <Vignette eskil={false} offset={0.17} darkness={0.48} />
-      </EffectComposer>
     </>
   );
 }
@@ -976,12 +953,13 @@ export default function GardenScene(props: GardenSceneProps) {
     <Canvas
       className="garden-canvas"
       shadows
-      dpr={[1, 1.75]}
+      frameloop="demand"
+      dpr={props.primary ? [1, 1.5] : [0.8, 1.15]}
       gl={{
         antialias: true,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.05,
+        toneMappingExposure: 0.94,
         powerPreference: "high-performance",
       }}
       fallback={

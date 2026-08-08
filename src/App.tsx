@@ -9,7 +9,6 @@ import {
   MapPin,
   Pause,
   Play,
-  Rotate3D,
   RotateCcw,
   Ruler,
   Settings2,
@@ -17,7 +16,10 @@ import {
   SunMedium,
   X,
 } from "lucide-react";
-import GardenScene from "./components/GardenScene";
+import GardenScene, {
+  gardenViews,
+  type GardenViewId,
+} from "./components/GardenScene";
 import {
   buildComposition,
   compositionPlants,
@@ -449,14 +451,10 @@ export default function App() {
   const [playing, setPlaying] = useState(false);
   const [conditionsOpen, setConditionsOpen] = useState(false);
   const [compositionOpen, setCompositionOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(true);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [nativeOnly, setNativeOnly] = useState(false);
   const reducedMotion = useMemo(
     () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
-    [],
-  );
-  const splatExperiment = useMemo(
-    () => new URLSearchParams(window.location.search).get("splat") === "hydrangea",
     [],
   );
   const availableProfiles = useMemo(() => compositionPlants(nativeOnly), [nativeOnly]);
@@ -519,17 +517,32 @@ export default function App() {
   return (
     <main className="experience-shell">
       <a href="#year-timeline" className="skip-link">Skip to year timeline</a>
-      <div className="scene-layer" aria-label="Interactive 3D shrub composition">
-        <GardenScene
-          day={day}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          reducedMotion={reducedMotion}
-          instances={instances}
-          splatExperiment={splatExperiment}
-        />
-      </div>
-      <div className="atmosphere" aria-hidden="true" />
+      <section className="scene-gallery" aria-label="Four seasonal garden views">
+        {gardenViews.map((view, index) => (
+          <article
+            key={view.id}
+            className={index === 0 ? "scene-frame is-primary" : "scene-frame"}
+            aria-label={view.label}
+          >
+            <div className="scene-layer">
+              <GardenScene
+                day={day}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                reducedMotion={reducedMotion || index > 0}
+                instances={instances}
+                viewId={view.id as GardenViewId}
+                primary={index === 0}
+              />
+            </div>
+            <div className="atmosphere" aria-hidden="true" />
+            <div className="photo-stamp" aria-hidden="true">
+              <span>{view.number} / 04</span>
+              <strong>{view.label}</strong>
+            </div>
+          </article>
+        ))}
+      </section>
 
       <header className="topbar">
         <a className="brand" href="#top" aria-label="Garden Through Time home">
@@ -565,10 +578,6 @@ export default function App() {
         <div className="story-rule" />
         <p className="story-copy">{narrative.copy}</p>
       </section>
-
-      <div className="orbit-hint" aria-hidden="true">
-        <Rotate3D size={16} /> Drag to look around
-      </div>
 
       <PlantRail
         day={day}

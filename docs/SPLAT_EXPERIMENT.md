@@ -2,10 +2,16 @@
 
 ## Status
 
-The first Gaussian-splat asset is an opt-in visual experiment, not a replacement
-for the source-backed seasonal plant system. Open the experience with
-`?splat=hydrangea` to enable it. Without that query parameter, the production
-path and initial bundle remain unchanged.
+Rejected for the product presentation on August 8, 2026. The single-image
+reconstruction produced translucent duplicate foliage and invented rear geometry
+when judged in the integrated composition. The runtime experiment and asset were
+removed; the seasonal photographic billboards remain the production rendering
+path.
+
+The presentation decision is to treat the scene as an editorial garden contact
+sheet: one large portrait and three supporting authored angles shown together,
+with no free orbit. This preserves the useful seasonal and composition behavior
+while showing the billboards only from angles where they remain credible.
 
 ## Source and generation
 
