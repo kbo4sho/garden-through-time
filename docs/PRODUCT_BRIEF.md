@@ -49,6 +49,23 @@ Calm, cinematic, tactile, and observant. Natural light, believable atmosphere, g
 - Primary surface: desktop browser, followed by tablet.
 - Phone: a useful simplified seasonal view; full 3D parity is not required initially.
 
+## Composition editing proof
+
+The first editable-composition slice stays deliberately bounded to the deeply
+modeled, source-backed plant set. A homeowner can:
+
+- compare focused, layered, and full cluster sizes of three, five, or seven plants;
+- choose the species at each authored planting position, including repeated plants
+  that read as a mass;
+- keep the seasonal timeline, plant identities, and site compatibility visible as
+  the composition changes.
+
+The positions are authored layouts, not a general-purpose bed editor. Editing the
+cluster does not imply exact purchasing quantities or spacing guidance; mature
+spacing still needs to be checked against the real planting bed. New plant choices
+should only be added when their scale, seasonal states, regional evidence, and
+compatibility are modeled to the same depth as the starter composition.
+
 ## Out of scope for the first proof
 
 - accounts and saved gardens;
@@ -67,4 +84,3 @@ Calm, cinematic, tactile, and observant. Natural light, believable atmosphere, g
 - Rendering and seasonal-transition strategy.
 - Whether substitutions happen in-scene or in a separate comparison mode.
 - The evidence threshold for expanding beyond the initial region.
-

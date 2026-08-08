@@ -12,7 +12,7 @@ import {
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import type { Group } from "three";
-import type { PlantId, PlantProfile } from "../data/plants";
+import type { PlantId, PlantInstance, PlantProfile } from "../data/plants";
 import { mulberry32, plantState, smoothstep } from "../lib/season";
 
 const assetPath = (path: string) =>
@@ -23,7 +23,7 @@ type GardenSceneProps = {
   selectedId: PlantId;
   onSelect: (id: PlantId) => void;
   reducedMotion: boolean;
-  profiles: PlantProfile[];
+  instances: PlantInstance[];
 };
 
 type Branch = {
@@ -748,12 +748,18 @@ function TexturedFruit({ particles, opacity }: { particles: Particle[]; opacity:
 
 function Shrub({
   profile,
+  position,
+  scale,
+  instanceSeed,
   day,
   selected,
   onSelect,
   reducedMotion,
 }: {
   profile: PlantProfile;
+  position: [number, number, number];
+  scale: number;
+  instanceSeed: number;
   day: number;
   selected: boolean;
   onSelect: () => void;
@@ -764,14 +770,14 @@ function Shrub({
   useFrame(({ clock }) => {
     if (!group.current || reducedMotion) return;
     group.current.rotation.z =
-      Math.sin(clock.elapsedTime * 0.42 + seedByPlant[profile.id]) * 0.0028;
+      Math.sin(clock.elapsedTime * 0.42 + seedByPlant[profile.id] + instanceSeed) * 0.0028;
   });
 
   return (
     <group
       ref={group}
-      position={profile.position}
-      scale={profile.scale}
+      position={position}
+      scale={scale}
       onClick={(event) => {
         event.stopPropagation();
         onSelect();
@@ -816,7 +822,7 @@ function Ground({ day }: { day: number }) {
   );
 }
 
-function Scene({ day, selectedId, onSelect, reducedMotion, profiles }: GardenSceneProps) {
+function Scene({ day, selectedId, onSelect, reducedMotion, instances }: GardenSceneProps) {
   const seasonalWarmth =
     (1 + Math.cos(((day - 188) / 365) * Math.PI * 2)) / 2;
   const sky = new THREE.Color("#aeb9b2").lerp(
@@ -852,13 +858,16 @@ function Scene({ day, selectedId, onSelect, reducedMotion, profiles }: GardenSce
         shadow-camera-bottom={-4}
       />
       <Ground day={day} />
-      {profiles.map((plant) => (
+      {instances.map((instance, index) => (
         <Shrub
-          key={plant.id}
-          profile={plant}
+          key={instance.instanceId}
+          profile={instance.profile}
+          position={instance.position}
+          scale={instance.scale}
+          instanceSeed={index * 1.73}
           day={day}
-          selected={selectedId === plant.id}
-          onSelect={() => onSelect(plant.id)}
+          selected={selectedId === instance.profile.id}
+          onSelect={() => onSelect(instance.profile.id)}
           reducedMotion={reducedMotion}
         />
       ))}

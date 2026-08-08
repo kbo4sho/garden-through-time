@@ -10,15 +10,21 @@ import {
   Pause,
   Play,
   Rotate3D,
+  RotateCcw,
   Ruler,
   Settings2,
+  Sprout,
   SunMedium,
   X,
 } from "lucide-react";
 import GardenScene from "./components/GardenScene";
 import {
+  buildComposition,
   compositionPlants,
+  defaultPlanting,
   nativeFothergilla,
+  resizePlanting,
+  type ClusterSize,
   type PlantId,
   type PlantProfile,
 } from "./data/plants";
@@ -39,35 +45,58 @@ const monthTicks = [
   { label: "Dec", day: 335 },
 ];
 
-const seasonNarrative = (day: number) => {
+const seasonNarrative = (day: number, plantIds: PlantId[]) => {
+  const present = new Set(plantIds);
+  const has = (id: PlantId) => present.has(id);
+
   if (day < 95 || day > 334)
     return {
       eyebrow: "The quiet season",
       title: "Structure becomes color.",
-      copy: "Red dogwood stems hold the composition while hydrangea flower heads and branching silhouettes catch the low winter light.",
+      copy: [
+        has("dogwood") && "Red dogwood stems carry the composition through winter.",
+        has("hydrangea") && "Persistent hydrangea flower heads catch the low light.",
+        has("fothergilla") && "Fothergilla reveals its compact branching silhouette.",
+      ].filter(Boolean).join(" "),
     };
   if (day < 152)
     return {
       eyebrow: "The opening act",
       title: "Spring begins in layers.",
-      copy: "Fothergilla flowers before its canopy fills in. The other shrubs stay quieter, giving the first bloom room to register.",
+      copy: [
+        has("fothergilla") && "Fothergilla flowers before its canopy fills in.",
+        has("dogwood") && "Dogwood leafs out behind its small late-spring flowers.",
+        has("hydrangea") && "Oakleaf hydrangea builds a broad green foundation.",
+      ].filter(Boolean).join(" "),
     };
   if (day < 244)
     return {
       eyebrow: "The garden at full volume",
       title: "Summer holds the center.",
-      copy: "Oakleaf hydrangea takes over from spring bloom while three distinct leaf shapes keep the green composition legible.",
+      copy: [
+        has("hydrangea") && "Oakleaf hydrangea brings the main summer bloom.",
+        has("dogwood") && "Dogwood adds an upright, finer-leaved layer.",
+        has("fothergilla") && "Fothergilla settles into a rounded blue-green mass.",
+      ].filter(Boolean).join(" "),
     };
   if (day < 315)
     return {
       eyebrow: "The second bloom",
       title: "Foliage becomes the flower.",
-      copy: "Golden fothergilla, dark-mahogany hydrangea, and thinning dogwood reveal a staggered fall handoff.",
+      copy: [
+        has("fothergilla") && "Fothergilla turns gold, orange, and red.",
+        has("hydrangea") && "Oakleaf hydrangea deepens toward mahogany.",
+        has("dogwood") && "Dogwood thins to reveal the stems beneath.",
+      ].filter(Boolean).join(" "),
     };
   return {
     eyebrow: "The reveal",
     title: "The framework returns.",
-    copy: "Leaf drop exposes the architecture beneath the summer mass and returns attention to bark, stems, and persistent flowers.",
+    copy: [
+      has("dogwood") && "Leaf drop returns attention to the dogwood's red stems.",
+      has("hydrangea") && "Hydrangea flower heads persist over bare branches.",
+      has("fothergilla") && "Fothergilla recedes to a quiet low framework.",
+    ].filter(Boolean).join(" "),
   };
 };
 
@@ -76,11 +105,13 @@ function PlantRail({
   selectedId,
   onSelect,
   profiles,
+  counts,
 }: {
   day: number;
   selectedId: PlantId;
   onSelect: (id: PlantId) => void;
   profiles: PlantProfile[];
+  counts: Record<PlantId, number>;
 }) {
   return (
     <aside className="plant-rail" aria-label="Plants in this composition">
@@ -102,7 +133,10 @@ function PlantRail({
             >
               <span className="plant-index">0{index + 1}</span>
               <span className="plant-row-copy">
-                <span className="plant-name">{plant.shortName}</span>
+                <span className="plant-name">
+                  {plant.shortName}
+                  {counts[plant.id] > 1 && <small> ×{counts[plant.id]}</small>}
+                </span>
                 <span className={active ? "plant-phase is-active" : "plant-phase"}>
                   {dayPhase(plant, day)}
                 </span>
@@ -146,10 +180,14 @@ function SelectedPlant({ plant, day }: { plant: PlantProfile; day: number }) {
 
 function ConditionsPanel({
   nativeOnly,
+  clusterCount,
+  hasFothergilla,
   onNativeOnlyChange,
   onClose,
 }: {
   nativeOnly: boolean;
+  clusterCount: number;
+  hasFothergilla: boolean;
   onNativeOnlyChange: (value: boolean) => void;
   onClose: () => void;
 }) {
@@ -165,10 +203,10 @@ function ConditionsPanel({
         </button>
       </div>
       <div className="condition-score">
-        <span className="score-orbit"><span>3/3</span></span>
+        <span className="score-orbit"><span>{clusterCount}/{clusterCount}</span></span>
         <div>
           <strong>Compatible composition</strong>
-          <p>All three plants overlap on light, moisture, and hardiness.</p>
+          <p>All {clusterCount} plants overlap on light, moisture, and hardiness.</p>
         </div>
       </div>
       <dl className="condition-list">
@@ -180,20 +218,25 @@ function ConditionsPanel({
       <div className="filter-preview">
         <p>Composition filter</p>
         <button
-          className={nativeOnly ? "filter-toggle is-active" : "filter-toggle"}
+          className={nativeOnly && hasFothergilla ? "filter-toggle is-active" : "filter-toggle"}
           type="button"
-          aria-pressed={nativeOnly}
+          aria-pressed={nativeOnly && hasFothergilla}
+          disabled={!hasFothergilla}
           onClick={() => onNativeOnlyChange(!nativeOnly)}
         >
           <span>
             <strong>Native species</strong>
-            <small>Prefer a native plant for each design role</small>
+            <small>
+              {hasFothergilla
+                ? "Use dwarf fothergilla for the spring role"
+                : "Add fothergilla to make this swap available"}
+            </small>
           </span>
           <span className="toggle-track" aria-hidden="true"><span /></span>
         </button>
       </div>
-      <div className={nativeOnly ? "substitution-card is-applied" : "substitution-card"} aria-live="polite">
-        <p>{nativeOnly ? "Swap applied" : "Available substitution"}</p>
+      <div className={nativeOnly && hasFothergilla ? "substitution-card is-applied" : "substitution-card"} aria-live="polite">
+        <p>{nativeOnly && hasFothergilla ? "Swap applied" : "Available substitution"}</p>
         <div className="swap-route">
           <span>Mount Airy fothergilla</span>
           <ChevronRight size={14} />
@@ -214,6 +257,105 @@ function ConditionsPanel({
       </div>
       <p className="conditions-note">
         Seasonal timing is a representative range, not a weather forecast.
+      </p>
+    </aside>
+  );
+}
+
+function CompositionPanel({
+  planting,
+  profiles,
+  onSizeChange,
+  onPlantChange,
+  onReset,
+  onClose,
+}: {
+  planting: PlantId[];
+  profiles: PlantProfile[];
+  onSizeChange: (size: ClusterSize) => void;
+  onPlantChange: (index: number, plantId: PlantId) => void;
+  onReset: () => void;
+  onClose: () => void;
+}) {
+  const sizes: { value: ClusterSize; label: string }[] = [
+    { value: 3, label: "Focused" },
+    { value: 5, label: "Layered" },
+    { value: 7, label: "Full" },
+  ];
+
+  return (
+    <aside className="composition-panel" aria-label="Edit planting composition">
+      <div className="conditions-heading">
+        <div>
+          <p>Composition editor</p>
+          <h2>Shape the cluster</h2>
+        </div>
+        <button className="icon-button" onClick={onClose} aria-label="Close composition editor">
+          <X size={18} />
+        </button>
+      </div>
+
+      <p className="composition-intro">
+        Change the number of plants, then choose the species at each position. The
+        garden stays arranged in natural layers as the cluster grows.
+      </p>
+
+      <fieldset className="cluster-size-control">
+        <legend>Cluster size</legend>
+        <div className="size-options">
+          {sizes.map((size) => (
+            <button
+              key={size.value}
+              type="button"
+              className={planting.length === size.value ? "is-active" : ""}
+              aria-pressed={planting.length === size.value}
+              onClick={() => onSizeChange(size.value)}
+            >
+              <strong>{size.value}</strong>
+              <span>{size.label}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
+      <div className="planting-choices">
+        <div className="planting-choices-heading">
+          <div>
+            <strong>Plants in this cluster</strong>
+            <span>{new Set(planting).size} species · {planting.length} plants</span>
+          </div>
+          <button type="button" onClick={onReset}>
+            <RotateCcw size={13} /> Reset
+          </button>
+        </div>
+        <div className="planting-slot-list">
+          {planting.map((plantId, index) => (
+            <label className="planting-slot" key={`slot-${index + 1}`}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <select
+                value={plantId}
+                onChange={(event) => onPlantChange(index, event.currentTarget.value as PlantId)}
+                aria-label={`Plant ${index + 1}`}
+              >
+                {profiles.map((profile) => (
+                  <option value={profile.id} key={profile.id}>
+                    {profile.commonName}
+                  </option>
+                ))}
+              </select>
+              <span
+                className="choice-swatch"
+                style={{ background: profiles.find((profile) => profile.id === plantId)?.accent }}
+                aria-hidden="true"
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <p className="composition-note">
+        These plants share the proof’s Zone 6a, part-shade, consistently moist site.
+        Mature spacing still needs to be confirmed for the real planting bed.
       </p>
     </aside>
   );
@@ -303,16 +445,33 @@ function Timeline({
 export default function App() {
   const [day, setDay] = useState(172);
   const [selectedId, setSelectedId] = useState<PlantId>("hydrangea");
+  const [planting, setPlanting] = useState<PlantId[]>(() => [...defaultPlanting]);
   const [playing, setPlaying] = useState(false);
   const [conditionsOpen, setConditionsOpen] = useState(false);
+  const [compositionOpen, setCompositionOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(true);
   const [nativeOnly, setNativeOnly] = useState(false);
   const reducedMotion = useMemo(
     () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
     [],
   );
-  const narrative = seasonNarrative(day);
-  const activePlants = useMemo(() => compositionPlants(nativeOnly), [nativeOnly]);
+  const availableProfiles = useMemo(() => compositionPlants(nativeOnly), [nativeOnly]);
+  const activePlants = useMemo(() => {
+    const activeIds = new Set(planting);
+    return availableProfiles.filter((plant) => activeIds.has(plant.id));
+  }, [availableProfiles, planting]);
+  const plantCounts = useMemo(
+    () => planting.reduce<Record<PlantId, number>>(
+      (counts, plantId) => ({ ...counts, [plantId]: counts[plantId] + 1 }),
+      { fothergilla: 0, hydrangea: 0, dogwood: 0 },
+    ),
+    [planting],
+  );
+  const instances = useMemo(
+    () => buildComposition(planting, nativeOnly),
+    [nativeOnly, planting],
+  );
+  const narrative = seasonNarrative(day, planting);
   const selectedPlant = activePlants.find((plant) => plant.id === selectedId) ?? activePlants[0];
 
   useEffect(() => {
@@ -325,11 +484,33 @@ export default function App() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setConditionsOpen(false);
+      if (event.key === "Escape") {
+        setConditionsOpen(false);
+        setCompositionOpen(false);
+      }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!activePlants.some((plant) => plant.id === selectedId)) {
+      setSelectedId(activePlants[0].id);
+    }
+  }, [activePlants, selectedId]);
+
+  const changeClusterSize = (size: ClusterSize) => {
+    setPlanting((current) => resizePlanting(current, size));
+  };
+
+  const changePlant = (index: number, plantId: PlantId) => {
+    setPlanting((current) =>
+      current.map((currentPlant, currentIndex) =>
+        currentIndex === index ? plantId : currentPlant,
+      ),
+    );
+    setSelectedId(plantId);
+  };
 
   return (
     <main className="experience-shell">
@@ -340,7 +521,7 @@ export default function App() {
           selectedId={selectedId}
           onSelect={setSelectedId}
           reducedMotion={reducedMotion}
-          profiles={activePlants}
+          instances={instances}
         />
       </div>
       <div className="atmosphere" aria-hidden="true" />
@@ -352,7 +533,22 @@ export default function App() {
         </a>
         <div className="topbar-actions">
           <span className="region-label"><MapPin size={14} />Chicago · Zone 6a</span>
-          <button className="conditions-button" onClick={() => setConditionsOpen(true)}>
+          <button
+            className="composition-button"
+            onClick={() => {
+              setConditionsOpen(false);
+              setCompositionOpen(true);
+            }}
+          >
+            <Sprout size={16} /> Edit planting
+          </button>
+          <button
+            className="conditions-button"
+            onClick={() => {
+              setCompositionOpen(false);
+              setConditionsOpen(true);
+            }}
+          >
             <Settings2 size={16} /> Conditions
           </button>
         </div>
@@ -374,6 +570,7 @@ export default function App() {
         selectedId={selectedId}
         onSelect={setSelectedId}
         profiles={activePlants}
+        counts={plantCounts}
       />
 
       <button
@@ -409,8 +606,31 @@ export default function App() {
           />
           <ConditionsPanel
             nativeOnly={nativeOnly}
+            clusterCount={planting.length}
+            hasFothergilla={plantCounts.fothergilla > 0}
             onNativeOnlyChange={setNativeOnly}
             onClose={() => setConditionsOpen(false)}
+          />
+        </>
+      )}
+
+      {compositionOpen && (
+        <>
+          <button
+            className="panel-scrim"
+            aria-label="Close composition editor"
+            onClick={() => setCompositionOpen(false)}
+          />
+          <CompositionPanel
+            planting={planting}
+            profiles={availableProfiles}
+            onSizeChange={changeClusterSize}
+            onPlantChange={changePlant}
+            onReset={() => {
+              setPlanting([...defaultPlanting]);
+              setSelectedId("hydrangea");
+            }}
+            onClose={() => setCompositionOpen(false)}
           />
         </>
       )}

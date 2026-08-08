@@ -1,4 +1,12 @@
 export type PlantId = "fothergilla" | "hydrangea" | "dogwood";
+export type ClusterSize = 3 | 5 | 7;
+
+export type PlantInstance = {
+  instanceId: string;
+  profile: PlantProfile;
+  position: [number, number, number];
+  scale: number;
+};
 
 export type PlantProfile = {
   id: PlantId;
@@ -186,6 +194,73 @@ export const nativeFothergilla: PlantProfile = {
 
 export const compositionPlants = (nativeOnly: boolean) =>
   nativeOnly ? [nativeFothergilla, plants[1], plants[2]] : plants;
+
+export const defaultPlanting: PlantId[] = [
+  "fothergilla",
+  "hydrangea",
+  "dogwood",
+];
+
+const expansionOrder: PlantId[] = [
+  "fothergilla",
+  "dogwood",
+  "hydrangea",
+  "fothergilla",
+];
+
+export const resizePlanting = (planting: PlantId[], size: ClusterSize) => {
+  if (planting.length >= size) return planting.slice(0, size);
+  const next = [...planting];
+  while (next.length < size) {
+    next.push(expansionOrder[(next.length - defaultPlanting.length) % expansionOrder.length]);
+  }
+  return next;
+};
+
+const compositionLayouts: Record<
+  ClusterSize,
+  { position: [number, number, number]; scale: number }[]
+> = {
+  3: [
+    { position: [-1.88, 0, 0.5], scale: 1 },
+    { position: [0.1, 0.03, 0.22], scale: 1 },
+    { position: [1.72, 0, -0.62], scale: 1 },
+  ],
+  5: [
+    { position: [-2.15, 0, -0.48], scale: 0.84 },
+    { position: [0, 0.03, -0.76], scale: 0.88 },
+    { position: [2.05, 0, -0.5], scale: 0.82 },
+    { position: [-1.05, 0.02, 0.74], scale: 0.82 },
+    { position: [1.08, 0, 0.68], scale: 0.8 },
+  ],
+  7: [
+    { position: [-2.42, 0, -0.82], scale: 0.72 },
+    { position: [0, 0.02, -1.12], scale: 0.76 },
+    { position: [2.38, 0, -0.78], scale: 0.7 },
+    { position: [-1.35, 0.03, -0.02], scale: 0.72 },
+    { position: [1.33, 0, -0.06], scale: 0.7 },
+    { position: [-1.02, 0.04, 0.88], scale: 0.68 },
+    { position: [1.05, 0, 0.84], scale: 0.67 },
+  ],
+};
+
+export const buildComposition = (
+  planting: PlantId[],
+  nativeOnly: boolean,
+): PlantInstance[] => {
+  const size = planting.length as ClusterSize;
+  const layout = compositionLayouts[size] ?? compositionLayouts[3];
+  const profiles = Object.fromEntries(
+    compositionPlants(nativeOnly).map((profile) => [profile.id, profile]),
+  ) as Record<PlantId, PlantProfile>;
+
+  return planting.map((plantId, index) => ({
+    instanceId: `plant-${index + 1}`,
+    profile: profiles[plantId],
+    position: layout[index].position,
+    scale: profiles[plantId].scale * layout[index].scale,
+  }));
+};
 
 export const plantMap = Object.fromEntries(
   plants.map((plant) => [plant.id, plant]),

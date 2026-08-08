@@ -167,7 +167,8 @@ input:focus-visible {
 }
 
 .region-label,
-.conditions-button {
+.conditions-button,
+.composition-button {
   height: 36px;
   display: inline-flex;
   align-items: center;
@@ -186,7 +187,8 @@ input:focus-visible {
   backdrop-filter: blur(14px);
 }
 
-.conditions-button {
+.conditions-button,
+.composition-button {
   padding: 0 16px;
   border: 1px solid rgba(255, 255, 255, 0.26);
   background: rgba(238, 241, 224, 0.1);
@@ -194,9 +196,20 @@ input:focus-visible {
   transition: background 160ms ease, transform 160ms ease;
 }
 
-.conditions-button:hover {
+.conditions-button:hover,
+.composition-button:hover {
   background: rgba(238, 241, 224, 0.18);
   transform: translateY(-1px);
+}
+
+.composition-button {
+  color: #263026;
+  background: rgba(239, 241, 218, 0.92);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.composition-button:hover {
+  background: #f7f5df;
 }
 
 .story-panel {
@@ -330,6 +343,13 @@ input:focus-visible {
   letter-spacing: -0.025em;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.plant-name small {
+  color: rgba(245, 242, 233, 0.5);
+  font-family: Inter, "Helvetica Neue", sans-serif;
+  font-size: 9px;
+  letter-spacing: 0;
 }
 
 .plant-phase {
@@ -644,7 +664,8 @@ input:focus-visible {
   backdrop-filter: blur(2px);
 }
 
-.conditions-panel {
+.conditions-panel,
+.composition-panel {
   position: absolute;
   z-index: 21;
   top: 18px;
@@ -660,6 +681,168 @@ input:focus-visible {
   backdrop-filter: blur(28px);
   animation: panel-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
   overflow-y: auto;
+}
+
+.composition-intro {
+  margin: 22px 0 24px;
+  color: rgba(234, 239, 226, 0.58);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.cluster-size-control {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.cluster-size-control legend {
+  margin-bottom: 9px;
+  color: rgba(234, 239, 226, 0.45);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.size-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.size-options button {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 12px;
+  color: rgba(242, 245, 236, 0.68);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.size-options button:hover,
+.size-options button.is-active {
+  color: #f4f6ee;
+  background: rgba(221, 234, 197, 0.1);
+  border-color: rgba(222, 237, 199, 0.34);
+}
+
+.size-options strong {
+  font-family: "Iowan Old Style", Baskerville, serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.size-options span {
+  font-size: 8px;
+  letter-spacing: 0.03em;
+}
+
+.planting-choices {
+  margin-top: 24px;
+}
+
+.planting-choices-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+
+.planting-choices-heading > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.planting-choices-heading strong {
+  font-size: 10px;
+}
+
+.planting-choices-heading span {
+  color: rgba(234, 239, 226, 0.42);
+  font-size: 8px;
+}
+
+.planting-choices-heading button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 0;
+  color: rgba(234, 239, 226, 0.54);
+  font-size: 8px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.planting-choices-heading button:hover {
+  color: #f3f6eb;
+}
+
+.planting-slot-list {
+  display: grid;
+  gap: 6px;
+}
+
+.planting-slot {
+  min-height: 43px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 8px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  color: rgba(234, 239, 226, 0.4);
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.planting-slot:focus-within {
+  border-color: rgba(222, 237, 199, 0.4);
+}
+
+.planting-slot select {
+  min-width: 0;
+  width: 100%;
+  padding: 8px 24px 8px 0;
+  color: rgba(244, 246, 238, 0.9);
+  font-size: 10px;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  cursor: pointer;
+}
+
+.planting-slot select option {
+  color: #1c251e;
+}
+
+.choice-swatch {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+.composition-note {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  color: rgba(234, 239, 226, 0.45);
+  font-size: 9px;
+  line-height: 1.55;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @keyframes panel-in {
@@ -801,6 +984,16 @@ input:focus-visible {
 .filter-toggle.is-active {
   background: rgba(221, 234, 197, 0.09);
   border-color: rgba(222, 237, 199, 0.32);
+}
+
+.filter-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.filter-toggle:disabled:hover {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .filter-toggle strong,
@@ -986,6 +1179,13 @@ input:focus-visible {
   }
 
   .conditions-button {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .composition-button {
     width: 38px;
     padding: 0;
     justify-content: center;

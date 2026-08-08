@@ -31,6 +31,8 @@ An interactive proof is now implemented in React and WebGL. It includes:
 - orbit and zoom controls around a layered 3D planting composition;
 - sourced bloom, foliage, size, light, moisture, and hardiness details;
 - a functional native-species filter with an explained, compatible substitution;
+- an editable three-, five-, or seven-plant cluster with species choices at each
+  authored position;
 - an explicit representative-year conditions model;
 - desktop, tablet, and simplified phone layouts.
 
