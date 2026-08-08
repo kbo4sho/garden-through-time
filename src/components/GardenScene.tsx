@@ -1,4 +1,12 @@
-import { Suspense, useMemo, useRef } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   Billboard,
@@ -24,7 +32,10 @@ type GardenSceneProps = {
   onSelect: (id: PlantId) => void;
   reducedMotion: boolean;
   instances: PlantInstance[];
+  splatExperiment: boolean;
 };
+
+const HydrangeaSplatLayer = lazy(() => import("./HydrangeaSplatLayer"));
 
 type Branch = {
   start: [number, number, number];
@@ -350,7 +361,15 @@ const photographicWeights = (profile: PlantProfile, day: number) => {
   return weights;
 };
 
-function PhotographicCanopy({ profile, day }: { profile: PlantProfile; day: number }) {
+function PhotographicCanopy({
+  profile,
+  day,
+  opacity = 1,
+}: {
+  profile: PlantProfile;
+  day: number;
+  opacity?: number;
+}) {
   const stagePaths: Record<PlantId, string[]> = {
     fothergilla: [
       "/textures/fothergilla-winter.webp",
@@ -398,6 +417,7 @@ function PhotographicCanopy({ profile, day }: { profile: PlantProfile; day: numb
       uFall: { value: textures[4] },
       uWeights: { value: new THREE.Vector4() },
       uExtraWeights: { value: new THREE.Vector4() },
+      uOpacity: { value: 1 },
     }),
     [textures],
   );
@@ -408,6 +428,7 @@ function PhotographicCanopy({ profile, day }: { profile: PlantProfile; day: numb
     weights[3],
   );
   uniforms.uExtraWeights.value.set(weights[4], 0, 0, 0);
+  uniforms.uOpacity.value = opacity;
 
   textures.forEach((texture) => {
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -436,6 +457,7 @@ function PhotographicCanopy({ profile, day }: { profile: PlantProfile; day: numb
           uniform sampler2D uFall;
           uniform vec4 uWeights;
           uniform vec4 uExtraWeights;
+          uniform float uOpacity;
           varying vec2 vUv;
           varying vec3 vNormal;
           void main() {
@@ -444,7 +466,8 @@ function PhotographicCanopy({ profile, day }: { profile: PlantProfile; day: numb
             vec4 bloom = texture2D(uBloom, vUv);
             vec4 summer = texture2D(uSummer, vUv);
             vec4 fall = texture2D(uFall, vUv);
-            float alpha = winter.a * uWeights.x + leafout.a * uWeights.y + bloom.a * uWeights.z + summer.a * uWeights.w + fall.a * uExtraWeights.x;
+            float sourceAlpha = winter.a * uWeights.x + leafout.a * uWeights.y + bloom.a * uWeights.z + summer.a * uWeights.w + fall.a * uExtraWeights.x;
+            float alpha = sourceAlpha * uOpacity;
             if (alpha < 0.055) discard;
             vec3 premultiplied =
               winter.rgb * winter.a * uWeights.x +
@@ -452,7 +475,7 @@ function PhotographicCanopy({ profile, day }: { profile: PlantProfile; day: numb
               bloom.rgb * bloom.a * uWeights.z +
               summer.rgb * summer.a * uWeights.w +
               fall.rgb * fall.a * uExtraWeights.x;
-            vec3 color = premultiplied / max(alpha, 0.001);
+            vec3 color = premultiplied / max(sourceAlpha, 0.001);
             float diffuse = 0.82 + 0.18 * max(dot(normalize(vNormal), normalize(vec3(-0.35, 0.72, 0.6))), 0.0);
             gl_FragColor = vec4(color * diffuse, alpha);
             #include <tonemapping_fragment>
@@ -755,6 +778,8 @@ function Shrub({
   selected,
   onSelect,
   reducedMotion,
+  splatExperiment,
+  splatReady,
 }: {
   profile: PlantProfile;
   position: [number, number, number];
@@ -764,8 +789,15 @@ function Shrub({
   selected: boolean;
   onSelect: () => void;
   reducedMotion: boolean;
+  splatExperiment: boolean;
+  splatReady: boolean;
 }) {
   const group = useRef<Group>(null);
+  const photoWeights = photographicWeights(profile, day);
+  const splatOpacity =
+    splatExperiment && profile.id === "hydrangea"
+      ? clampRange(photoWeights[2] + photoWeights[3], 0, 1)
+      : 0;
 
   useFrame(({ clock }) => {
     if (!group.current || reducedMotion) return;
@@ -790,8 +822,11 @@ function Shrub({
       }}
     >
       <GroundingShadow profile={profile} />
-      <PhotographicCanopy profile={profile} day={day} />
-
+      <PhotographicCanopy
+        profile={profile}
+        day={day}
+        opacity={1 - (splatReady ? splatOpacity : 0)}
+      />
       {selected && (
         <mesh position={[0, 0.024, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.34, 0.37, 64]} />
@@ -822,7 +857,39 @@ function Ground({ day }: { day: number }) {
   );
 }
 
-function Scene({ day, selectedId, onSelect, reducedMotion, instances }: GardenSceneProps) {
+function Scene({
+  day,
+  selectedId,
+  onSelect,
+  reducedMotion,
+  instances,
+  splatExperiment,
+}: GardenSceneProps) {
+  const [splatReady, setSplatReady] = useState(false);
+  const [splatRequested, setSplatRequested] = useState(false);
+  const handleSplatReady = useCallback(() => setSplatReady(true), []);
+  const hydrangea = instances.find((instance) => instance.profile.id === "hydrangea");
+  const hydrangeaSplatOpacity = hydrangea
+    ? clampRange(
+        photographicWeights(hydrangea.profile, day)[2] +
+          photographicWeights(hydrangea.profile, day)[3],
+        0,
+        1,
+      )
+    : 0;
+
+  useEffect(() => {
+    if (!splatExperiment) return;
+    if ("requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(() => setSplatRequested(true), {
+        timeout: 1800,
+      });
+      return () => window.cancelIdleCallback(idleId);
+    }
+    const timeoutId = globalThis.setTimeout(() => setSplatRequested(true), 1200);
+    return () => globalThis.clearTimeout(timeoutId);
+  }, [splatExperiment]);
+
   const seasonalWarmth =
     (1 + Math.cos(((day - 188) / 365) * Math.PI * 2)) / 2;
   const sky = new THREE.Color("#aeb9b2").lerp(
@@ -869,8 +936,19 @@ function Scene({ day, selectedId, onSelect, reducedMotion, instances }: GardenSc
           selected={selectedId === instance.profile.id}
           onSelect={() => onSelect(instance.profile.id)}
           reducedMotion={reducedMotion}
+          splatExperiment={splatExperiment}
+          splatReady={splatReady}
         />
       ))}
+      {splatExperiment && splatRequested && (
+        <Suspense fallback={null}>
+          <HydrangeaSplatLayer
+            instances={instances}
+            opacity={hydrangeaSplatOpacity}
+            onReady={handleSplatReady}
+          />
+        </Suspense>
+      )}
       <OrbitControls
         makeDefault
         enablePan={false}

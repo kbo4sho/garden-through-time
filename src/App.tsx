@@ -455,6 +455,10 @@ export default function App() {
     () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
     [],
   );
+  const splatExperiment = useMemo(
+    () => new URLSearchParams(window.location.search).get("splat") === "hydrangea",
+    [],
+  );
   const availableProfiles = useMemo(() => compositionPlants(nativeOnly), [nativeOnly]);
   const activePlants = useMemo(() => {
     const activeIds = new Set(planting);
@@ -522,6 +526,7 @@ export default function App() {
           onSelect={setSelectedId}
           reducedMotion={reducedMotion}
           instances={instances}
+          splatExperiment={splatExperiment}
         />
       </div>
       <div className="atmosphere" aria-hidden="true" />
