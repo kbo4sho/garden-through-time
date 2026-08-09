@@ -99,3 +99,34 @@ FIXED WHEN: An observable check proving that gap is closed
 ```
 
 On `LOSE`, return only the largest gap to the builder and use another fresh critic after repair. On `UNJUDGEABLE`, repair the evidence or inspection path before changing the product.
+
+## Visual contact-sheet pass — August 2026
+
+### Outcome
+
+The integrated visual pass won its independent final review. The experience now
+presents one composition in four simultaneous, decision-specific views: garden
+portrait, front elevation, high-oblique planting plan, and selected-plant seasonal
+detail. The environment is a continuous warm-neutral ground and backdrop rather
+than a modeled yard, keeping scale, layering, spacing, and seasonal change ahead
+of scenery.
+
+### Retained evidence
+
+- Baseline and same-viewport candidate:
+  `output/playwright/visual-gauntlet/baseline-live-in-app.png` and
+  `output/playwright/visual-gauntlet/candidate-local-in-app.png`.
+- Required matrix: `matrix-{3,5,7}-{winter,spring,summer,fall}.png` in
+  `output/playwright/visual-gauntlet/`.
+- Responsive evidence: `candidate-5-spring-tablet.png` and
+  `candidate-3-fall-phone.png` in the same directory.
+
+### Repair history and closure
+
+Two fresh critics rejected earlier passes because photographic billboard bases
+still exposed dark wedges, trapezoids, and abrupt horizontal cutoffs. The closing
+repair lowered each photographic canopy into the shared ground field, applied a
+strong nonlinear alpha feather at the plant base, broadened the diffuse contact
+shadow, and replaced the hard selection ring with a low-contrast wash. A third
+fresh critic inspected the regenerated twelve-frame matrix plus desktop, tablet,
+phone, timeline, and console behavior and returned `WIN`, with no remaining gap.

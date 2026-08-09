@@ -24,7 +24,6 @@ import {
   buildComposition,
   compositionTemplates,
   compositionPlants,
-  defaultPlanting,
   defaultTemplateId,
   nativeFothergilla,
   plantGroups,
@@ -56,6 +55,24 @@ const monthTicks = [
   { label: "Nov", day: 305 },
   { label: "Dec", day: 335 },
 ];
+
+const previewParams = new URLSearchParams(window.location.search);
+const requestedDayParam = previewParams.get("day");
+const requestedDay = requestedDayParam?.trim()
+  ? Number(requestedDayParam)
+  : Number.NaN;
+const initialDay = Number.isFinite(requestedDay)
+  ? Math.min(365, Math.max(1, Math.round(requestedDay)))
+  : 172;
+const initialTemplate =
+  compositionTemplates.find((template) => template.id === previewParams.get("template")) ??
+  compositionTemplates.find((template) => template.id === defaultTemplateId) ??
+  compositionTemplates[0];
+const requestedPlant = previewParams.get("plant") as PlantId | null;
+const initialSelectedId =
+  requestedPlant && initialTemplate.planting.includes(requestedPlant)
+    ? requestedPlant
+    : initialTemplate.planting[1] ?? initialTemplate.planting[0];
 
 const seasonNarrative = (day: number, profiles: PlantProfile[]) => {
   if (day < 95 || day > 334)
@@ -618,10 +635,10 @@ function Timeline({
 
 export default function App() {
   const libraryAccess: LibraryAccess = "full-library";
-  const [day, setDay] = useState(172);
-  const [selectedId, setSelectedId] = useState<PlantId>("hydrangea");
-  const [planting, setPlanting] = useState<PlantId[]>(() => [...defaultPlanting]);
-  const [activeTemplateId, setActiveTemplateId] = useState(defaultTemplateId);
+  const [day, setDay] = useState(initialDay);
+  const [selectedId, setSelectedId] = useState<PlantId>(initialSelectedId);
+  const [planting, setPlanting] = useState<PlantId[]>(() => [...initialTemplate.planting]);
+  const [activeTemplateId, setActiveTemplateId] = useState(initialTemplate.id);
   const [playing, setPlaying] = useState(false);
   const [conditionsOpen, setConditionsOpen] = useState(false);
   const [compositionOpen, setCompositionOpen] = useState(false);
@@ -738,7 +755,10 @@ export default function App() {
             <div className="atmosphere" aria-hidden="true" />
             <div className="photo-stamp" aria-hidden="true">
               <span>{view.number} / 04</span>
-              <strong>{view.label}</strong>
+              <span className="photo-stamp-copy">
+                <strong>{view.label}</strong>
+                <small>{view.note}</small>
+              </span>
             </div>
           </article>
         ))}

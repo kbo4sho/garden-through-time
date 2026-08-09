@@ -5,10 +5,8 @@ import {
   Instance,
   Instances,
   PerspectiveCamera,
-  SoftShadows,
   useTexture,
 } from "@react-three/drei";
-import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import type { Group } from "three";
 import type {
@@ -34,9 +32,9 @@ type GardenSceneProps = {
 
 export const gardenViews = [
   { id: "portrait", number: "01", label: "Garden portrait", note: "The whole composition" },
-  { id: "left-three-quarter", number: "02", label: "Left three-quarter", note: "Low-to-tall layering" },
-  { id: "right-three-quarter", number: "03", label: "Right three-quarter", note: "Depth through the border" },
-  { id: "detail", number: "04", label: "Planting detail", note: "Habit and overlap" },
+  { id: "front-elevation", number: "02", label: "Front elevation", note: "Height and overlap" },
+  { id: "planting-plan", number: "03", label: "Planting plan", note: "Spacing and repetition" },
+  { id: "seasonal-detail", number: "04", label: "Seasonal detail", note: "The selected plant" },
 ] as const;
 
 export type GardenViewId = (typeof gardenViews)[number]["id"];
@@ -45,18 +43,22 @@ const cameraPresets: Record<
   GardenViewId,
   { position: [number, number, number]; target: [number, number, number]; fov: number }
 > = {
-  portrait: { position: [5.45, 3.05, 6.25], target: [0, 1.2, 0], fov: 32 },
-  "left-three-quarter": {
-    position: [2.2, 3.05, 7.25],
-    target: [-0.14, 1.18, 0.04],
-    fov: 32,
+  portrait: { position: [5.8, 3.1, 7.35], target: [-0.82, 1.14, 0.05], fov: 32 },
+  "front-elevation": {
+    position: [0.02, 2.68, 8.65],
+    target: [0, 1.16, 0.02],
+    fov: 29,
   },
-  "right-three-quarter": {
-    position: [6.85, 3, 3.45],
-    target: [0.08, 1.2, -0.08],
-    fov: 32,
+  "planting-plan": {
+    position: [4.7, 7.35, 6.15],
+    target: [0, 0.52, 0.02],
+    fov: 31,
   },
-  detail: { position: [4.25, 2.55, 4.85], target: [0.04, 1.38, -0.04], fov: 29 },
+  "seasonal-detail": {
+    position: [2.4, 2.15, 3.2],
+    target: [0, 1.3, 0],
+    fov: 24,
+  },
 };
 
 type Branch = {
@@ -446,8 +448,10 @@ function PhotographicCanopy({
       uWeights: { value: new THREE.Vector4() },
       uExtraWeights: { value: new THREE.Vector4() },
       uOpacity: { value: 1 },
+      uSaturation: { value: profile.id === "dogwood" ? 0.38 : 0.9 },
+      uBrightness: { value: profile.id === "dogwood" ? 0.8 : 1 },
     }),
-    [textures],
+    [profile.id, textures],
   );
   uniforms.uWeights.value.set(
     weights[0],
@@ -464,7 +468,7 @@ function PhotographicCanopy({
   });
 
   return (
-    <Billboard follow lockX lockZ position={[0, height * 0.425, 0]}>
+    <Billboard follow lockX lockZ position={[0, height * 0.31, 0]}>
       <mesh geometry={geometry} scale={[height, height, height]}>
         <shaderMaterial
           uniforms={uniforms}
@@ -486,6 +490,8 @@ function PhotographicCanopy({
           uniform vec4 uWeights;
           uniform vec4 uExtraWeights;
           uniform float uOpacity;
+          uniform float uSaturation;
+          uniform float uBrightness;
           varying vec2 vUv;
           varying vec3 vNormal;
           void main() {
@@ -495,8 +501,11 @@ function PhotographicCanopy({
             vec4 summer = texture2D(uSummer, vUv);
             vec4 fall = texture2D(uFall, vUv);
             float sourceAlpha = winter.a * uWeights.x + leafout.a * uWeights.y + bloom.a * uWeights.z + summer.a * uWeights.w + fall.a * uExtraWeights.x;
-            float alpha = sourceAlpha * uOpacity;
-            if (alpha < 0.055) discard;
+            if (sourceAlpha < 0.072) discard;
+            float alpha = smoothstep(0.072, 0.19, sourceAlpha) * uOpacity;
+            float groundFeather = smoothstep(0.18, 0.32, vUv.y);
+            alpha *= groundFeather * groundFeather;
+            if (alpha < 0.035) discard;
             vec3 premultiplied =
               winter.rgb * winter.a * uWeights.x +
               leafout.rgb * leafout.a * uWeights.y +
@@ -504,7 +513,13 @@ function PhotographicCanopy({
               summer.rgb * summer.a * uWeights.w +
               fall.rgb * fall.a * uExtraWeights.x;
             vec3 color = premultiplied / max(sourceAlpha, 0.001);
-            float diffuse = 0.82 + 0.18 * max(dot(normalize(vNormal), normalize(vec3(-0.35, 0.72, 0.6))), 0.0);
+            float luminance = dot(color, vec3(0.2126, 0.7152, 0.0722));
+            float dormant = clamp(uWeights.x, 0.0, 1.0);
+            float seasonalSaturation = mix(uSaturation, min(uSaturation, 0.58), dormant);
+            color = mix(vec3(luminance), color, seasonalSaturation);
+            color = clamp((color - 0.5) * 1.045 + 0.5, 0.0, 1.0);
+            color *= mix(1.0, 0.86, dormant) * uBrightness;
+            float diffuse = 0.95 + 0.07 * max(dot(normalize(vNormal), normalize(vec3(-0.35, 0.72, 0.6))), 0.0);
             gl_FragColor = vec4(color * diffuse, alpha);
             #include <tonemapping_fragment>
             #include <colorspace_fragment>
@@ -528,9 +543,9 @@ function GroundingShadow({ profile }: { profile: PlantProfile }) {
     const context = canvas.getContext("2d");
     if (context) {
       const gradient = context.createRadialGradient(96, 48, 2, 96, 48, 92);
-      gradient.addColorStop(0, "rgba(8, 14, 9, 0.68)");
-      gradient.addColorStop(0.42, "rgba(8, 14, 9, 0.34)");
-      gradient.addColorStop(1, "rgba(8, 14, 9, 0)");
+      gradient.addColorStop(0, "rgba(37, 32, 25, 0.31)");
+      gradient.addColorStop(0.42, "rgba(37, 32, 25, 0.13)");
+      gradient.addColorStop(1, "rgba(37, 32, 25, 0)");
       context.fillStyle = gradient;
       context.fillRect(0, 0, 192, 96);
     }
@@ -544,13 +559,50 @@ function GroundingShadow({ profile }: { profile: PlantProfile }) {
     <mesh
       position={[0, 0.018, 0]}
       rotation={[-Math.PI / 2, 0, 0.72]}
-      scale={[height * 0.82, height * 0.34, 1]}
+      scale={[height * 0.96, height * 0.34, 1]}
     >
       <planeGeometry args={[1, 1]} />
       <meshBasicMaterial
         map={texture}
         transparent
-        opacity={0.62}
+        opacity={0.42}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
+function SelectionWash({ profile }: { profile: PlantProfile }) {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 160;
+    canvas.height = 80;
+    const context = canvas.getContext("2d");
+    if (context) {
+      const gradient = context.createRadialGradient(80, 40, 1, 80, 40, 76);
+      gradient.addColorStop(0, "rgba(255, 255, 255, 0.74)");
+      gradient.addColorStop(0.48, "rgba(255, 255, 255, 0.22)");
+      gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, 160, 80);
+    }
+    return new THREE.CanvasTexture(canvas);
+  }, []);
+  const height = profile.photoHeight;
+
+  return (
+    <mesh
+      position={[0, 0.02, 0]}
+      rotation={[-Math.PI / 2, 0, 0.72]}
+      scale={[height * 0.92, height * 0.34, 1]}
+    >
+      <planeGeometry args={[1, 1]} />
+      <meshBasicMaterial
+        map={texture}
+        color={profile.accent}
+        transparent
+        opacity={0.16}
         depthWrite={false}
         toneMapped={false}
       />
@@ -841,29 +893,31 @@ function Shrub({
       }}
     >
       <GroundingShadow profile={profile} />
+      {selected && <SelectionWash profile={profile} />}
       <PhotographicCanopy profile={profile} day={day} />
-      {selected && (
-        <mesh position={[0, 0.024, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.34, 0.37, 64]} />
-          <meshBasicMaterial
-            color={profile.accent}
-            transparent
-            opacity={0.58}
-            side={THREE.DoubleSide}
-          />
-        </mesh>
-      )}
     </group>
   );
 }
 
 function SnapshotCamera({
   viewId,
+  focus,
 }: {
   viewId: GardenViewId;
+  focus?: PlantInstance;
 }) {
   const camera = useRef<THREE.PerspectiveCamera>(null);
-  const preset = cameraPresets[viewId];
+  const preset = useMemo(() => {
+    const base = cameraPresets[viewId];
+    if (viewId !== "seasonal-detail" || !focus) return base;
+    const [x, , z] = focus.position;
+    const focusHeight = Math.min(1.72, focus.profile.photoHeight * focus.scale * 0.48);
+    return {
+      position: [x + 2.25, focusHeight + 0.78, z + 2.95] as [number, number, number],
+      target: [x, focusHeight, z] as [number, number, number],
+      fov: base.fov,
+    };
+  }, [focus, viewId]);
   const target = useMemo(() => new THREE.Vector3(...preset.target), [preset]);
 
   return (
@@ -877,18 +931,55 @@ function SnapshotCamera({
   );
 }
 
+function PlantingBed() {
+  const texture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 256;
+    canvas.height = 256;
+    const context = canvas.getContext("2d");
+    if (context) {
+      const gradient = context.createRadialGradient(128, 128, 12, 128, 128, 126);
+      gradient.addColorStop(0, "rgba(93, 81, 65, 0.48)");
+      gradient.addColorStop(0.58, "rgba(105, 92, 73, 0.3)");
+      gradient.addColorStop(0.82, "rgba(113, 101, 83, 0.11)");
+      gradient.addColorStop(1, "rgba(113, 101, 83, 0)");
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, 256, 256);
+    }
+    const bed = new THREE.CanvasTexture(canvas);
+    bed.colorSpace = THREE.SRGBColorSpace;
+    return bed;
+  }, []);
+
+  return (
+    <mesh position={[0, 0.006, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[9.2, 5.1]} />
+      <meshBasicMaterial
+        map={texture}
+        transparent
+        opacity={0.72}
+        depthWrite={false}
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
 function Ground({ day }: { day: number }) {
   const winter = day < 85 || day > 335;
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-      <circleGeometry args={[7.5, 160]} />
-      <meshPhysicalMaterial
-        color={winter ? "#4b5145" : "#465944"}
-        roughness={1}
-        clearcoat={0.018}
-      />
-    </mesh>
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[96, 96]} />
+        <meshPhysicalMaterial
+          color={winter ? "#d8d4ca" : "#d1d4c6"}
+          roughness={1}
+          clearcoat={0}
+        />
+      </mesh>
+      <PlantingBed />
+    </group>
   );
 }
 
@@ -903,37 +994,23 @@ function Scene({
 }: GardenSceneProps) {
   const seasonalWarmth =
     (1 + Math.cos(((day - 188) / 365) * Math.PI * 2)) / 2;
-  const sky = new THREE.Color("#aeb9b2").lerp(
-    new THREE.Color("#9db59f"),
-    seasonalWarmth,
-  );
-  const haze = new THREE.Color("#69766d").lerp(
-    new THREE.Color("#657c67"),
-    seasonalWarmth,
-  );
+  const winter = day < 85 || day > 335;
+  const sky = new THREE.Color(winter ? "#d8d4ca" : "#d1d4c6");
+  const haze = sky.clone();
+  const focus = instances.find((instance) => instance.profile.id === selectedId) ?? instances[0];
 
   return (
     <>
       <color attach="background" args={[sky]} />
-      <fog attach="fog" args={[haze, 8.8, 18]} />
-      <SnapshotCamera viewId={viewId} />
-      {primary && <SoftShadows size={18} samples={12} focus={0.48} />}
+      <fog attach="fog" args={[haze, 13.5, 27]} />
+      <SnapshotCamera viewId={viewId} focus={focus} />
       <hemisphereLight
-        args={["#dbe3d9", "#29352b", 1.7 + seasonalWarmth * 0.3]}
+        args={["#fffaf0", "#9d9b8d", 1.3 + seasonalWarmth * 0.12]}
       />
       <directionalLight
         position={[-4.5, 7.8, 5.2]}
-        color={seasonalWarmth > 0.4 ? "#fff0cf" : "#e5edf0"}
-        intensity={2.25}
-        castShadow
-        shadow-mapSize-width={primary ? 2048 : 1024}
-        shadow-mapSize-height={primary ? 2048 : 1024}
-        shadow-camera-near={0.5}
-        shadow-camera-far={18}
-        shadow-camera-left={-6}
-        shadow-camera-right={6}
-        shadow-camera-top={6}
-        shadow-camera-bottom={-4}
+        color={seasonalWarmth > 0.4 ? "#fff2dc" : "#eef0ec"}
+        intensity={1.62}
       />
       <Ground day={day} />
       {instances.map((instance, index) => (
@@ -949,12 +1026,6 @@ function Scene({
           reducedMotion={reducedMotion}
         />
       ))}
-      {primary && (
-        <EffectComposer multisampling={4}>
-          <Bloom luminanceThreshold={0.96} mipmapBlur intensity={0.07} />
-          <Vignette eskil={false} offset={0.12} darkness={0.34} />
-        </EffectComposer>
-      )}
     </>
   );
 }
@@ -970,7 +1041,7 @@ export default function GardenScene(props: GardenSceneProps) {
         antialias: true,
         alpha: false,
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 0.94,
+        toneMappingExposure: 1.02,
         powerPreference: "high-performance",
       }}
       fallback={

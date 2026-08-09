@@ -49,6 +49,15 @@ Seasonal events are ranges, not universal dates. A representative-year visualiza
 
 Calm, cinematic, tactile, and observant. Natural light, believable atmosphere, grounded plants, varied material response, and enough stillness to study the composition. Avoid generic dashboard styling, game-like reward language, glossy plastic foliage, or ornamental controls that compete with the garden.
 
+Present the composition as an editorial contact sheet rather than a freely orbiting
+3D scene. Keep four purposeful views visible together: a garden portrait for the
+whole composition, a front elevation for height and overlap, a high-oblique
+planting plan for spacing and repetition, and a seasonal detail for the selected
+plant. Use one continuous warm-neutral ground and backdrop so the environment
+supports comparison without implying a fully modeled yard. Each view must add a
+different planting judgment; extra angles that only repeat the hero image do not
+earn space.
+
 ## Naming and message
 
 - User-facing name: **Year-Round Interest**.
