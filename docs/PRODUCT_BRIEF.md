@@ -94,6 +94,22 @@ states and an explicit design role, and the role-based chooser keeps selection
 in service of the authored composition. This is the current evidence threshold
 for any later library addition.
 
+### Planting recommendations and product packaging
+
+The next composition slice adds three curated recommendations for each authored
+cluster size: three, five, and seven plants. Recommendations are the primary
+decision-support product; the plant library supports them rather than becoming
+the product by itself. A homeowner can apply a recommendation and then replace
+individual positions without losing the rest of the composition.
+
+Templates and plants carry a stable access tier separate from future account or
+payment technology. The proposed product preview includes one complete template
+at every cluster size plus a useful substitution set. A future full-library
+entitlement can expose every recommendation and compatible substitution. The
+current proof remains fully unlocked until authentication and checkout are
+deliberately added; it must not contain dead purchase controls or hide sources,
+caveats, or seasonal uncertainty behind access.
+
 ## Out of scope for the first proof
 
 - accounts and saved gardens;

@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "audit:templates": "node scripts/audit-templates.mjs",
     "dev": "vite",
     "build": "node scripts/build-sites.mjs",
     "preview": "vite preview",

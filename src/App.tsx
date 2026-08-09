@@ -22,14 +22,20 @@ import GardenScene, {
 } from "./components/GardenScene";
 import {
   buildComposition,
+  compositionTemplates,
   compositionPlants,
   defaultPlanting,
+  defaultTemplateId,
   nativeFothergilla,
   plantGroups,
   plants,
-  resizePlanting,
+  previewTemplateForSize,
   seasonalEvidenceFor,
+  templateIsAvailable,
+  templatesForSize,
   type ClusterSize,
+  type CompositionTemplate,
+  type LibraryAccess,
   type PlantGroup,
   type PlantId,
   type PlantProfile,
@@ -288,16 +294,24 @@ function ConditionsPanel({
 function CompositionPanel({
   planting,
   profiles,
+  activeTemplate,
+  templateCustomized,
+  libraryAccess,
   onSizeChange,
+  onTemplateChange,
   onPlantChange,
-  onReset,
+  onRestoreTemplate,
   onClose,
 }: {
   planting: PlantId[];
   profiles: PlantProfile[];
+  activeTemplate: CompositionTemplate;
+  templateCustomized: boolean;
+  libraryAccess: LibraryAccess;
   onSizeChange: (size: ClusterSize) => void;
+  onTemplateChange: (template: CompositionTemplate) => void;
   onPlantChange: (index: number, plantId: PlantId) => void;
-  onReset: () => void;
+  onRestoreTemplate: () => void;
   onClose: () => void;
 }) {
   const sizes: { value: ClusterSize; label: string }[] = [
@@ -312,6 +326,7 @@ function CompositionPanel({
     selectedProfile?.group ?? "summer",
   );
   const visibleProfiles = profiles.filter((profile) => profile.group === activeGroup);
+  const recommendedTemplates = templatesForSize(planting.length as ClusterSize);
 
   useEffect(() => {
     if (activeSlot >= planting.length) setActiveSlot(Math.max(0, planting.length - 1));
@@ -359,14 +374,83 @@ function CompositionPanel({
         </div>
       </fieldset>
 
+      <section
+        className="template-picker"
+        aria-label="Recommended planting arrangements"
+      >
+        <div className="template-picker-heading">
+          <div>
+            <h3>Recommended arrangements</h3>
+            <span>Three editor-curated starting points</span>
+          </div>
+          <span>{planting.length} plants</span>
+        </div>
+        <div className="template-list">
+          {recommendedTemplates.map((template, index) => {
+            const isActive = template.id === activeTemplate.id;
+            const isAvailable = templateIsAvailable(template, libraryAccess);
+            const speciesCount = new Set(template.planting).size;
+            const accents = [...new Set(template.planting)].map(
+              (plantId) => plants.find((profile) => profile.id === plantId)?.accent,
+            );
+
+            return (
+              <button
+                type="button"
+                className={isActive ? "template-card is-active" : "template-card"}
+                key={template.id}
+                data-template-id={template.id}
+                aria-pressed={isActive}
+                disabled={!isAvailable}
+                onClick={() => onTemplateChange(template)}
+              >
+                <span className="template-index">{String(index + 1).padStart(2, "0")}</span>
+                <span className="template-card-copy">
+                  <span className="template-title-row">
+                    <strong>{template.name}</strong>
+                    {isActive && (
+                      <em>{templateCustomized ? "Customized" : "Selected"}</em>
+                    )}
+                  </span>
+                  <small>{template.summary}</small>
+                  <span className="template-cadence" aria-label="Seasonal cadence">
+                    <span><b>W</b>{template.seasonalCarry.winter}</span>
+                    <span><b>Sp</b>{template.seasonalCarry.spring}</span>
+                    <span><b>Su</b>{template.seasonalCarry.summer}</span>
+                    <span><b>F</b>{template.seasonalCarry.fall}</span>
+                  </span>
+                </span>
+                <span className="template-meta" aria-label={`${speciesCount} species`}>
+                  <span className="template-swatches" aria-hidden="true">
+                    {accents.map((accent, accentIndex) => (
+                      <i
+                        key={`${template.id}-accent-${accentIndex}`}
+                        style={{ background: accent }}
+                      />
+                    ))}
+                  </span>
+                  <small>{speciesCount} species</small>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <div className="planting-choices">
         <div className="planting-choices-heading">
           <div>
-            <strong>Plants in this cluster</strong>
+            <strong>
+              {templateCustomized ? `Customized from ${activeTemplate.name}` : activeTemplate.name}
+            </strong>
             <span>{new Set(planting).size} species · {planting.length} plants</span>
           </div>
-          <button type="button" onClick={onReset}>
-            <RotateCcw size={13} /> Reset
+          <button
+            type="button"
+            onClick={onRestoreTemplate}
+            disabled={!templateCustomized}
+          >
+            <RotateCcw size={13} /> Restore
           </button>
         </div>
         <div className="planting-slot-list">
@@ -533,9 +617,11 @@ function Timeline({
 }
 
 export default function App() {
+  const libraryAccess: LibraryAccess = "full-library";
   const [day, setDay] = useState(172);
   const [selectedId, setSelectedId] = useState<PlantId>("hydrangea");
   const [planting, setPlanting] = useState<PlantId[]>(() => [...defaultPlanting]);
+  const [activeTemplateId, setActiveTemplateId] = useState(defaultTemplateId);
   const [playing, setPlaying] = useState(false);
   const [conditionsOpen, setConditionsOpen] = useState(false);
   const [compositionOpen, setCompositionOpen] = useState(false);
@@ -545,7 +631,10 @@ export default function App() {
     () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
     [],
   );
-  const availableProfiles = useMemo(() => compositionPlants(nativeOnly), [nativeOnly]);
+  const availableProfiles = useMemo(
+    () => compositionPlants(nativeOnly, libraryAccess),
+    [libraryAccess, nativeOnly],
+  );
   const activePlants = useMemo(() => {
     const profileById = new Map(availableProfiles.map((plant) => [plant.id, plant]));
     return [...new Set(planting)]
@@ -565,11 +654,17 @@ export default function App() {
     [planting],
   );
   const instances = useMemo(
-    () => buildComposition(planting, nativeOnly),
-    [nativeOnly, planting],
+    () => buildComposition(planting, nativeOnly, libraryAccess),
+    [libraryAccess, nativeOnly, planting],
   );
   const narrative = seasonNarrative(day, activePlants);
   const selectedPlant = activePlants.find((plant) => plant.id === selectedId) ?? activePlants[0];
+  const activeTemplate =
+    compositionTemplates.find((template) => template.id === activeTemplateId) ??
+    compositionTemplates[0];
+  const templateCustomized =
+    activeTemplate.planting.length !== planting.length ||
+    activeTemplate.planting.some((plantId, index) => plantId !== planting[index]);
 
   useEffect(() => {
     if (!playing || reducedMotion) return;
@@ -597,7 +692,17 @@ export default function App() {
   }, [activePlants, selectedId]);
 
   const changeClusterSize = (size: ClusterSize) => {
-    setPlanting((current) => resizePlanting(current, size));
+    const template = previewTemplateForSize(size);
+    setActiveTemplateId(template.id);
+    setPlanting([...template.planting]);
+    setSelectedId(template.planting[1] ?? template.planting[0]);
+  };
+
+  const applyTemplate = (template: CompositionTemplate) => {
+    if (!templateIsAvailable(template, libraryAccess)) return;
+    setActiveTemplateId(template.id);
+    setPlanting([...template.planting]);
+    setSelectedId(template.planting[1] ?? template.planting[0]);
   };
 
   const changePlant = (index: number, plantId: PlantId) => {
@@ -736,12 +841,13 @@ export default function App() {
           <CompositionPanel
             planting={planting}
             profiles={availableProfiles}
+            activeTemplate={activeTemplate}
+            templateCustomized={templateCustomized}
+            libraryAccess={libraryAccess}
             onSizeChange={changeClusterSize}
+            onTemplateChange={applyTemplate}
             onPlantChange={changePlant}
-            onReset={() => {
-              setPlanting([...defaultPlanting]);
-              setSelectedId("hydrangea");
-            }}
+            onRestoreTemplate={() => applyTemplate(activeTemplate)}
             onClose={() => setCompositionOpen(false)}
           />
         </>

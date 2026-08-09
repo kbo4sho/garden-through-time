@@ -17,6 +17,22 @@ export type PlantGroup = "spring" | "summer" | "foliage" | "winter";
 export type ClusterSize = 3 | 5 | 7;
 export type PhotoStage = "winter" | "leafout" | "bloom" | "summer" | "fall";
 export type TimingConfidence = "high" | "medium" | "low";
+export type LibraryAccess = "preview" | "full-library";
+
+export type CompositionTemplate = {
+  id: string;
+  name: string;
+  size: ClusterSize;
+  summary: string;
+  seasonalCarry: {
+    winter: string;
+    spring: string;
+    summer: string;
+    fall: string;
+  };
+  planting: PlantId[];
+  accessTier: LibraryAccess;
+};
 
 export const plantGroups: { id: PlantGroup; label: string }[] = [
   { id: "spring", label: "Spring bloom" },
@@ -34,6 +50,7 @@ export type PlantInstance = {
 
 export type PlantProfile = {
   id: PlantId;
+  accessTier: LibraryAccess;
   commonName: string;
   botanicalName: string;
   cultivar: string;
@@ -191,6 +208,7 @@ const generatedAssets = (id: PlantId): Record<PhotoStage, string> => ({
 export const plants: PlantProfile[] = [
   {
     id: "fothergilla",
+    accessTier: "preview",
     commonName: "Mount Airy fothergilla",
     botanicalName: "Fothergilla × intermedia",
     cultivar: "‘Mount Airy’",
@@ -252,6 +270,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "hydrangea",
+    accessTier: "preview",
     commonName: "Ruby Slippers oakleaf hydrangea",
     botanicalName: "Hydrangea quercifolia",
     cultivar: "‘Ruby Slippers’",
@@ -313,6 +332,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "dogwood",
+    accessTier: "preview",
     commonName: "Arctic Fire redtwig dogwood",
     botanicalName: "Cornus sericea",
     cultivar: "Arctic Fire® ‘Farrow’",
@@ -379,6 +399,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "smooth-hydrangea",
+    accessTier: "full-library",
     commonName: "‘Annabelle’ smooth hydrangea",
     botanicalName: "Hydrangea arborescens",
     cultivar: "‘Annabelle’",
@@ -434,6 +455,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "panicle-hydrangea",
+    accessTier: "full-library",
     commonName: "‘Little Lime’ panicle hydrangea",
     botanicalName: "Hydrangea paniculata",
     cultivar: "‘Jane’ Little Lime®",
@@ -488,6 +510,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "sweetspire",
+    accessTier: "preview",
     commonName: "‘Henry’s Garnet’ Virginia sweetspire",
     botanicalName: "Itea virginica",
     cultivar: "‘Henry’s Garnet’",
@@ -549,6 +572,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "summersweet",
+    accessTier: "full-library",
     commonName: "‘Ruby Spice’ summersweet",
     botanicalName: "Clethra alnifolia",
     cultivar: "‘Ruby Spice’",
@@ -609,6 +633,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "viburnum",
+    accessTier: "full-library",
     commonName: "All That Glitters arrowwood viburnum",
     botanicalName: "Viburnum dentatum var. deamii",
     cultivar: "All That Glitters® ‘SMVDBL’",
@@ -670,6 +695,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "serviceberry",
+    accessTier: "preview",
     commonName: "‘Regent’ Saskatoon serviceberry",
     botanicalName: "Amelanchier alnifolia",
     cultivar: "‘Regent’",
@@ -731,6 +757,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "ninebark",
+    accessTier: "preview",
     commonName: "Lemon Candy ninebark",
     botanicalName: "Physocarpus opulifolius",
     cultivar: "Lemon Candy® ‘Podaras 3’",
@@ -791,6 +818,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "boxwood",
+    accessTier: "preview",
     commonName: "‘Green Velvet’ boxwood",
     botanicalName: "Buxus",
     cultivar: "‘Green Velvet’",
@@ -848,6 +876,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "buttonbush",
+    accessTier: "full-library",
     commonName: "Sugar Shack buttonbush",
     botanicalName: "Cephalanthus occidentalis",
     cultivar: "Sugar Shack® ‘SMCOSS’",
@@ -909,6 +938,7 @@ export const plants: PlantProfile[] = [
   },
   {
     id: "winterberry",
+    accessTier: "full-library",
     commonName: "‘Red Sprite’ winterberry",
     botanicalName: "Ilex verticillata",
     cultivar: "‘Red Sprite’",
@@ -988,13 +1018,186 @@ export const nativeFothergilla: PlantProfile = {
   photoHeight: 2.35,
 };
 
-export const compositionPlants = (nativeOnly: boolean) =>
-  nativeOnly ? [nativeFothergilla, ...plants.slice(1)] : plants;
+export const plantIsAvailable = (profile: PlantProfile, access: LibraryAccess) =>
+  access === "full-library" || profile.accessTier === "preview";
+
+export const compositionPlants = (
+  nativeOnly: boolean,
+  access: LibraryAccess = "full-library",
+) => (nativeOnly ? [nativeFothergilla, ...plants.slice(1)] : plants).filter(
+  (profile) => plantIsAvailable(profile, access),
+);
+
+export const compositionTemplates: CompositionTemplate[] = [
+  {
+    id: "balanced-year-3",
+    name: "Balanced Year",
+    size: 3,
+    summary: "The original cadence: spring bloom, summer volume, fall color, and red winter stems.",
+    seasonalCarry: {
+      winter: "Red stems",
+      spring: "Bottlebrush bloom",
+      summer: "Oakleaf volume",
+      fall: "Mahogany + gold",
+    },
+    planting: ["fothergilla", "hydrangea", "dogwood"],
+    accessTier: "preview",
+  },
+  {
+    id: "light-structure-3",
+    name: "Light + Structure",
+    size: 3,
+    summary: "Airy blossom and lime panicles settle into a quiet evergreen frame.",
+    seasonalCarry: {
+      winter: "Evergreen form",
+      spring: "Serviceberry bloom",
+      summer: "Lime panicles",
+      fall: "Gold + red foliage",
+    },
+    planting: ["serviceberry", "panicle-hydrangea", "boxwood"],
+    accessTier: "full-library",
+  },
+  {
+    id: "moisture-garden-3",
+    name: "Moisture Garden",
+    size: 3,
+    summary: "A relaxed composition for the wetter edge, carried by bloom, seedheads, and winter stems.",
+    seasonalCarry: {
+      winter: "Red stems",
+      spring: "Fresh foliage",
+      summer: "White + globe bloom",
+      fall: "Garnet + yellow",
+    },
+    planting: ["sweetspire", "buttonbush", "dogwood"],
+    accessTier: "full-library",
+  },
+  {
+    id: "layered-seasons-5",
+    name: "Layered Seasons",
+    size: 5,
+    summary: "A flowering center with repeated spring bloom and evergreen winter footing.",
+    seasonalCarry: {
+      winter: "Stems + evergreen",
+      spring: "Repeated bloom",
+      summer: "Oakleaf anchor",
+      fall: "Gold + mahogany",
+    },
+    planting: ["fothergilla", "hydrangea", "dogwood", "fothergilla", "boxwood"],
+    accessTier: "preview",
+  },
+  {
+    id: "woodland-framework-5",
+    name: "Woodland Framework",
+    size: 5,
+    summary: "Airy spring blossom, cloudlike summer bloom, garnet foliage, and evergreen structure.",
+    seasonalCarry: {
+      winter: "Stems + evergreen",
+      spring: "Serviceberry bloom",
+      summer: "Annabelle clouds",
+      fall: "Garnet foliage",
+    },
+    planting: ["serviceberry", "smooth-hydrangea", "dogwood", "sweetspire", "boxwood"],
+    accessTier: "full-library",
+  },
+  {
+    id: "long-summer-5",
+    name: "Long Summer",
+    size: 5,
+    summary: "Gold foliage and fragrant bloom extend the season around late-summer panicles.",
+    seasonalCarry: {
+      winter: "Red stems + bark",
+      spring: "Gold leaf + bloom",
+      summer: "Fragrance + panicles",
+      fall: "Yellow + russet",
+    },
+    planting: ["fothergilla", "panicle-hydrangea", "summersweet", "ninebark", "dogwood"],
+    accessTier: "full-library",
+  },
+  {
+    id: "seasonal-tapestry-7",
+    name: "Full Seasonal Tapestry",
+    size: 7,
+    summary: "Seven distinct layers move from spring blossom to foliage color, bark, and evergreen form.",
+    seasonalCarry: {
+      winter: "Stems + evergreen",
+      spring: "Layered white bloom",
+      summer: "Oakleaf volume",
+      fall: "Gold + garnet",
+    },
+    planting: [
+      "fothergilla",
+      "hydrangea",
+      "dogwood",
+      "serviceberry",
+      "boxwood",
+      "sweetspire",
+      "ninebark",
+    ],
+    accessTier: "preview",
+  },
+  {
+    id: "summer-structure-7",
+    name: "Summer to Structure",
+    size: 7,
+    summary: "Overlapping summer bloom resolves into bark, seedheads, and evergreen mass.",
+    seasonalCarry: {
+      winter: "Stems + evergreen",
+      spring: "Bottlebrush + gold leaf",
+      summer: "Long bloom relay",
+      fall: "Gold + seedheads",
+    },
+    planting: [
+      "fothergilla",
+      "smooth-hydrangea",
+      "dogwood",
+      "panicle-hydrangea",
+      "boxwood",
+      "summersweet",
+      "ninebark",
+    ],
+    accessTier: "full-library",
+  },
+  {
+    id: "moist-garden-drift-7",
+    name: "Moist Garden Drift",
+    size: 7,
+    summary: "Repeated moisture-loving shrubs make a loose summer drift with strong dormant stems.",
+    seasonalCarry: {
+      winter: "Repeated red stems",
+      spring: "Fresh foliage + bloom",
+      summer: "Fragrant wet-edge drift",
+      fall: "Garnet + yellow",
+    },
+    planting: [
+      "sweetspire",
+      "buttonbush",
+      "dogwood",
+      "fothergilla",
+      "summersweet",
+      "sweetspire",
+      "dogwood",
+    ],
+    accessTier: "full-library",
+  },
+];
+
+export const defaultTemplateId = "balanced-year-3";
+
+export const templatesForSize = (size: ClusterSize) =>
+  compositionTemplates.filter((template) => template.size === size);
+
+export const previewTemplateForSize = (size: ClusterSize) =>
+  compositionTemplates.find(
+    (template) => template.size === size && template.accessTier === "preview",
+  ) ?? compositionTemplates.find((template) => template.size === size)!;
+
+export const templateIsAvailable = (
+  template: CompositionTemplate,
+  access: LibraryAccess,
+) => access === "full-library" || template.accessTier === "preview";
 
 export const defaultPlanting: PlantId[] = [
-  "fothergilla",
-  "hydrangea",
-  "dogwood",
+  ...compositionTemplates.find((template) => template.id === defaultTemplateId)!.planting,
 ];
 
 const expansionOrder: PlantId[] = [
@@ -1043,11 +1246,12 @@ const compositionLayouts: Record<
 export const buildComposition = (
   planting: PlantId[],
   nativeOnly: boolean,
+  access: LibraryAccess = "full-library",
 ): PlantInstance[] => {
   const size = planting.length as ClusterSize;
   const layout = compositionLayouts[size] ?? compositionLayouts[3];
   const profiles = Object.fromEntries(
-    compositionPlants(nativeOnly).map((profile) => [profile.id, profile]),
+    compositionPlants(nativeOnly, access).map((profile) => [profile.id, profile]),
   ) as Record<PlantId, PlantProfile>;
 
   return planting.map((plantId, index) => ({

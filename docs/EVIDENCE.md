@@ -2,6 +2,45 @@
 
 This record captures repeatable checks for the current interactive proof. It does not replace target-user comprehension testing or a production horticultural review.
 
+## Planting recommendation templates
+
+- Nine stable recommendation records provide exactly three options for each
+  authored three-, five-, and seven-plant layout. The automated inventory probe
+  verifies unique IDs, matching planting lengths, existing plant references,
+  four nonempty seasonal carriers, one future preview recommendation per size,
+  and the protected default.
+- Every plant and recommendation carries a `preview` or `full-library` access
+  tier. Preview recommendations depend only on preview plants. The current proof
+  sets full-library access explicitly and contains no authentication, payment,
+  or nonfunctional purchase action.
+- Browser interaction evidence applies a complete recommendation, replaces only
+  position 02, observes the explicit `Customized from` state, and restores the
+  original ordered planting. Changing cluster size applies that size's preview
+  recommendation and exposes exactly three matching template cards.
+- Keyboard activation of `Summer to Structure` updates the selected state and
+  seven-plant composition. Native button semantics expose the active template,
+  cluster size, positions, seasonal rationale, and restore availability without
+  relying on color alone.
+- Thirty-six 1440 × 900 captures cover January 15, May 10, August 13, and
+  October 18 for all nine recommendations. Every capture retains the garden
+  portrait, left three-quarter, right three-quarter, planting detail, plant
+  identity rail, and year control. The raw captures and nine four-season contact
+  sheets are retained under the ignored `output/playwright/` evidence folder.
+- Editor captures at 1024 × 768 and 390 × 844 keep all three recommendations
+  readable and selectable; the panel scrolls into the unchanged position-level
+  editor on the phone fallback.
+- `npm run audit:templates`, `npm run check`, and `npm run build` pass. The
+  browser console contains the development-only React tools notice and no
+  errors or warnings from the application.
+
+The confirmed feature bar is recorded in
+[`docs/TEMPLATE_GAUNTLET.md`](TEMPLATE_GAUNTLET.md). A fresh critic must issue
+the feature verdict; these observations are raw inspection evidence, not a
+builder verdict. The fresh critic returned **WIN** after independently applying
+all nine recommendations, checking their ordered plantings, exercising
+customize/restore and keyboard timeline behavior, inspecting every supplied
+seasonal capture, and tracing the content/access boundary.
+
 ## Runtime
 
 - Production build: `npm run build`
