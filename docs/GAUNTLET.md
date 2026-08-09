@@ -2,9 +2,9 @@
 
 ## Goal
 
-Create a cinematic, botanically credible 3D composition of three compatible flowering shrubs. A homeowner must be able to scrub to any day of a representative year and see species-specific changes in foliage, bloom, fruit, fall color, leaf drop, and dormant structure.
+Create a cinematic, botanically credible composition that lets a homeowner judge year-round interest before planting. A homeowner must be able to scrub to any day of a representative year and see species-specific changes in foliage, bloom, fruit, fall color, leaf drop, and dormant structure.
 
-Within two minutes, the user should understand how the plants layer together, when each contributes seasonal interest, where the composition becomes weak, and whether the plants suit their growing conditions.
+Within two minutes, the user should understand how the plants layer together, what carries the composition in each season, where its year-round interest becomes weak, and whether the plants suit their growing conditions.
 
 ## Reference bar
 
@@ -99,4 +99,3 @@ FIXED WHEN: An observable check proving that gap is closed
 ```
 
 On `LOSE`, return only the largest gap to the builder and use another fresh critic after repair. On `UNJUDGEABLE`, repair the evidence or inspection path before changing the product.
-

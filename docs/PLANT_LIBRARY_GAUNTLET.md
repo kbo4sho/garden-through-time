@@ -3,7 +3,7 @@
 ## Confirmed goal
 
 Add ten botanically recognizable, source-backed shrub choices without turning
-Garden Through Time into a shallow catalog. Each choice must remain credible in
+Year-Round Interest into a shallow catalog. Each choice must remain credible in
 the existing four-view composition, through a representative Chicago-area year,
 and in the authored three-, five-, and seven-plant layouts.
 

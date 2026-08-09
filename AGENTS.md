@@ -2,7 +2,9 @@
 
 ## North Star
 
-Build a browser experience that helps a homeowner judge a planting composition across a full year. The user should feel that they are observing one living garden through time, not browsing a plant catalog or switching among four unrelated seasonal renders.
+Build a browser experience that helps a homeowner judge a planting composition's year-round interest before planting it. The user should feel that they are observing one living garden across a full year, not browsing a plant catalog or switching among unrelated seasonal renders.
+
+The canonical product promise is: **See the whole year before you plant.** Time is the medium; year-round interest is the decision the product helps the homeowner make.
 
 The composition is always the hero. Interface, filters, labels, and plant data must remain subordinate to it.
 
@@ -21,6 +23,7 @@ If implementation choices conflict with those documents, preserve the product go
 - Treat seasonal events as likely regional ranges. Never present weather-sensitive bloom dates as guaranteed precision.
 - Each species must change independently through the year.
 - Preserve real scale, layering, and the spatial relationship among plants.
+- Frame the experience around year-round interest: what carries the composition, when it peaks, and where it goes quiet.
 - A beautiful scene that cannot support a planting decision is incomplete.
 - A horticulturally accurate tool that feels like dated landscape software is also incomplete.
 - Keep technology choices open until they can be evaluated against real pixels, behavior, and performance.
@@ -37,4 +40,3 @@ The first proof contains one hero composition and a small compatible substitutio
 - Validate behavior on desktop and tablet and provide a meaningful phone fallback.
 - After major implementation waves, inspect the integrated experience rather than grading isolated components.
 - The material builder cannot issue the final Gauntlet verdict. Use a fresh critic context and the contract in `docs/GAUNTLET.md`.
-

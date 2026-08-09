@@ -1,18 +1,26 @@
 # Product brief
 
-## The idea
+## The problem
 
 Most garden-planning products show plants as static objects or at their most marketable moment. Real gardens are compositions in time: one shrub flowers while another is leafing out, a summer mass becomes fall structure, and winter exposes form that peak-bloom photography hides.
 
-Garden Through Time makes that fourth dimension visible.
+This is the **peak-season snapshot problem**: homeowners must make a year-round planting decision from isolated photographs of plants at their best moment.
+
+## Product promise
+
+**Year-Round Interest** helps a homeowner judge one living composition across an entire year before planting it.
+
+Canonical tagline: **See the whole year before you plant.**
+
+The experience should reveal what carries the composition in each season, when it peaks, and where it goes quiet. Time is the medium; year-round interest is the decision.
 
 ## Primary audience
 
-Design-conscious homeowners and garden planners who want confidence before buying and planting a group of shrubs. They care about beauty but do not necessarily know botanical terminology or professional landscape software.
+Design-conscious homeowners and garden planners who want confidence that a group of shrubs will provide year-round interest before they buy and plant it. They care about beauty but do not necessarily know botanical terminology or professional landscape software.
 
 ## Desired outcome
 
-The user lands in a realistic planted scene, moves through the year, and can explain why the cluster works—or where it does not. The experience should create the feeling: “I can finally see the whole year, not just the nursery photo.”
+The user lands in a realistic planted scene, moves through the year, and can explain why the cluster works—or where its year-round interest becomes weak. The experience should create the feeling: “I can finally see the whole year, not just the nursery photo.”
 
 ## Core experience
 
@@ -40,6 +48,16 @@ Seasonal events are ranges, not universal dates. A representative-year visualiza
 ## Visual direction
 
 Calm, cinematic, tactile, and observant. Natural light, believable atmosphere, grounded plants, varied material response, and enough stillness to study the composition. Avoid generic dashboard styling, game-like reward language, glossy plastic foliage, or ornamental controls that compete with the garden.
+
+## Naming and message
+
+- User-facing name: **Year-Round Interest**.
+- Tagline: **See the whole year before you plant.**
+- Internal project and repository name may remain `garden-through-time`.
+- Prefer the language of composition, seasonal contribution, strong periods,
+  weak periods, and winter structure over generic time-travel language.
+- “Garden Through Time” is historical/internal language, not the primary
+  customer-facing promise.
 
 ## Working defaults
 
@@ -89,7 +107,6 @@ for any later library addition.
 
 ## Open product decisions
 
-- Final name and visual identity.
 - Exact starter composition and horticultural reviewers.
 - Rendering and seasonal-transition strategy.
 - Whether substitutions happen in-scene or in a separate comparison mode.

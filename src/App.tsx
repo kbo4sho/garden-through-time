@@ -234,7 +234,7 @@ function ConditionsPanel({
         <div><dt><MapPin size={15} /> Region</dt><dd>Chicago, IL · Zone 6a</dd></div>
         <div><dt><SunMedium size={15} /> Light</dt><dd>Morning sun / afternoon shade</dd></div>
         <div><dt><Droplets size={15} /> Moisture</dt><dd>Consistent, well-drained</dd></div>
-        <div><dt><CalendarDays size={15} /> Intent</dt><dd>Four-season interest</dd></div>
+        <div><dt><CalendarDays size={15} /> Intent</dt><dd>Year-round interest</dd></div>
       </dl>
       <div className="filter-preview">
         <p>Composition filter</p>
@@ -327,8 +327,8 @@ function CompositionPanel({
     <aside className="composition-panel" aria-label="Edit planting composition">
       <div className="conditions-heading">
         <div>
-          <p>Composition editor</p>
-          <h2>Shape the cluster</h2>
+          <p>Year-round composition</p>
+          <h2>Design for the full year</h2>
         </div>
         <button className="icon-button" onClick={onClose} aria-label="Close composition editor">
           <X size={18} />
@@ -336,8 +336,9 @@ function CompositionPanel({
       </div>
 
       <p className="composition-intro">
-        Choose a position, then compare plants by the part they play through the
-        year. The authored layers stay fixed while species, scale, and season change.
+        Choose a position, then compare plants by how they carry the composition
+        through the year. The authored layers stay fixed while species, scale, and
+        season change.
       </p>
 
       <fieldset className="cluster-size-control">
@@ -611,7 +612,7 @@ export default function App() {
   return (
     <main className="experience-shell">
       <a href="#year-timeline" className="skip-link">Skip to year timeline</a>
-      <section className="scene-gallery" aria-label="Four seasonal garden views">
+      <section className="scene-gallery" aria-label="Four synchronized views of one year-round garden composition">
         {gardenViews.map((view, index) => (
           <article
             key={view.id}
@@ -639,9 +640,12 @@ export default function App() {
       </section>
 
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="Garden Through Time home">
+        <a className="brand" href="#top" aria-label="Year-Round Interest home">
           <span className="brand-mark"><span /></span>
-          <span>Garden<br />Through Time</span>
+          <span className="brand-copy">
+            <strong>Year-Round<br />Interest</strong>
+            <small>See the whole year before you plant.</small>
+          </span>
         </a>
         <div className="topbar-actions">
           <span className="region-label"><MapPin size={14} />Chicago · Zone 6a</span>

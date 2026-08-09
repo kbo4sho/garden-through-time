@@ -127,6 +127,25 @@ input:focus-visible {
   text-decoration: none;
 }
 
+.brand-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.brand-copy strong {
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.05;
+}
+
+.brand-copy small {
+  color: rgba(39, 52, 41, 0.52);
+  font-size: 8px;
+  font-weight: 520;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
 .brand-mark {
   position: relative;
   width: 32px;
@@ -1418,6 +1437,10 @@ input:focus-visible {
 
   .topbar {
     padding: 20px;
+  }
+
+  .brand-copy small {
+    display: none;
   }
 
   .region-label {
