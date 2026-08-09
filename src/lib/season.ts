@@ -23,6 +23,7 @@ export const windowIntensity = (
 };
 
 export const leafDensity = (profile: PlantProfile, day: number) => {
+  if (profile.evergreen) return 1;
   const leafIn = smoothstep(
     profile.leaf.emerge[0],
     profile.leaf.emerge[1],
@@ -48,21 +49,26 @@ export const leafColor = (profile: PlantProfile, day: number) => {
 export const plantState = (profile: PlantProfile, day: number) => {
   const leaves = leafDensity(profile, day);
   const bloom = windowIntensity(day, profile.bloom.window);
-  const fruit = profile.fruit ? windowIntensity(day, profile.fruit.window) : 0;
+  const fruitSeason = profile.fruit ? windowIntensity(day, profile.fruit.window) : 0;
+  const winterDisplay = profile.winterDisplay.windows.some(
+    ([start, end]) => day >= start && day <= end,
+  ) ? 1 : 0;
+  const persistentFruit =
+    profile.winterDisplay.kind === "persistent-fruit" ||
+    profile.winterDisplay.kind === "persistent-seed"
+      ? winterDisplay
+      : 0;
+  const fruit = Math.max(fruitSeason, persistentFruit);
   const fall = smoothstep(
     profile.leaf.fallWindow[0],
     profile.leaf.fallWindow[1],
     day,
   );
-  const persistentBloom = profile.bloom.persistent
-    ? day >= profile.bloom.window[1] - 16
-      ? 0.82 - smoothstep(310, 365, day) * 0.28
-      : day < 112
-        ? 0.54 * (1 - smoothstep(72, 112, day))
-        : 0
+  const persistentBloom = profile.winterDisplay.kind === "persistent-bloom"
+    ? winterDisplay
     : 0;
 
-  return { leaves, bloom, fruit, fall, persistentBloom };
+  return { leaves, bloom, fruit, fruitSeason, fall, persistentBloom, winterDisplay };
 };
 
 export const dayToDate = (day: number) => {
@@ -83,12 +89,13 @@ export const dayToDate = (day: number) => {
 export const dayPhase = (profile: PlantProfile, day: number) => {
   const state = plantState(profile, day);
   if (state.bloom > 0.18) return "In bloom";
-  if (state.fruit > 0.18) return "Fruit forming";
+  if (profile.evergreen) return "Evergreen structure";
   if (state.fall > 0.2 && state.leaves > 0.15) return "Fall color";
-  if (state.persistentBloom > 0.18) return "Aged flower heads";
+  if (state.winterDisplay > 0.18) return profile.winterDisplay.label;
+  if (state.fruitSeason > 0.18) return "Fruit forming";
   if (state.leaves > 0.7) return "Full foliage";
   if (state.leaves > 0.08) return day < 190 ? "Leafing out" : "Leaves falling";
-  return profile.id === "dogwood" ? "Red winter stems" : "Dormant structure";
+  return "Dormant structure";
 };
 
 export const seasonCopy = (day: number) => {

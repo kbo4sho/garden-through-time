@@ -25,8 +25,12 @@ import {
   compositionPlants,
   defaultPlanting,
   nativeFothergilla,
+  plantGroups,
+  plants,
   resizePlanting,
+  seasonalEvidenceFor,
   type ClusterSize,
+  type PlantGroup,
   type PlantId,
   type PlantProfile,
 } from "./data/plants";
@@ -47,58 +51,35 @@ const monthTicks = [
   { label: "Dec", day: 335 },
 ];
 
-const seasonNarrative = (day: number, plantIds: PlantId[]) => {
-  const present = new Set(plantIds);
-  const has = (id: PlantId) => present.has(id);
-
+const seasonNarrative = (day: number, profiles: PlantProfile[]) => {
   if (day < 95 || day > 334)
     return {
       eyebrow: "The quiet season",
       title: "Structure becomes color.",
-      copy: [
-        has("dogwood") && "Red dogwood stems carry the composition through winter.",
-        has("hydrangea") && "Persistent hydrangea flower heads catch the low light.",
-        has("fothergilla") && "Fothergilla reveals its compact branching silhouette.",
-      ].filter(Boolean).join(" "),
+      copy: profiles.slice(0, 3).map((profile) => profile.seasonalNotes.winter).join(" "),
     };
   if (day < 152)
     return {
       eyebrow: "The opening act",
       title: "Spring begins in layers.",
-      copy: [
-        has("fothergilla") && "Fothergilla flowers before its canopy fills in.",
-        has("dogwood") && "Dogwood leafs out behind its small late-spring flowers.",
-        has("hydrangea") && "Oakleaf hydrangea builds a broad green foundation.",
-      ].filter(Boolean).join(" "),
+      copy: profiles.slice(0, 3).map((profile) => profile.seasonalNotes.spring).join(" "),
     };
   if (day < 244)
     return {
       eyebrow: "The garden at full volume",
       title: "Summer holds the center.",
-      copy: [
-        has("hydrangea") && "Oakleaf hydrangea brings the main summer bloom.",
-        has("dogwood") && "Dogwood adds an upright, finer-leaved layer.",
-        has("fothergilla") && "Fothergilla settles into a rounded blue-green mass.",
-      ].filter(Boolean).join(" "),
+      copy: profiles.slice(0, 3).map((profile) => profile.seasonalNotes.summer).join(" "),
     };
   if (day < 315)
     return {
       eyebrow: "The second bloom",
       title: "Foliage becomes the flower.",
-      copy: [
-        has("fothergilla") && "Fothergilla turns gold, orange, and red.",
-        has("hydrangea") && "Oakleaf hydrangea deepens toward mahogany.",
-        has("dogwood") && "Dogwood thins to reveal the stems beneath.",
-      ].filter(Boolean).join(" "),
+      copy: profiles.slice(0, 3).map((profile) => profile.seasonalNotes.fall).join(" "),
     };
   return {
     eyebrow: "The reveal",
     title: "The framework returns.",
-    copy: [
-      has("dogwood") && "Leaf drop returns attention to the dogwood's red stems.",
-      has("hydrangea") && "Hydrangea flower heads persist over bare branches.",
-      has("fothergilla") && "Fothergilla recedes to a quiet low framework.",
-    ].filter(Boolean).join(" "),
+    copy: profiles.slice(0, 3).map((profile) => profile.seasonalNotes.winter).join(" "),
   };
 };
 
@@ -125,7 +106,8 @@ function PlantRail({
             state.bloom > 0.18 ||
             state.fruit > 0.18 ||
             state.fall > 0.2 ||
-            (plant.id === "dogwood" && state.leaves < 0.1);
+            plant.evergreen ||
+            (plant.group === "winter" && state.leaves < 0.1);
           return (
             <button
               key={plant.id}
@@ -153,6 +135,14 @@ function PlantRail({
 }
 
 function SelectedPlant({ plant, day }: { plant: PlantProfile; day: number }) {
+  const timingEvidence = seasonalEvidenceFor(plant);
+  const dayLabel = (dayOfYear: number) =>
+    new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(Date.UTC(2025, 0, dayOfYear)));
+
   return (
     <section className="selected-plant" aria-live="polite">
       <div className="selected-plant-heading">
@@ -172,6 +162,35 @@ function SelectedPlant({ plant, day }: { plant: PlantProfile; day: number }) {
         <span><MapPin size={14} />{plant.zones}</span>
         <span><CalendarDays size={14} />{plant.bloomRange}</span>
         <span><Leaf size={14} />{plant.foliageBehavior}</span>
+      </div>
+      {plant.caveat && <p className="plant-caveat">{plant.caveat}</p>}
+      <div className="timing-evidence">
+        <strong>Representative timing · low date confidence</strong>
+        <p>
+          Exact day bounds are visual interpolation for Chicago / Zone 6a, not
+          observed local phenology or a forecast. Seasonal traits and order are
+          anchored to {plant.sourceLabel}.
+        </p>
+        <details>
+          <summary>View encoded seasonal trace</summary>
+          <dl>
+            {timingEvidence.map((item) => (
+              <div key={item.event}>
+                <dt>{item.event}</dt>
+                <dd>
+                  {item.windows.map((window) =>
+                    `${dayLabel(window[0])}–${dayLabel(Math.min(365, window[1]))}`,
+                  ).join(" · ")}
+                  <span>{item.provenance.replace("-", " ")} · {item.confidence}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <small>
+            The five seasonal billboards are interpretive illustrations of the
+            cited habit and traits, not specimen photographs.
+          </small>
+        </details>
       </div>
       <a href={plant.sourceUrl} target="_blank" rel="noreferrer">
         Plant data: {plant.sourceLabel} <ExternalLink size={13} />
@@ -258,7 +277,9 @@ function ConditionsPanel({
         </a>
       </div>
       <p className="conditions-note">
-        Seasonal timing is a representative range, not a weather forecast.
+        Seasonal timing is a low-confidence visual interpolation for a
+        representative Chicago year, not observed local phenology or a weather
+        forecast. Exact bounds and their source scope are disclosed per plant.
       </p>
     </aside>
   );
@@ -284,6 +305,23 @@ function CompositionPanel({
     { value: 5, label: "Layered" },
     { value: 7, label: "Full" },
   ];
+  const [activeSlot, setActiveSlot] = useState(0);
+  const selectedProfile =
+    profiles.find((profile) => profile.id === planting[activeSlot]) ?? profiles[0];
+  const [activeGroup, setActiveGroup] = useState<PlantGroup>(
+    selectedProfile?.group ?? "summer",
+  );
+  const visibleProfiles = profiles.filter((profile) => profile.group === activeGroup);
+
+  useEffect(() => {
+    if (activeSlot >= planting.length) setActiveSlot(Math.max(0, planting.length - 1));
+  }, [activeSlot, planting.length]);
+
+  const chooseSlot = (index: number) => {
+    setActiveSlot(index);
+    const profile = profiles.find((candidate) => candidate.id === planting[index]);
+    if (profile) setActiveGroup(profile.group);
+  };
 
   return (
     <aside className="composition-panel" aria-label="Edit planting composition">
@@ -298,8 +336,8 @@ function CompositionPanel({
       </div>
 
       <p className="composition-intro">
-        Change the number of plants, then choose the species at each position. The
-        garden stays arranged in natural layers as the cluster grows.
+        Choose a position, then compare plants by the part they play through the
+        year. The authored layers stay fixed while species, scale, and season change.
       </p>
 
       <fieldset className="cluster-size-control">
@@ -332,32 +370,81 @@ function CompositionPanel({
         </div>
         <div className="planting-slot-list">
           {planting.map((plantId, index) => (
-            <label className="planting-slot" key={`slot-${index + 1}`}>
+            <button
+              type="button"
+              className={activeSlot === index ? "planting-slot is-active" : "planting-slot"}
+              key={`slot-${index + 1}`}
+              onClick={() => chooseSlot(index)}
+              aria-pressed={activeSlot === index}
+            >
               <span>{String(index + 1).padStart(2, "0")}</span>
-              <select
-                value={plantId}
-                onChange={(event) => onPlantChange(index, event.currentTarget.value as PlantId)}
-                aria-label={`Plant ${index + 1}`}
-              >
-                {profiles.map((profile) => (
-                  <option value={profile.id} key={profile.id}>
-                    {profile.commonName}
-                  </option>
-                ))}
-              </select>
+              <span className="slot-plant-name">
+                {profiles.find((profile) => profile.id === plantId)?.shortName}
+              </span>
               <span
                 className="choice-swatch"
                 style={{ background: profiles.find((profile) => profile.id === plantId)?.accent }}
                 aria-hidden="true"
               />
-            </label>
+            </button>
           ))}
         </div>
       </div>
 
+      <div className="plant-library">
+        <div className="plant-library-heading">
+          <div>
+            <strong>Replace position {String(activeSlot + 1).padStart(2, "0")}</strong>
+            <span>Choose by seasonal role</span>
+          </div>
+          <span>{profiles.length} compatible choices</span>
+        </div>
+        <div className="plant-group-tabs" role="tablist" aria-label="Plant design roles">
+          {plantGroups.map((group) => (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeGroup === group.id}
+              className={activeGroup === group.id ? "is-active" : ""}
+              key={group.id}
+              onClick={() => setActiveGroup(group.id)}
+            >
+              {group.label}
+            </button>
+          ))}
+        </div>
+        <div className="plant-option-grid" role="tabpanel">
+          {visibleProfiles.map((profile) => (
+            <button
+              type="button"
+              className={planting[activeSlot] === profile.id ? "plant-option is-active" : "plant-option"}
+              key={profile.id}
+              onClick={() => onPlantChange(activeSlot, profile.id)}
+              aria-pressed={planting[activeSlot] === profile.id}
+            >
+              <span
+                className="plant-option-image"
+                style={{ backgroundImage: `url(${profile.assets.bloom})` }}
+                aria-hidden="true"
+              />
+              <span className="plant-option-copy">
+                <strong>{profile.shortName}</strong>
+                <small>{profile.role}</small>
+                <em>{profile.matureSize.split(" × ")[0]}</em>
+              </span>
+            </button>
+          ))}
+        </div>
+        {selectedProfile?.caveat && (
+          <p className="library-caveat">
+            <Info size={12} /> {selectedProfile.caveat}
+          </p>
+        )}
+      </div>
+
       <p className="composition-note">
-        These plants share the proof’s Zone 6a, part-shade, consistently moist site.
-        Mature spacing still needs to be confirmed for the real planting bed.
+        All choices tolerate Zone 6a and part shade. Their moisture and pollination
+        caveats remain visible; mature spacing still needs confirmation in the real bed.
       </p>
     </aside>
   );
@@ -459,21 +546,28 @@ export default function App() {
   );
   const availableProfiles = useMemo(() => compositionPlants(nativeOnly), [nativeOnly]);
   const activePlants = useMemo(() => {
-    const activeIds = new Set(planting);
-    return availableProfiles.filter((plant) => activeIds.has(plant.id));
+    const profileById = new Map(availableProfiles.map((plant) => [plant.id, plant]));
+    return [...new Set(planting)]
+      .map((id) => profileById.get(id))
+      .filter((profile): profile is PlantProfile => Boolean(profile));
   }, [availableProfiles, planting]);
   const plantCounts = useMemo(
-    () => planting.reduce<Record<PlantId, number>>(
-      (counts, plantId) => ({ ...counts, [plantId]: counts[plantId] + 1 }),
-      { fothergilla: 0, hydrangea: 0, dogwood: 0 },
-    ),
+    () => {
+      const counts = Object.fromEntries(
+        plants.map((plant) => [plant.id, 0]),
+      ) as Record<PlantId, number>;
+      planting.forEach((plantId) => {
+        counts[plantId] += 1;
+      });
+      return counts;
+    },
     [planting],
   );
   const instances = useMemo(
     () => buildComposition(planting, nativeOnly),
     [nativeOnly, planting],
   );
-  const narrative = seasonNarrative(day, planting);
+  const narrative = seasonNarrative(day, activePlants);
   const selectedPlant = activePlants.find((plant) => plant.id === selectedId) ?? activePlants[0];
 
   useEffect(() => {

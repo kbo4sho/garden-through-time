@@ -11,7 +11,12 @@ import {
 import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
 import * as THREE from "three";
 import type { Group } from "three";
-import type { PlantId, PlantInstance, PlantProfile } from "../data/plants";
+import type {
+  PhotoStage,
+  PlantId,
+  PlantInstance,
+  PlantProfile,
+} from "../data/plants";
 import { mulberry32, plantState, smoothstep } from "../lib/season";
 
 const assetPath = (path: string) =>
@@ -67,11 +72,8 @@ type Particle = {
   shade: number;
 };
 
-const seedByPlant: Record<PlantId, number> = {
-  fothergilla: 8172,
-  hydrangea: 31993,
-  dogwood: 50261,
-};
+const seedForPlant = (id: PlantId) =>
+  [...id].reduce((seed, character) => (seed * 31 + character.charCodeAt(0)) >>> 0, 8172);
 
 const habitDimensions = {
   mound: { width: 1.42, height: 2.05, lower: 0.28 },
@@ -115,7 +117,7 @@ const makeLeafGeometry = (habit: PlantProfile["habit"]) => {
 };
 
 const generatePlant = (profile: PlantProfile) => {
-  const random = mulberry32(seedByPlant[profile.id]);
+  const random = mulberry32(seedForPlant(profile.id));
   const dim = habitDimensions[profile.habit];
   const branches: Branch[] = [];
   const leaves: Particle[] = [];
@@ -192,7 +194,7 @@ const generatePlant = (profile: PlantProfile) => {
 
   const bloomClusters =
     profile.bloom.form === "panicle" ? 14 : profile.bloom.form === "brush" ? 15 : 11;
-  const bloomRandom = mulberry32(seedByPlant[profile.id] + 991);
+  const bloomRandom = mulberry32(seedForPlant(profile.id) + 991);
   const centers = Array.from({ length: bloomClusters }, (_, index) => {
     const angle = (index / bloomClusters) * Math.PI * 2 + bloomRandom() * 0.7;
     const radius = dim.width * (0.34 + bloomRandom() * 0.5);
@@ -302,14 +304,6 @@ function BranchMesh({
   );
 }
 
-const photoHeightByPlant: Record<PlantId, number> = {
-  fothergilla: 2.55,
-  hydrangea: 2.72,
-  dogwood: 3.05,
-};
-
-type PhotoStage = "winter" | "leafout" | "bloom" | "summer" | "fall";
-
 const photoStageIndex: Record<PhotoStage, number> = {
   winter: 0,
   leafout: 1,
@@ -318,53 +312,91 @@ const photoStageIndex: Record<PhotoStage, number> = {
   fall: 4,
 };
 
-const photoKeyframes: Record<PlantId, { day: number; stage: PhotoStage }[]> = {
-  fothergilla: [
+const photoKeyframes = (profile: PlantProfile): { day: number; stage: PhotoStage }[] => {
+  if (profile.evergreen) {
+    return [
+      { day: 1, stage: "winter" },
+      { day: 90, stage: "winter" },
+      { day: 112, stage: "leafout" },
+      { day: profile.bloom.window[0], stage: "bloom" },
+      { day: profile.bloom.window[1], stage: "bloom" },
+      { day: 175, stage: "summer" },
+      { day: profile.leaf.fallWindow[0], stage: "summer" },
+      { day: profile.leaf.fallWindow[1], stage: "fall" },
+      { day: 348, stage: "winter" },
+      { day: 365, stage: "winter" },
+    ];
+  }
+
+  const emergeStart = Math.max(72, profile.leaf.emerge[0] - 12);
+  const bloomStart = profile.bloom.window[0];
+  const bloomEnd = profile.bloom.window[1];
+  const fallStart = profile.leaf.fallWindow[0];
+  const fallEnd = Math.min(profile.leaf.drop[1] - 4, profile.leaf.fallWindow[1]);
+  const earlyWinterBoundary =
+    profile.winterDisplay.windows.find(([start]) => start === 1)?.[1] ?? emergeStart;
+  const lateWinterBoundary =
+    profile.winterDisplay.windows.find(([, end]) => end === 365)?.[0] ?? fallEnd;
+  const bloomStageEnd = Math.max(
+    bloomStart + 12,
+    Math.min(bloomEnd, fallStart - 20),
+  );
+  const bloomFull = Math.min(
+    bloomStageEnd,
+    bloomStart + Math.min(18, Math.max(9, (bloomStageEnd - bloomStart) * 0.3)),
+  );
+  const summerStart = Math.min(
+    fallStart - 8,
+    Math.max(bloomStageEnd, profile.fruit?.window[0] ?? bloomStageEnd + 18),
+  );
+  const fruitEndsBeforeFall = Boolean(
+    profile.fruit && profile.fruit.window[1] < fallStart - 4,
+  );
+  const fruitEndsDuringFall = Boolean(
+    profile.fruit &&
+      profile.fruit.window[1] >= fallStart - 4 &&
+      profile.fruit.window[1] < lateWinterBoundary,
+  );
+  const preBloomStage: PhotoStage =
+    bloomStart < profile.leaf.emerge[1] && profile.winterDisplay.kind === "structure"
+      ? "winter"
+      : "leafout";
+
+  const keyframes: { day: number; stage: PhotoStage }[] = [
     { day: 1, stage: "winter" },
-    { day: 94, stage: "winter" },
-    { day: 111, stage: "bloom" },
-    { day: 145, stage: "bloom" },
-    { day: 165, stage: "summer" },
-    { day: 252, stage: "summer" },
-    { day: 278, stage: "fall" },
-    { day: 300, stage: "fall" },
-    { day: 322, stage: "winter" },
+    { day: earlyWinterBoundary, stage: "winter" },
+    { day: Math.min(profile.leaf.emerge[1], bloomStart), stage: "leafout" },
+    { day: bloomStart, stage: preBloomStage },
+    { day: bloomFull, stage: "bloom" },
+    { day: bloomStageEnd, stage: "bloom" },
+    { day: summerStart, stage: "summer" },
+  ];
+  if (fruitEndsBeforeFall && profile.fruit) {
+    keyframes.push(
+      { day: profile.fruit.window[1], stage: "summer" },
+      {
+        day: Math.min(fallStart - 4, profile.fruit.window[1] + 14),
+        stage: "leafout",
+      },
+    );
+  }
+  keyframes.push(
+    { day: fallStart, stage: fruitEndsBeforeFall ? "leafout" : "summer" },
+  );
+  if (fruitEndsDuringFall && profile.fruit) {
+    keyframes.push({ day: profile.fruit.window[1], stage: "fall" });
+  }
+  keyframes.push(
+    { day: lateWinterBoundary, stage: "fall" },
+    { day: profile.leaf.drop[1], stage: "winter" },
     { day: 365, stage: "winter" },
-  ],
-  hydrangea: [
-    { day: 1, stage: "winter" },
-    { day: 92, stage: "winter" },
-    { day: 112, stage: "leafout" },
-    { day: 150, stage: "leafout" },
-    { day: 178, stage: "bloom" },
-    { day: 242, stage: "bloom" },
-    { day: 258, stage: "summer" },
-    { day: 290, stage: "fall" },
-    { day: 322, stage: "fall" },
-    { day: 340, stage: "winter" },
-    { day: 365, stage: "winter" },
-  ],
-  dogwood: [
-    { day: 1, stage: "winter" },
-    { day: 92, stage: "winter" },
-    { day: 112, stage: "leafout" },
-    { day: 135, stage: "leafout" },
-    { day: 145, stage: "bloom" },
-    { day: 170, stage: "bloom" },
-    { day: 190, stage: "leafout" },
-    { day: 198, stage: "leafout" },
-    { day: 220, stage: "summer" },
-    { day: 245, stage: "summer" },
-    { day: 268, stage: "fall" },
-    { day: 286, stage: "fall" },
-    { day: 312, stage: "winter" },
-    { day: 365, stage: "winter" },
-  ],
+  );
+  return keyframes.sort((a, b) => a.day - b.day);
 };
 
 const photographicWeights = (profile: PlantProfile, day: number) => {
   const weights = [0, 0, 0, 0, 0];
-  const keyframes = photoKeyframes[profile.id];
+  const keyframes = photoKeyframes(profile);
   const nextIndex = keyframes.findIndex((keyframe) => day <= keyframe.day);
   if (nextIndex <= 0) {
     weights[photoStageIndex[keyframes[0].stage]] = 1;
@@ -387,32 +419,11 @@ function PhotographicCanopy({
   day: number;
   opacity?: number;
 }) {
-  const stagePaths: Record<PlantId, string[]> = {
-    fothergilla: [
-      "/textures/fothergilla-winter.webp",
-      "/textures/fothergilla-summer.webp",
-      "/textures/fothergilla-spring.webp",
-      "/textures/fothergilla-summer.webp",
-      "/textures/fothergilla-fall-v2.webp",
-    ],
-    hydrangea: [
-      "/textures/hydrangea-winter.webp",
-      "/textures/hydrangea-spring.webp",
-      "/textures/hydrangea-summer.webp",
-      "/textures/hydrangea-summer.webp",
-      "/textures/hydrangea-fall-v2.webp",
-    ],
-    dogwood: [
-      "/textures/dogwood-winter.webp",
-      "/textures/dogwood-leafout.webp",
-      "/textures/dogwood-spring.webp",
-      "/textures/dogwood-summer.webp",
-      "/textures/dogwood-late-fall.webp",
-    ],
-  };
-  const textures = useTexture(stagePaths[profile.id].map(assetPath)) as THREE.Texture[];
+  const stagePaths = (["winter", "leafout", "bloom", "summer", "fall"] as PhotoStage[])
+    .map((stage) => profile.assets[stage]);
+  const textures = useTexture(stagePaths.map(assetPath)) as THREE.Texture[];
   const weights = photographicWeights(profile, day);
-  const height = photoHeightByPlant[profile.id];
+  const height = profile.photoHeight;
   const geometry = useMemo(() => {
     const canopy = new THREE.PlaneGeometry(1, 1, 32, 32);
     const positions = canopy.attributes.position;
@@ -527,7 +538,7 @@ function GroundingShadow({ profile }: { profile: PlantProfile }) {
     shadow.colorSpace = THREE.SRGBColorSpace;
     return shadow;
   }, []);
-  const height = photoHeightByPlant[profile.id];
+  const height = profile.photoHeight;
 
   return (
     <mesh
@@ -810,7 +821,7 @@ function Shrub({
   useFrame(({ clock }) => {
     if (!group.current || reducedMotion) return;
     group.current.rotation.z =
-      Math.sin(clock.elapsedTime * 0.42 + seedByPlant[profile.id] + instanceSeed) * 0.0028;
+      Math.sin(clock.elapsedTime * 0.42 + seedForPlant(profile.id) + instanceSeed) * 0.0028;
   });
 
   return (

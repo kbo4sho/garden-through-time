@@ -66,6 +66,16 @@ spacing still needs to be checked against the real planting bed. New plant choic
 should only be added when their scale, seasonal states, regional evidence, and
 compatibility are modeled to the same depth as the starter composition.
 
+### Deliberate plant-library expansion
+
+The August 2026 proof deliberately expands the compatible substitution set from
+the three protected starter plants to thirteen source-backed shrub choices. It
+does not expand the product into a general catalog: the original composition
+remains the default, every added choice has five independent seasonal billboard
+states and an explicit design role, and the role-based chooser keeps selection
+in service of the authored composition. This is the current evidence threshold
+for any later library addition.
+
 ## Out of scope for the first proof
 
 - accounts and saved gardens;
