@@ -19,6 +19,7 @@ import {
 import GardenScene, {
   gardenViews,
   type GardenViewId,
+  type VisualStyle,
 } from "./components/GardenScene";
 import {
   buildComposition,
@@ -57,6 +58,8 @@ const monthTicks = [
 ];
 
 const previewParams = new URLSearchParams(window.location.search);
+const visualStyle: VisualStyle =
+  previewParams.get("style") === "editorial" ? "editorial" : "photographic";
 const requestedDayParam = previewParams.get("day");
 const requestedDay = requestedDayParam?.trim()
   ? Number(requestedDayParam)
@@ -749,6 +752,7 @@ export default function App() {
                 reducedMotion={reducedMotion || index > 0}
                 instances={instances}
                 viewId={view.id as GardenViewId}
+                visualStyle={visualStyle}
                 primary={index === 0}
               />
             </div>

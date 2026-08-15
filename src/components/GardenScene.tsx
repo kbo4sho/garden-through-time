@@ -27,8 +27,11 @@ type GardenSceneProps = {
   reducedMotion: boolean;
   instances: PlantInstance[];
   viewId: GardenViewId;
+  visualStyle: VisualStyle;
   primary?: boolean;
 };
+
+export type VisualStyle = "photographic" | "editorial";
 
 export const gardenViews = [
   { id: "portrait", number: "01", label: "Garden portrait", note: "The whole composition" },
@@ -314,6 +317,30 @@ const photoStageIndex: Record<PhotoStage, number> = {
   fall: 4,
 };
 
+const photoStages: PhotoStage[] = [
+  "winter",
+  "leafout",
+  "bloom",
+  "summer",
+  "fall",
+];
+
+const editorialPlantIds = new Set<PlantId>([
+  "fothergilla",
+  "hydrangea",
+  "dogwood",
+]);
+
+const seasonalAssetPaths = (
+  profile: PlantProfile,
+  visualStyle: VisualStyle,
+) =>
+  photoStages.map((stage) =>
+    visualStyle === "editorial" && editorialPlantIds.has(profile.id)
+      ? `/textures/editorial-mixed-media/${profile.id}-${stage}.png`
+      : profile.assets[stage],
+  );
+
 const photoKeyframes = (profile: PlantProfile): { day: number; stage: PhotoStage }[] => {
   if (profile.evergreen) {
     return [
@@ -412,17 +439,18 @@ const photographicWeights = (profile: PlantProfile, day: number) => {
   return weights;
 };
 
-function PhotographicCanopy({
+function SeasonalBillboardCanopy({
   profile,
   day,
+  visualStyle,
   opacity = 1,
 }: {
   profile: PlantProfile;
   day: number;
+  visualStyle: VisualStyle;
   opacity?: number;
 }) {
-  const stagePaths = (["winter", "leafout", "bloom", "summer", "fall"] as PhotoStage[])
-    .map((stage) => profile.assets[stage]);
+  const stagePaths = seasonalAssetPaths(profile, visualStyle);
   const textures = useTexture(stagePaths.map(assetPath)) as THREE.Texture[];
   const weights = photographicWeights(profile, day);
   const height = profile.photoHeight;
@@ -448,10 +476,16 @@ function PhotographicCanopy({
       uWeights: { value: new THREE.Vector4() },
       uExtraWeights: { value: new THREE.Vector4() },
       uOpacity: { value: 1 },
-      uSaturation: { value: profile.id === "dogwood" ? 0.38 : 0.9 },
-      uBrightness: { value: profile.id === "dogwood" ? 0.8 : 1 },
+      uSaturation: {
+        value:
+          profile.id === "dogwood" && visualStyle === "photographic" ? 0.38 : 0.9,
+      },
+      uBrightness: {
+        value:
+          profile.id === "dogwood" && visualStyle === "photographic" ? 0.8 : 1,
+      },
     }),
-    [profile.id, textures],
+    [profile.id, textures, visualStyle],
   );
   uniforms.uWeights.value.set(
     weights[0],
@@ -858,6 +892,7 @@ function Shrub({
   selected,
   onSelect,
   reducedMotion,
+  visualStyle,
 }: {
   profile: PlantProfile;
   position: [number, number, number];
@@ -867,6 +902,7 @@ function Shrub({
   selected: boolean;
   onSelect: () => void;
   reducedMotion: boolean;
+  visualStyle: VisualStyle;
 }) {
   const group = useRef<Group>(null);
 
@@ -894,7 +930,11 @@ function Shrub({
     >
       <GroundingShadow profile={profile} />
       {selected && <SelectionWash profile={profile} />}
-      <PhotographicCanopy profile={profile} day={day} />
+      <SeasonalBillboardCanopy
+        profile={profile}
+        day={day}
+        visualStyle={visualStyle}
+      />
     </group>
   );
 }
@@ -990,6 +1030,7 @@ function Scene({
   reducedMotion,
   instances,
   viewId,
+  visualStyle,
   primary = false,
 }: GardenSceneProps) {
   const seasonalWarmth =
@@ -1024,6 +1065,7 @@ function Scene({
           selected={selectedId === instance.profile.id}
           onSelect={() => onSelect(instance.profile.id)}
           reducedMotion={reducedMotion}
+          visualStyle={visualStyle}
         />
       ))}
     </>
