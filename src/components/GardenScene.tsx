@@ -1,5 +1,5 @@
-import { Suspense, useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   Billboard,
   Instance,
@@ -41,6 +41,51 @@ export const gardenViews = [
 ] as const;
 
 export type GardenViewId = (typeof gardenViews)[number]["id"];
+
+const paperPlanPose = (instance: PlantInstance, instances: PlantInstance[]) => {
+  const ordered = [...instances].sort((left, right) => {
+    const dx = left.position[0] - right.position[0];
+    return Math.abs(dx) > 0.08 ? dx : left.position[2] - right.position[2];
+  });
+  const index = Math.max(
+    0,
+    ordered.findIndex((item) => item.instanceId === instance.instanceId),
+  );
+  const count = Math.max(1, ordered.length);
+  const spacing = count <= 3 ? 0.5 : count <= 5 ? 0.52 : 0.44;
+  const scaleBoost = count <= 3 ? 1.22 : count <= 5 ? 1.02 : 0.86;
+  return {
+    position: [
+      (index - (count - 1) / 2) * spacing,
+      instance.position[2] * 0.2,
+      0,
+    ] as [number, number, number],
+    scale: instance.scale * scaleBoost,
+  };
+};
+
+const paperPlanBounds = (instances: PlantInstance[]) => {
+  const poses = instances.map((instance) => {
+    const pose = paperPlanPose(instance, instances);
+    const radius = instance.profile.photoHeight * pose.scale * 0.28;
+    return {
+      x: pose.position[0],
+      y: pose.position[1],
+      radius,
+      height: instance.profile.photoHeight * pose.scale,
+    };
+  });
+  const minX = Math.min(...poses.map((pose) => pose.x - pose.radius));
+  const maxX = Math.max(...poses.map((pose) => pose.x + pose.radius));
+  const minY = Math.min(...poses.map((pose) => pose.y - pose.radius * 0.18));
+  const maxY = Math.max(...poses.map((pose) => pose.y + pose.height * 0.5));
+  return {
+    cx: (minX + maxX) / 2,
+    cy: (minY + maxY) / 2,
+    spanX: Math.max(0.9, maxX - minX),
+    spanY: Math.max(0.9, maxY - minY),
+  };
+};
 
 const cameraPresets: Record<
   GardenViewId,
@@ -325,19 +370,13 @@ const photoStages: PhotoStage[] = [
   "fall",
 ];
 
-const editorialPlantIds = new Set<PlantId>([
-  "fothergilla",
-  "hydrangea",
-  "dogwood",
-]);
-
 const seasonalAssetPaths = (
   profile: PlantProfile,
   visualStyle: VisualStyle,
 ) =>
   photoStages.map((stage) =>
-    visualStyle === "editorial" && editorialPlantIds.has(profile.id)
-      ? `/textures/editorial-mixed-media/${profile.id}-${stage}.png`
+    visualStyle === "editorial"
+      ? `/textures/hand-drawn-page/${profile.id}-${stage}.png`
       : profile.assets[stage],
   );
 
@@ -443,18 +482,24 @@ function SeasonalBillboardCanopy({
   profile,
   day,
   visualStyle,
+  viewId,
   opacity = 1,
 }: {
   profile: PlantProfile;
   day: number;
   visualStyle: VisualStyle;
+  viewId: GardenViewId;
   opacity?: number;
 }) {
   const stagePaths = seasonalAssetPaths(profile, visualStyle);
   const textures = useTexture(stagePaths.map(assetPath)) as THREE.Texture[];
   const weights = photographicWeights(profile, day);
   const height = profile.photoHeight;
+  const editorial = visualStyle === "editorial";
   const geometry = useMemo(() => {
+    if (editorial) {
+      return new THREE.PlaneGeometry(1, 1);
+    }
     const canopy = new THREE.PlaneGeometry(1, 1, 32, 32);
     const positions = canopy.attributes.position;
     for (let index = 0; index < positions.count; index += 1) {
@@ -465,7 +510,7 @@ function SeasonalBillboardCanopy({
     positions.needsUpdate = true;
     canopy.computeVertexNormals();
     return canopy;
-  }, []);
+  }, [editorial]);
   const uniforms = useMemo(
     () => ({
       uWinter: { value: textures[0] },
@@ -484,8 +529,10 @@ function SeasonalBillboardCanopy({
         value:
           profile.id === "dogwood" && visualStyle === "photographic" ? 0.8 : 1,
       },
+      uEditorial: { value: editorial ? 1 : 0 },
+      uPlanMode: { value: 0 },
     }),
-    [profile.id, textures, visualStyle],
+    [editorial, profile.id, textures, visualStyle],
   );
   uniforms.uWeights.value.set(
     weights[0],
@@ -497,13 +544,75 @@ function SeasonalBillboardCanopy({
   uniforms.uOpacity.value = opacity;
 
   textures.forEach((texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 12;
+    texture.colorSpace = editorial ? THREE.NoColorSpace : THREE.SRGBColorSpace;
+    texture.premultiplyAlpha = false;
+    if (editorial) {
+      texture.anisotropy = 1;
+      texture.generateMipmaps = false;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+    } else {
+      texture.anisotropy = 12;
+    }
   });
 
-  return (
-    <Billboard follow lockX lockZ position={[0, height * 0.31, 0]}>
-      <mesh geometry={geometry} scale={[height, height, height]}>
+  uniforms.uPlanMode.value = editorial && viewId === "planting-plan" ? 1 : 0;
+  const billboardY = height * 0.31;
+  const editorialFragment = `
+          uniform sampler2D uWinter;
+          uniform sampler2D uLeafout;
+          uniform sampler2D uBloom;
+          uniform sampler2D uSummer;
+          uniform sampler2D uFall;
+          uniform vec4 uWeights;
+          uniform vec4 uExtraWeights;
+          uniform float uOpacity;
+          uniform float uPlanMode;
+          varying vec2 vUv;
+          float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+          }
+          void main() {
+            vec2 uv = vUv;
+            vec4 winter = texture2D(uWinter, uv);
+            vec4 leafout = texture2D(uLeafout, uv);
+            vec4 bloom = texture2D(uBloom, uv);
+            vec4 summer = texture2D(uSummer, uv);
+            vec4 fall = texture2D(uFall, uv);
+            float sourceAlpha = winter.a * uWeights.x + leafout.a * uWeights.y + bloom.a * uWeights.z + summer.a * uWeights.w + fall.a * uExtraWeights.x;
+            float n1 = hash(vUv * vec2(37.0, 19.0));
+            float n2 = hash(vUv * vec2(91.0, 53.0) + 2.7);
+            float atFoot = 1.0 - smoothstep(0.04, 0.22, vUv.y);
+            float alphaGate = mix(0.035, 0.11, 1.0 - atFoot);
+            if (sourceAlpha < alphaGate) discard;
+            vec3 premul =
+              winter.rgb * uWeights.x +
+              leafout.rgb * uWeights.y +
+              bloom.rgb * uWeights.z +
+              summer.rgb * uWeights.w +
+              fall.rgb * uExtraWeights.x;
+            vec3 color = premul / max(sourceAlpha, 0.001);
+            vec3 paper = vec3(0.9529, 0.9333, 0.8863);
+            float paperDist = length(color - paper);
+            float luma = dot(color, vec3(0.299, 0.587, 0.114));
+            float chroma = max(max(color.r, color.g), color.b) - min(min(color.r, color.g), color.b);
+            if (atFoot < 0.35) {
+              if (paperDist < 0.12 && chroma < 0.08) discard;
+              if (luma > 0.93 && chroma < 0.07) discard;
+              if (sourceAlpha < 0.82 && paperDist < 0.2) discard;
+            }
+            float broken = 0.006 + 0.02 * n1 + 0.01 * sin(vUv.x * 29.0 + n2 * 6.2831);
+            if (vUv.y < broken) discard;
+            float nibble = 0.12 + 0.08 * hash(vUv * vec2(64.0, 81.0));
+            if (atFoot < 0.35 && sourceAlpha < nibble && paperDist < 0.22 && chroma < 0.08) discard;
+            float intoPage = mix(0.55 + 0.45 * smoothstep(broken, broken + 0.05, vUv.y), 1.0, 1.0 - atFoot);
+            float alpha = sourceAlpha * intoPage * uOpacity;
+            if (alpha < 0.04) discard;
+            gl_FragColor = vec4(color * alpha, alpha);
+          }
+          `;
+
+  const canopyMaterial = (
         <shaderMaterial
           uniforms={uniforms}
           vertexShader={`
@@ -515,7 +624,10 @@ function SeasonalBillboardCanopy({
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
           }
           `}
-          fragmentShader={`
+          fragmentShader={
+            editorial
+              ? editorialFragment
+              : `
           uniform sampler2D uWinter;
           uniform sampler2D uLeafout;
           uniform sampler2D uBloom;
@@ -526,6 +638,7 @@ function SeasonalBillboardCanopy({
           uniform float uOpacity;
           uniform float uSaturation;
           uniform float uBrightness;
+          uniform float uEditorial;
           varying vec2 vUv;
           varying vec3 vNormal;
           void main() {
@@ -558,18 +671,47 @@ function SeasonalBillboardCanopy({
             #include <tonemapping_fragment>
             #include <colorspace_fragment>
           }
-          `}
+          `
+          }
           transparent
-          depthWrite
+          depthWrite={!editorial}
           side={THREE.DoubleSide}
-          toneMapped
+          toneMapped={!editorial}
+          premultipliedAlpha={editorial}
+          blending={editorial ? THREE.CustomBlending : THREE.NormalBlending}
+          blendSrc={editorial ? THREE.OneFactor : THREE.SrcAlphaFactor}
+          blendDst={THREE.OneMinusSrcAlphaFactor}
         />
+  );
+
+  const canopyMesh = (
+      <mesh
+        geometry={geometry}
+        scale={[height, height, editorial ? 1 : height]}
+        position={editorial ? [0, height * 0.46, 0] : [0, 0, 0]}
+      >
+        {canopyMaterial}
       </mesh>
+  );
+
+  if (editorial) {
+    return canopyMesh;
+  }
+
+  return (
+    <Billboard follow lockX lockZ position={[0, billboardY, 0]}>
+      {canopyMesh}
     </Billboard>
   );
 }
 
-function GroundingShadow({ profile }: { profile: PlantProfile }) {
+function GroundingShadow({
+  profile,
+  visualStyle,
+}: {
+  profile: PlantProfile;
+  visualStyle: VisualStyle;
+}) {
   const texture = useMemo(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 192;
@@ -588,6 +730,7 @@ function GroundingShadow({ profile }: { profile: PlantProfile }) {
     return shadow;
   }, []);
   const height = profile.photoHeight;
+  if (visualStyle === "editorial") return null;
 
   return (
     <mesh
@@ -884,39 +1027,45 @@ function TexturedFruit({ particles, opacity }: { particles: Particle[]; opacity:
 }
 
 function Shrub({
-  profile,
-  position,
-  scale,
+  instance,
+  instances,
   instanceSeed,
   day,
   selected,
   onSelect,
   reducedMotion,
   visualStyle,
+  viewId,
 }: {
-  profile: PlantProfile;
-  position: [number, number, number];
-  scale: number;
+  instance: PlantInstance;
+  instances: PlantInstance[];
   instanceSeed: number;
   day: number;
   selected: boolean;
   onSelect: () => void;
   reducedMotion: boolean;
   visualStyle: VisualStyle;
+  viewId: GardenViewId;
 }) {
   const group = useRef<Group>(null);
+  const paperPlan = visualStyle === "editorial" && viewId === "planting-plan";
+  const planPose = paperPlan ? paperPlanPose(instance, instances) : null;
+  const groupPosition: [number, number, number] = planPose
+    ? planPose.position
+    : instance.position;
+  const groupScale = planPose ? planPose.scale : instance.scale;
 
   useFrame(({ clock }) => {
-    if (!group.current || reducedMotion) return;
+    if (!group.current || reducedMotion || visualStyle === "editorial") return;
     group.current.rotation.z =
-      Math.sin(clock.elapsedTime * 0.42 + seedForPlant(profile.id) + instanceSeed) * 0.0028;
+      Math.sin(clock.elapsedTime * 0.42 + seedForPlant(instance.profile.id) + instanceSeed) * 0.0028;
   });
 
   return (
     <group
       ref={group}
-      position={position}
-      scale={scale}
+      position={groupPosition}
+      scale={groupScale}
       onClick={(event) => {
         event.stopPropagation();
         onSelect();
@@ -928,12 +1077,13 @@ function Shrub({
         document.body.style.cursor = "default";
       }}
     >
-      <GroundingShadow profile={profile} />
-      {selected && <SelectionWash profile={profile} />}
+      <GroundingShadow profile={instance.profile} visualStyle={visualStyle} />
+      {selected && visualStyle !== "editorial" && <SelectionWash profile={instance.profile} />}
       <SeasonalBillboardCanopy
-        profile={profile}
+        profile={instance.profile}
         day={day}
         visualStyle={visualStyle}
+        viewId={viewId}
       />
     </group>
   );
@@ -942,32 +1092,233 @@ function Shrub({
 function SnapshotCamera({
   viewId,
   focus,
+  visualStyle,
+  instances,
 }: {
   viewId: GardenViewId;
   focus?: PlantInstance;
+  visualStyle: VisualStyle;
+  instances: PlantInstance[];
 }) {
-  const camera = useRef<THREE.PerspectiveCamera>(null);
+  const size = useThree((state) => state.size);
+  const set = useThree((state) => state.set);
+  const photoCamera = useRef<THREE.PerspectiveCamera>(null);
+  const editorial = visualStyle === "editorial";
+  const planBounds = useMemo(
+    () =>
+      editorial && viewId === "planting-plan" && instances.length
+        ? paperPlanBounds(instances)
+        : null,
+    [editorial, instances, viewId],
+  );
   const preset = useMemo(() => {
+    if (editorial) {
+      if (viewId === "planting-plan") {
+        const cx = planBounds?.cx ?? 0.08;
+        const cy = (planBounds?.cy ?? 0.12) + 0.06;
+        return {
+          position: [cx, cy, 8] as [number, number, number],
+          target: [cx, cy, 0] as [number, number, number],
+          halfH: 1.15,
+          spanX: planBounds?.spanX ?? 2.4,
+          spanY: planBounds?.spanY ?? 1.6,
+        };
+      }
+      if (viewId === "seasonal-detail" && focus) {
+        const [x] = focus.position;
+        const focusHeight = Math.min(1.55, focus.profile.photoHeight * focus.scale * 0.52);
+        return {
+          position: [x, focusHeight, 8] as [number, number, number],
+          target: [x, focusHeight, 0] as [number, number, number],
+          halfH: 1.38,
+        };
+      }
+      if (viewId === "front-elevation") {
+        return {
+          position: [0.02, 1.12, 8] as [number, number, number],
+          target: [0, 1.12, 0] as [number, number, number],
+          halfH: 1.82,
+        };
+      }
+      return {
+        position: [0.48, 1.08, 8] as [number, number, number],
+        target: [0.48, 1.08, 0] as [number, number, number],
+        halfH: 1.72,
+      };
+    }
     const base = cameraPresets[viewId];
-    if (viewId !== "seasonal-detail" || !focus) return base;
+    if (viewId !== "seasonal-detail" || !focus) {
+      return { ...base, halfH: 0 };
+    }
     const [x, , z] = focus.position;
     const focusHeight = Math.min(1.72, focus.profile.photoHeight * focus.scale * 0.48);
     return {
       position: [x + 2.25, focusHeight + 0.78, z + 2.95] as [number, number, number],
       target: [x, focusHeight, z] as [number, number, number],
       fov: base.fov,
+      halfH: 0,
     };
-  }, [focus, viewId]);
+  }, [editorial, focus, planBounds, viewId]);
   const target = useMemo(() => new THREE.Vector3(...preset.target), [preset]);
+  const orthoCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 40), []);
+  const aspect = size.width / Math.max(size.height, 1);
+  const halfH = (() => {
+    if (planBounds && "spanX" in preset) {
+      const pad = 1.02;
+      const neededW = (planBounds.spanX / 2) * pad;
+      const neededH = (planBounds.spanY / 2) * pad;
+      return neededW / neededH > aspect ? neededH : neededW / aspect;
+    }
+    return preset.halfH || 1.8;
+  })();
+  const halfW = halfH * aspect;
+
+  useLayoutEffect(() => {
+    if (!editorial) return;
+    orthoCamera.left = -halfW;
+    orthoCamera.right = halfW;
+    orthoCamera.top = halfH;
+    orthoCamera.bottom = -halfH;
+    orthoCamera.position.set(...preset.position);
+    orthoCamera.lookAt(target);
+    orthoCamera.updateProjectionMatrix();
+    set({ camera: orthoCamera });
+  }, [editorial, halfH, halfW, orthoCamera, preset.position, set, target]);
+
+  if (editorial) {
+    return <primitive object={orthoCamera} />;
+  }
 
   return (
     <PerspectiveCamera
-      ref={camera}
+      ref={photoCamera}
       makeDefault
       position={preset.position}
-      fov={preset.fov}
+      fov={"fov" in preset ? (preset.fov as number) : cameraPresets[viewId].fov}
       onUpdate={(activeCamera) => activeCamera.lookAt(target)}
     />
+  );
+}
+
+function SharedPageGround({
+  instances,
+  viewId,
+}: {
+  instances: PlantInstance[];
+  viewId: GardenViewId;
+}) {
+  const paperPlan = viewId === "planting-plan";
+  const texture = useMemo(() => {
+    const width = 1024;
+    const height = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    if (context) {
+      const random = mulberry32(77129);
+      context.clearRect(0, 0, width, height);
+      for (let blob = 0; blob < 14; blob += 1) {
+        const cx = width * (0.12 + random() * 0.76);
+        const cy = height * (0.5 + (random() - 0.5) * 0.18);
+        const rx = width * (0.22 + random() * 0.28);
+        const ry = height * (0.32 + random() * 0.2);
+        const gradient = context.createRadialGradient(cx, cy, 6, cx, cy, rx);
+        const alpha = 0.04 + random() * 0.06;
+        gradient.addColorStop(0, `rgba(138, 142, 112, ${alpha})`);
+        gradient.addColorStop(0.62, `rgba(150, 144, 120, ${alpha * 0.4})`);
+        gradient.addColorStop(1, "rgba(150, 144, 120, 0)");
+        context.fillStyle = gradient;
+        context.beginPath();
+        context.ellipse(cx, cy, rx, ry, (random() - 0.5) * 0.25, 0, Math.PI * 2);
+        context.fill();
+      }
+      for (let index = 0; index < 5200; index += 1) {
+        const x = random() * width;
+        const y = height * (0.22 + random() * 0.56);
+        const radius = 0.25 + random() * 1.2;
+        const ink = 78 + random() * 32;
+        context.fillStyle = `rgba(${ink + random() * 14}, ${ink + 8 + random() * 12}, ${ink - 8 + random() * 10}, ${0.04 + random() * 0.13})`;
+        context.beginPath();
+        context.arc(x, y, radius, 0, Math.PI * 2);
+        context.fill();
+      }
+    }
+    const wash = new THREE.CanvasTexture(canvas);
+    wash.colorSpace = THREE.NoColorSpace;
+    return wash;
+  }, []);
+  const uniforms = useMemo(
+    () => ({
+      uMap: { value: texture },
+      uOpacity: { value: 0.72 },
+    }),
+    [texture],
+  );
+
+  const layout = useMemo(() => {
+    if (paperPlan && instances.length) {
+      const bounds = paperPlanBounds(instances);
+      return {
+        position: [bounds.cx, bounds.cy + 0.04, -0.25] as [number, number, number],
+        scale: [bounds.spanX + 0.55, bounds.spanY + 0.7, 1] as [number, number, number],
+      };
+    }
+    const xs = instances.map((instance) => instance.position[0]);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const cx = (minX + maxX) / 2;
+    const span = Math.max(3.6, maxX - minX + 1.9);
+    return {
+      position: [cx, 0.24, -0.4] as [number, number, number],
+      scale: [span, 0.92, 1] as [number, number, number],
+    };
+  }, [instances, paperPlan]);
+
+  return (
+    <mesh position={layout.position} scale={layout.scale} renderOrder={-1}>
+      <planeGeometry args={[1, 1]} />
+      <shaderMaterial
+        uniforms={uniforms}
+        transparent
+        depthWrite={false}
+        toneMapped={false}
+        vertexShader={`
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `}
+        fragmentShader={`
+          uniform sampler2D uMap;
+          uniform float uOpacity;
+          varying vec2 vUv;
+          float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+          }
+          void main() {
+            vec4 tex = texture2D(uMap, vUv);
+            float nx = vUv.x * 2.0 - 1.0;
+            float ny = vUv.y * 2.0 - 1.0;
+            float n = hash(vUv * vec2(37.0, 19.0));
+            float n2 = hash(vUv * vec2(91.0, 53.0) + 3.1);
+            float blob = 1.0 - (nx * nx * 0.62 + ny * ny * 1.55);
+            blob -= 0.1 * n + 0.06 * sin(vUv.x * 18.0 + n2 * 6.0);
+            if (blob < 0.04) discard;
+            float mask = smoothstep(0.04, 0.3, blob);
+            float alpha = max(tex.a, 0.18) * mask * uOpacity;
+            if (alpha < 0.03) discard;
+            vec3 color = mix(vec3(0.545, 0.557, 0.439), tex.rgb, 0.55);
+            gl_FragColor = vec4(color * alpha, alpha);
+          }
+        `}
+        premultipliedAlpha
+        blending={THREE.CustomBlending}
+        blendSrc={THREE.OneFactor}
+        blendDst={THREE.OneMinusSrcAlphaFactor}
+      />
+    </mesh>
   );
 }
 
@@ -1005,7 +1356,8 @@ function PlantingBed() {
   );
 }
 
-function Ground({ day }: { day: number }) {
+function Ground({ day, visualStyle }: { day: number; visualStyle: VisualStyle }) {
+  if (visualStyle === "editorial") return null;
   const winter = day < 85 || day > 335;
 
   return (
@@ -1035,37 +1387,53 @@ function Scene({
 }: GardenSceneProps) {
   const seasonalWarmth =
     (1 + Math.cos(((day - 188) / 365) * Math.PI * 2)) / 2;
+  const editorial = visualStyle === "editorial";
   const winter = day < 85 || day > 335;
   const sky = new THREE.Color(winter ? "#d8d4ca" : "#d1d4c6");
   const haze = sky.clone();
   const focus = instances.find((instance) => instance.profile.id === selectedId) ?? instances[0];
 
+  const visibleInstances =
+    editorial && viewId === "seasonal-detail"
+      ? instances.filter((instance) => instance.profile.id === selectedId)
+      : instances;
+
   return (
     <>
-      <color attach="background" args={[sky]} />
-      <fog attach="fog" args={[haze, 13.5, 27]} />
-      <SnapshotCamera viewId={viewId} focus={focus} />
-      <hemisphereLight
-        args={["#fffaf0", "#9d9b8d", 1.3 + seasonalWarmth * 0.12]}
+      {!editorial && <color attach="background" args={[sky]} />}
+      {!editorial && <fog attach="fog" args={[haze, 13.5, 27]} />}
+      <SnapshotCamera
+        viewId={viewId}
+        focus={focus}
+        visualStyle={visualStyle}
+        instances={visibleInstances}
       />
-      <directionalLight
-        position={[-4.5, 7.8, 5.2]}
-        color={seasonalWarmth > 0.4 ? "#fff2dc" : "#eef0ec"}
-        intensity={1.62}
-      />
-      <Ground day={day} />
-      {instances.map((instance, index) => (
+      {editorial ? null : (
+        <>
+          <hemisphereLight
+            args={["#fffaf0", "#9d9b8d", 1.3 + seasonalWarmth * 0.12]}
+          />
+          <directionalLight
+            position={[-4.5, 7.8, 5.2]}
+            color={seasonalWarmth > 0.4 ? "#fff2dc" : "#eef0ec"}
+            intensity={1.62}
+          />
+        </>
+      )}
+      <Ground day={day} visualStyle={visualStyle} />
+      {editorial ? <SharedPageGround instances={visibleInstances} viewId={viewId} /> : null}
+      {visibleInstances.map((instance, index) => (
         <Shrub
           key={instance.instanceId}
-          profile={instance.profile}
-          position={instance.position}
-          scale={instance.scale}
+          instance={instance}
+          instances={visibleInstances}
           instanceSeed={index * 1.73}
           day={day}
           selected={selectedId === instance.profile.id}
           onSelect={() => onSelect(instance.profile.id)}
           reducedMotion={reducedMotion}
           visualStyle={visualStyle}
+          viewId={viewId}
         />
       ))}
     </>
@@ -1073,19 +1441,33 @@ function Scene({
 }
 
 export default function GardenScene(props: GardenSceneProps) {
+  const editorial = props.visualStyle === "editorial";
   return (
     <Canvas
       className="garden-canvas"
-      shadows
+      shadows={!editorial}
+      orthographic={editorial}
       frameloop="demand"
-      dpr={props.primary ? [1, 1.5] : [0.8, 1.15]}
+      dpr={editorial ? 2 : props.primary ? [1, 1.5] : [0.8, 1.15]}
       gl={{
-        antialias: true,
-        alpha: false,
-        toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.02,
+        antialias: !editorial,
+        alpha: editorial,
+        premultipliedAlpha: editorial,
+        toneMapping: editorial
+          ? THREE.NoToneMapping
+          : THREE.ACESFilmicToneMapping,
+        toneMappingExposure: editorial ? 1 : 1.02,
         powerPreference: "high-performance",
       }}
+      onCreated={
+        editorial
+          ? ({ gl, scene }) => {
+              gl.setClearColor(0x000000, 0);
+              gl.outputColorSpace = THREE.LinearSRGBColorSpace;
+              scene.background = null;
+            }
+          : undefined
+      }
       fallback={
         <div className="canvas-fallback">
           <p>3D view unavailable.</p>

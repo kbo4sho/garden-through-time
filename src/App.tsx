@@ -735,13 +735,14 @@ export default function App() {
   };
 
   return (
-    <main className="experience-shell">
+    <main className={`experience-shell${visualStyle === "editorial" ? " is-editorial" : ""}`}>
       <a href="#year-timeline" className="skip-link">Skip to year timeline</a>
       <section className="scene-gallery" aria-label="Four synchronized views of one year-round garden composition">
         {gardenViews.map((view, index) => (
           <article
             key={view.id}
             className={index === 0 ? "scene-frame is-primary" : "scene-frame"}
+            data-view={view.id}
             aria-label={view.label}
           >
             <div className="scene-layer">
