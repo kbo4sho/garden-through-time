@@ -1041,7 +1041,7 @@ export default function App() {
         <>
           <button
             className="panel-scrim"
-            aria-label="Close share panel"
+            aria-label="Dismiss send panel"
             onClick={() => setShareOpen(false)}
           />
           <SharePanel
