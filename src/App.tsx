@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
+  Check,
   ChevronRight,
+  Copy,
   Droplets,
   ExternalLink,
   Info,
   Leaf,
+  Link2,
   MapPin,
   Pause,
   Play,
@@ -41,6 +44,13 @@ import {
   type PlantProfile,
 } from "./data/plants";
 import { dayPhase, dayToDate, plantState, seasonCopy } from "./lib/season";
+import {
+  composeShareHref,
+  parseShareSearch,
+  sanitizeFromName,
+  serializeShareSearch,
+  type ShareCatalog,
+} from "./lib/shareLink";
 
 const monthTicks = [
   { label: "Jan", day: 1 },
@@ -60,22 +70,15 @@ const monthTicks = [
 const previewParams = new URLSearchParams(window.location.search);
 const visualStyle: VisualStyle =
   previewParams.get("style") === "editorial" ? "editorial" : "photographic";
-const requestedDayParam = previewParams.get("day");
-const requestedDay = requestedDayParam?.trim()
-  ? Number(requestedDayParam)
-  : Number.NaN;
-const initialDay = Number.isFinite(requestedDay)
-  ? Math.min(365, Math.max(1, Math.round(requestedDay)))
-  : 172;
-const initialTemplate =
-  compositionTemplates.find((template) => template.id === previewParams.get("template")) ??
-  compositionTemplates.find((template) => template.id === defaultTemplateId) ??
-  compositionTemplates[0];
-const requestedPlant = previewParams.get("plant") as PlantId | null;
-const initialSelectedId =
-  requestedPlant && initialTemplate.planting.includes(requestedPlant)
-    ? requestedPlant
-    : initialTemplate.planting[1] ?? initialTemplate.planting[0];
+const shareCatalog: ShareCatalog = {
+  templates: compositionTemplates,
+  plantIds: new Set<string>(plants.map((plant) => plant.id)),
+  defaultTemplateId,
+};
+const initialShare = parseShareSearch(previewParams, shareCatalog);
+const preservePlantParam = previewParams.has("plant");
+const initialPlanting = initialShare.planting as PlantId[];
+const initialSelectedId = initialShare.selectedPlantId as PlantId;
 
 const seasonNarrative = (day: number, profiles: PlantProfile[]) => {
   if (day < 95 || day > 334)
@@ -555,6 +558,109 @@ function CompositionPanel({
   );
 }
 
+const copyShareHref = async (value: string) => {
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    const field = document.createElement("textarea");
+    field.value = value;
+    field.setAttribute("readonly", "");
+    field.style.position = "fixed";
+    field.style.left = "-9999px";
+    document.body.append(field);
+    field.select();
+    const ok = document.execCommand("copy");
+    field.remove();
+    return ok;
+  }
+};
+
+function SharePanel({
+  authorName,
+  day,
+  templateName,
+  clusterCount,
+  customized,
+  shareHref,
+  onAuthorNameChange,
+  onClose,
+}: {
+  authorName: string;
+  day: number;
+  templateName: string;
+  clusterCount: number;
+  customized: boolean;
+  shareHref: string;
+  onAuthorNameChange: (value: string) => void;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const date = dayToDate(day);
+
+  const copyLink = async () => {
+    const ok = await copyShareHref(shareHref);
+    if (!ok) return;
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2200);
+  };
+
+  return (
+    <aside className="share-panel" aria-label="Send this living bed">
+      <div className="conditions-heading">
+        <div>
+          <p>Send this living bed</p>
+          <h2>Copy a living-bed link</h2>
+        </div>
+        <button className="icon-button" onClick={onClose} aria-label="Close share panel">
+          <X size={18} />
+        </button>
+      </div>
+      <p className="share-intro">
+        Park the date on the timeline, put your name on the composition, and send
+        the link. The recipient lands on this bed and can move through the year
+        without opening the editor.
+      </p>
+      <label className="share-from-field" htmlFor="share-from-name">
+        <span>From</span>
+        <input
+          id="share-from-name"
+          name="from"
+          type="text"
+          autoComplete="name"
+          maxLength={80}
+          placeholder="Your name, studio, or nursery"
+          value={authorName}
+          onChange={(event) => onAuthorNameChange(event.currentTarget.value)}
+          onBlur={() => onAuthorNameChange(sanitizeFromName(authorName))}
+        />
+      </label>
+      <dl className="share-meta">
+        <div>
+          <dt>Parked date</dt>
+          <dd>{date.label}</dd>
+        </div>
+        <div>
+          <dt>Composition</dt>
+          <dd>
+            {customized ? `Customized from ${templateName}` : templateName}
+            <small>
+              {clusterCount} plants · recipient can scrub the year
+            </small>
+          </dd>
+        </div>
+      </dl>
+      <button className="copy-link-button" type="button" onClick={copyLink}>
+        {copied ? <Check size={16} /> : <Copy size={16} />}
+        {copied ? "Link copied" : "Copy link"}
+      </button>
+      <p className="share-url" aria-label="Shareable link">
+        {shareHref}
+      </p>
+    </aside>
+  );
+}
+
 function Timeline({
   day,
   playing,
@@ -638,13 +744,15 @@ function Timeline({
 
 export default function App() {
   const libraryAccess: LibraryAccess = "full-library";
-  const [day, setDay] = useState(initialDay);
+  const [day, setDay] = useState(initialShare.day);
   const [selectedId, setSelectedId] = useState<PlantId>(initialSelectedId);
-  const [planting, setPlanting] = useState<PlantId[]>(() => [...initialTemplate.planting]);
-  const [activeTemplateId, setActiveTemplateId] = useState(initialTemplate.id);
+  const [planting, setPlanting] = useState<PlantId[]>(() => [...initialPlanting]);
+  const [activeTemplateId, setActiveTemplateId] = useState(initialShare.templateId);
+  const [authorName, setAuthorName] = useState(initialShare.from);
   const [playing, setPlaying] = useState(false);
   const [conditionsOpen, setConditionsOpen] = useState(false);
   const [compositionOpen, setCompositionOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [nativeOnly, setNativeOnly] = useState(false);
   const reducedMotion = useMemo(
@@ -685,6 +793,21 @@ export default function App() {
   const templateCustomized =
     activeTemplate.planting.length !== planting.length ||
     activeTemplate.planting.some((plantId, index) => plantId !== planting[index]);
+  const shareSearch = serializeShareSearch(
+    {
+      day,
+      templateId: activeTemplateId,
+      planting,
+      from: authorName,
+      templatePlanting: activeTemplate.planting,
+    },
+    {
+      style: visualStyle,
+      plant: preservePlantParam ? selectedId : null,
+    },
+  );
+  const shareQuery = shareSearch.toString();
+  const shareHref = composeShareHref(window.location, shareQuery);
 
   useEffect(() => {
     if (!playing || reducedMotion) return;
@@ -695,10 +818,25 @@ export default function App() {
   }, [playing, reducedMotion]);
 
   useEffect(() => {
+    const next = `${window.location.pathname}${shareQuery ? `?${shareQuery}` : ""}${window.location.hash}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== current) {
+      window.history.replaceState(null, "", next);
+    }
+  }, [shareQuery]);
+
+  useEffect(() => {
+    document.title = authorName
+      ? `${authorName} · Year-Round Interest`
+      : "Year-Round Interest";
+  }, [authorName]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setConditionsOpen(false);
         setCompositionOpen(false);
+        setShareOpen(false);
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -735,7 +873,10 @@ export default function App() {
   };
 
   return (
-    <main className={`experience-shell${visualStyle === "editorial" ? " is-editorial" : ""}`}>
+    <main
+      className={`experience-shell${visualStyle === "editorial" ? " is-editorial" : ""}`}
+      data-sent-from={authorName || undefined}
+    >
       <a href="#year-timeline" className="skip-link">Skip to year timeline</a>
       <section className="scene-gallery" aria-label="Four synchronized views of one year-round garden composition">
         {gardenViews.map((view, index) => (
@@ -774,7 +915,11 @@ export default function App() {
           <span className="brand-mark"><span /></span>
           <span className="brand-copy">
             <strong>Year-Round<br />Interest</strong>
-            <small>See the whole year before you plant.</small>
+            <small>
+              {authorName
+                ? `A living bed from ${authorName}`
+                : "See the whole year before you plant."}
+            </small>
           </span>
         </a>
         <div className="topbar-actions">
@@ -783,15 +928,27 @@ export default function App() {
             className="composition-button"
             onClick={() => {
               setConditionsOpen(false);
+              setShareOpen(false);
               setCompositionOpen(true);
             }}
           >
             <Sprout size={16} /> Edit planting
           </button>
           <button
+            className="share-button"
+            onClick={() => {
+              setConditionsOpen(false);
+              setCompositionOpen(false);
+              setShareOpen(true);
+            }}
+          >
+            <Link2 size={16} /> Send bed
+          </button>
+          <button
             className="conditions-button"
             onClick={() => {
               setCompositionOpen(false);
+              setShareOpen(false);
               setConditionsOpen(true);
             }}
           >
@@ -801,7 +958,10 @@ export default function App() {
       </header>
 
       <section className="story-panel" aria-live="polite">
-        <p>{narrative.eyebrow}</p>
+        {authorName && (
+          <p className="sent-byline">Sent by {authorName}</p>
+        )}
+        <p className="story-eyebrow">{narrative.eyebrow}</p>
         <h1>{narrative.title}</h1>
         <div className="story-rule" />
         <p className="story-copy">{narrative.copy}</p>
@@ -874,6 +1034,25 @@ export default function App() {
             onPlantChange={changePlant}
             onRestoreTemplate={() => applyTemplate(activeTemplate)}
             onClose={() => setCompositionOpen(false)}
+          />
+        </>
+      )}
+      {shareOpen && (
+        <>
+          <button
+            className="panel-scrim"
+            aria-label="Close share panel"
+            onClick={() => setShareOpen(false)}
+          />
+          <SharePanel
+            authorName={authorName}
+            day={day}
+            templateName={activeTemplate.name}
+            clusterCount={planting.length}
+            customized={templateCustomized}
+            shareHref={shareHref}
+            onAuthorNameChange={setAuthorName}
+            onClose={() => setShareOpen(false)}
           />
         </>
       )}

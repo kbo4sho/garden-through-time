@@ -6,7 +6,9 @@ The core experience opens directly on a cinematic 3D composition of three compat
 
 ## Product promise
 
-Within two minutes, a homeowner should understand:
+See the whole year before you plant. The sellable artifact is a **shareable living-bed link**: a small authored cluster a landscape designer (first) or specialty nursery (second) can scrub through a year, swap within a tight palette, name, park on a date, and send. The client or shopper receives that named composition; they do not have to operate the editor.
+
+Within two minutes, a recipient of the sent bed should understand:
 
 - how the plants layer together in height, form, color, and texture;
 - when each plant contributes seasonal interest;
@@ -27,16 +29,18 @@ The composition is the product. The catalog, filters, and plant details support 
 An interactive proof is now implemented in React and WebGL. It includes:
 
 - a continuous, keyboard-accessible January 1–December 31 timeline;
-- independent foliage, flower, fruit, fall-color, and dormant states for three shrubs;
-- orbit and zoom controls around a layered 3D planting composition;
+- independent foliage, flower, fruit, fall-color, and dormant states for the sourced shrub palette;
+- four synchronized views of one living bed;
 - sourced bloom, foliage, size, light, moisture, and hardiness details;
-- a functional native-species filter with an explained, compatible substitution;
 - an editable three-, five-, or seven-plant cluster with species choices at each
-  authored position;
-- an explicit representative-year conditions model;
+  authored position, plus nine named templates;
+- a shareable composition URL that recreates cluster size, template, in-slot
+  swaps, parked day, and designer or nursery name — no accounts;
 - desktop, tablet, and simplified phone layouts.
 
-The implementation has reached the Gauntlet's external-validation boundary. The independent critic found the available visual, interaction, data, filter, and runtime evidence inspectable, then returned `UNJUDGEABLE` because the remaining composition-understanding P0 requires a five-person unbriefed homeowner study. It is an experience proof, not a planting prescription or live-weather forecast.
+The current sellable slice is the designer-pitch living-bed link. Do not treat a
+five-person unbriefed homeowner study as the next required build. It is an
+experience proof, not a planting prescription or live-weather forecast.
 
 ## Run locally
 

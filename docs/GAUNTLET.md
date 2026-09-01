@@ -6,6 +6,10 @@ Create a cinematic, botanically credible composition that lets a homeowner judge
 
 Within two minutes, the user should understand how the plants layer together, what carries the composition in each season, where its year-round interest becomes weak, and whether the plants suit their growing conditions.
 
+## Current product slice
+
+The sellable artifact is a shareable living-bed link: a designer or nursery parks a date, names the composition, and sends a URL. Do not treat the five-person unbriefed homeowner study as the next required build. The P0 comprehension probe below remains historical Gauntlet language; this slice does not reopen it.
+
 ## Reference bar
 
 - [Garden Sketchbook](https://www.gardensketchbook.com/) establishes the closest browser-based, true-to-scale seasonal garden baseline. This project must exceed it in continuous seasonal storytelling and visual finish.

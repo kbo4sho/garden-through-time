@@ -8,28 +8,32 @@ This is the **peak-season snapshot problem**: homeowners must make a year-round 
 
 ## Product promise
 
-**Year-Round Interest** helps a homeowner judge one living composition across an entire year before planting it.
+**Year-Round Interest** makes one living composition visible across an entire year before it is planted.
 
 Canonical tagline: **See the whole year before you plant.**
 
-The experience should reveal what carries the composition in each season, when it peaks, and where it goes quiet. Time is the medium; year-round interest is the decision.
+The sellable artifact is a **shareable living-bed link**: a small authored cluster (3, 5, or 7 plants) that a landscape designer or specialty nursery can scrub through a year, swap within the authored palette, name, park on a date, and send. The recipient opens the parked composition and can move through the year. They do not have to operate the editor.
 
 ## Primary audience
 
-Design-conscious homeowners and garden planners who want confidence that a group of shrubs will provide year-round interest before they buy and plant it. They care about beauty but do not necessarily know botanical terminology or professional landscape software.
+The first customer is a landscape designer closing a residential client. They set a 3/5/7 plant cluster, swap a couple of species, scrub to a weak month such as January so the client sees winter structure, then send a link. One person can say yes; the client does not have to operate the tool.
+
+The same product also serves a specialty nursery merchandising a year-round border. The shopper scrubs, leaves with a plant list in a later slice, and buys in the yard. Do not expand this brief into homeowner SaaS, a yard editor, or a catalog.
+
+Design-conscious homeowners remain the people who live with the bed. They are recipients of a sent composition, not the operator the product is built around.
 
 ## Desired outcome
 
-The user lands in a realistic planted scene, moves through the year, and can explain why the cluster works—or where its year-round interest becomes weak. The experience should create the feeling: “I can finally see the whole year, not just the nursery photo.”
+A designer or nursery parks the bed on a date, puts a name on it, and sends a URL that recreates the cluster, template, any in-slot swaps, parked day, and byline. Opening that URL should read as a sent composition: the garden is visible, the name is on it, the date is parked. The recipient can scrub the year and understand winter structure without opening the composition editor.
 
 ## Core experience
 
-1. Open directly on a composed grouping of three compatible flowering shrubs.
+1. Open directly on a composed grouping of compatible shrubs — from a share link, on the parked date, with the sender's name visible.
 2. Keep the garden visually dominant and make the date control immediately available.
 3. Allow continuous movement from January 1 through December 31.
 4. Update each plant according to its own regional phenology: buds, leaf emergence, bloom progression, fruit, fall color, leaf drop, and dormant form.
-5. Let the user identify or focus a plant without permanently covering the composition.
-6. Reveal decision-supporting information and compatible substitutions only when requested.
+5. Let the recipient identify plants without permanently covering the composition.
+6. Keep substitution and slot editing inside the authored positions, for the designer or nursery who is preparing the link.
 
 ## Initial data model
 
@@ -79,13 +83,19 @@ earn space.
 ## Composition editing proof
 
 The first editable-composition slice stays deliberately bounded to the deeply
-modeled, source-backed plant set. A homeowner can:
+modeled, source-backed plant set. A designer or nursery can:
 
 - compare focused, layered, and full cluster sizes of three, five, or seven plants;
 - choose the species at each authored planting position, including repeated plants
   that read as a mass;
 - keep the seasonal timeline, plant identities, and site compatibility visible as
-  the composition changes.
+  the composition changes;
+- put a name on the bed, park a date, and copy a URL that recreates the
+  composition for a client or shopper.
+
+The recipient of that link should not have to open the composition editor or
+operate a 3D viewport to understand the bed. Swapping stays inside the authored
+positions already in the proof.
 
 The positions are authored layouts, not a general-purpose bed editor. Editing the
 cluster does not imply exact purchasing quantities or spacing guidance; mature
@@ -108,8 +118,8 @@ for any later library addition.
 The next composition slice adds three curated recommendations for each authored
 cluster size: three, five, and seven plants. Recommendations are the primary
 decision-support product; the plant library supports them rather than becoming
-the product by itself. A homeowner can apply a recommendation and then replace
-individual positions without losing the rest of the composition.
+the product by itself. A designer or nursery can apply a recommendation and then
+replace individual positions without losing the rest of the composition.
 
 Templates and plants carry a stable access tier separate from future account or
 payment technology. The proposed product preview includes one complete template
@@ -121,14 +131,16 @@ caveats, or seasonal uncertainty behind access.
 
 ## Out of scope for the first proof
 
-- accounts and saved gardens;
-- purchasing or nursery inventory;
+- accounts, saved gardens, and login (a magic/share URL is the auth);
+- purchasing, checkout, or nursery inventory;
+- printable plant lists (a later nursery slice);
 - augmented-reality placement;
 - drawing or importing a full yard;
 - long-term plant growth by age;
 - live weather or phenology forecasting;
 - a comprehensive plant catalog;
-- sun and shadow simulation.
+- sun and shadow simulation;
+- making the homeowner the person who has to operate the 3D/editor.
 
 ## Open product decisions
 
@@ -136,3 +148,6 @@ caveats, or seasonal uncertainty behind access.
 - Rendering and seasonal-transition strategy.
 - Whether substitutions happen in-scene or in a separate comparison mode.
 - The evidence threshold for expanding beyond the initial region.
+
+Do not treat a five-person unbriefed homeowner study as the next required build.
+The current sellable slice is the designer-pitch shareable living-bed link.
