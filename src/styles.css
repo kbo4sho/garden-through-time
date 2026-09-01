@@ -182,11 +182,14 @@ input:focus-visible {
 .topbar-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
 .region-label,
 .conditions-button,
+.share-button,
 .composition-button {
   height: 36px;
   display: inline-flex;
@@ -207,6 +210,7 @@ input:focus-visible {
 }
 
 .conditions-button,
+.share-button,
 .composition-button {
   padding: 0 16px;
   border: 1px solid rgba(255, 255, 255, 0.26);
@@ -216,6 +220,7 @@ input:focus-visible {
 }
 
 .conditions-button:hover,
+.share-button:hover,
 .composition-button:hover {
   background: rgba(238, 241, 224, 0.18);
   transform: translateY(-1px);
@@ -240,7 +245,7 @@ input:focus-visible {
   pointer-events: none;
 }
 
-.story-panel > p:first-child,
+.story-eyebrow,
 .rail-kicker,
 .selected-role {
   margin: 0 0 12px;
@@ -1288,6 +1293,122 @@ input:focus-visible {
   to { opacity: 1; transform: translateX(0); }
 }
 
+.sent-byline {
+  margin: 0 0 10px;
+  color: rgba(245, 242, 233, 0.78);
+  font-family: "Iowan Old Style", Baskerville, "Times New Roman", serif;
+  font-size: 13px;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 10px rgba(18, 25, 19, 0.16);
+}
+
+.share-panel {
+  position: absolute;
+  z-index: 21;
+  top: 18px;
+  right: 18px;
+  width: min(360px, calc(100vw - 36px));
+  max-height: calc(100% - 36px);
+  padding: 26px;
+  color: #e8ece0;
+  background: rgba(25, 34, 27, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 19px;
+  box-shadow: -28px 0 80px rgba(7, 12, 8, 0.26);
+  backdrop-filter: blur(28px);
+  animation: panel-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  overflow-y: auto;
+}
+
+.share-intro {
+  margin: 22px 0 20px;
+  color: rgba(234, 239, 226, 0.58);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.share-from-field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.share-from-field span,
+.share-meta dt {
+  color: rgba(234, 239, 226, 0.45);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.share-from-field input {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  color: #f4f6ee;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 11px;
+}
+
+.share-from-field input::placeholder {
+  color: rgba(234, 239, 226, 0.38);
+}
+
+.share-meta {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 20px;
+}
+
+.share-meta > div {
+  display: grid;
+  gap: 4px;
+}
+
+.share-meta dd {
+  margin: 0;
+  color: #f4f6ee;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.share-meta small {
+  display: block;
+  margin-top: 3px;
+  color: rgba(234, 239, 226, 0.48);
+  font-size: 11px;
+}
+
+.copy-link-button {
+  width: 100%;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #263026;
+  background: rgba(239, 241, 218, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.copy-link-button:hover {
+  background: #f7f5df;
+}
+
+.share-url {
+  margin: 12px 0 0;
+  color: rgba(234, 239, 226, 0.42);
+  font-size: 10px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
 .conditions-heading {
   display: flex;
   align-items: flex-start;
@@ -1620,7 +1741,8 @@ input:focus-visible {
     display: none;
   }
 
-  .conditions-button {
+  .conditions-button,
+  .share-button {
     width: 38px;
     padding: 0;
     justify-content: center;
@@ -1977,6 +2099,7 @@ input:focus-visible {
 
 .region-label,
 .conditions-button,
+.share-button,
 .composition-button {
   color: rgba(36, 49, 39, 0.82);
   border-color: rgba(39, 52, 41, 0.2);
@@ -1985,6 +2108,7 @@ input:focus-visible {
 }
 
 .conditions-button:hover,
+.share-button:hover,
 .composition-button:hover {
   background: rgba(255, 253, 245, 0.8);
 }
@@ -2007,8 +2131,13 @@ input:focus-visible {
   width: min(320px, 26vw);
 }
 
-.story-panel > p:first-child {
+.story-eyebrow {
   color: rgba(42, 52, 43, 0.52);
+}
+
+.sent-byline {
+  color: #2d3b31;
+  text-shadow: none;
 }
 
 .story-panel h1 {
@@ -2228,7 +2357,7 @@ input:focus-visible {
     width: auto;
   }
 
-  .story-panel > p:first-child {
+  .story-eyebrow {
     color: rgba(39, 51, 41, 0.52);
   }
 

@@ -6,6 +6,8 @@ Build a browser experience that helps a homeowner judge a planting composition's
 
 The canonical product promise is: **See the whole year before you plant.** Time is the medium; year-round interest is the decision the product helps the homeowner make.
 
+The thing to sell is a **shareable living-bed link**: a small authored cluster you can scrub through a year, swap within a tight palette, and send. Designer first, specialty nursery second. The client or shopper receives a named composition parked on a date; they do not have to operate an editor.
+
 The composition is always the hero. Interface, filters, labels, and plant data must remain subordinate to it.
 
 ## Canonical context
@@ -30,7 +32,7 @@ If implementation choices conflict with those documents, preserve the product go
 
 ## Initial scope boundary
 
-The first proof contains one hero composition and a small compatible substitution set. Do not add accounts, commerce, nursery inventory, AR, a general-purpose yard editor, live weather prediction, plant-age simulation, or a comprehensive plant database unless the product brief is deliberately expanded.
+The first proof contains one hero composition and a small compatible substitution set. Do not add accounts, commerce, nursery inventory, AR, a general-purpose yard editor, live weather prediction, plant-age simulation, or a comprehensive plant database unless the product brief is deliberately expanded. A magic/share URL is the auth for this slice; do not add accounts to send a bed.
 
 ## Working expectations
 
@@ -40,3 +42,4 @@ The first proof contains one hero composition and a small compatible substitutio
 - Validate behavior on desktop and tablet and provide a meaningful phone fallback.
 - After major implementation waves, inspect the integrated experience rather than grading isolated components.
 - The material builder cannot issue the final Gauntlet verdict. Use a fresh critic context and the contract in `docs/GAUNTLET.md`.
+- Do not treat a five-person unbriefed homeowner study as the next required build. The current sellable slice is the designer-pitch shareable link.

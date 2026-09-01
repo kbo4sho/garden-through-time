@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "node scripts/build-sites.mjs",
     "preview": "vite preview",
-    "check": "tsc -b --pretty false"
+    "check": "tsc -b --pretty false && node scripts/check-share-link.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.4",
