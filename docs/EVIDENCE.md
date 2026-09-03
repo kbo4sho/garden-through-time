@@ -65,7 +65,9 @@ seasonal capture, and tracing the content/access boundary.
   in the unfurl path.
 - Phone first-paint keeps the parked day. Native range controls that fire a layout
   `input` at day 183 (2 July) are ignored unless the recipient is actually
-  scrubbing. A January pitch must not open as summer.
+  scrubbing. A January pitch must not open as summer. Chromium at 390×844 did
+  not reproduce the live July first-paint; the attached iOS-style capture remains
+  the observation, and the midpoint guard is the shipped defense.
 
 ## Thirteen-plant library expansion
 

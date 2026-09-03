@@ -151,8 +151,8 @@ assert(
 );
 assert(shouldCommitTimelineDay(15, 16, false), "Keyboard still steps one day");
 assert(
-  !shouldCommitTimelineDay(15, DEFAULT_SHARE_DAY, false),
-  "Unsolicited jumps to the default summer day are ignored",
+  shouldCommitTimelineDay(15, 20, false),
+  "A short unsolicited step is still a legal scrub",
 );
 
 const pagesOrigin = "https://kbo4sho.github.io/garden-through-time/";

@@ -54,11 +54,12 @@ export const shouldCommitTimelineDay = (
   if (!Number.isFinite(nextDay)) return false;
   const next = clampDayOfYear(nextDay);
   if (userAdjusting) return true;
-  if (next === currentDay) return false;
+  // Keep real one-pixel scrubs working even if pointer events are late;
+  // only drop the layout event that parks a January bed on 2 July.
   if (next === YEAR_RANGE_MIDPOINT && currentDay !== YEAR_RANGE_MIDPOINT) {
     return false;
   }
-  return Math.abs(next - currentDay) <= 1;
+  return next !== currentDay;
 };
 
 export const plantingMatchesTemplate = (
