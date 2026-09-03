@@ -69,14 +69,18 @@ seasonal capture, and tracing the content/access boundary.
   not reproduce the live July first-paint; the attached iOS-style capture remains
   the observation, and the midpoint guard is the shipped defense.
 - Phone recipient first-paint is a simplified seasonal view: one garden portrait
-  owns the 390×844 viewport, the byline and why-this-date copy stay readable,
-  hit targets are at least 44px, and tapping a plant opens its record. The
-  desktop four-up contact sheet is unchanged. While WebGL loads, the portrait
-  shows “Loading the year” until the first frame is painted — not empty gray
-  panels, and not the “3D view unavailable” fallback. All plant names on the
-  January pitch sit in a two-by-two grid on the first screen. Month labels are
-  spans, not empty buttons; all twelve are visible. Gallery captions sit on an
-  opaque backing at 12px or larger.
+  owns the 390×844 viewport. On a `from=` share link, the garden is the first
+  paint, Play and the year scrubber are the unmistakable interaction (date and
+  season live in that dock), and designer tools stay behind a single overflow
+  control. Editorial headline and plant-details chrome recede. Plant names stay
+  in a quiet two-by-two grid; tapping a plant still opens its record. Hit
+  targets remain at least 44px. The desktop four-up contact sheet is unchanged.
+  While WebGL loads, the portrait keeps a warm “Loading the year” overlay
+  until two complete garden frames have drawn — not a black canvas, empty
+  gray panels, or the “3D view unavailable” fallback. The plant record wraps
+  on a 390px sheet with no horizontal scroll, and Plant details keeps a 44px
+  row above the year dock. Month labels are spans, not empty buttons; all
+  twelve are visible.
 
 ## Thirteen-plant library expansion
 

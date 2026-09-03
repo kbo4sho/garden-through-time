@@ -1448,15 +1448,29 @@ function Scene({
 }
 
 function SceneReady({ onReady }: { onReady?: () => void }) {
-  const called = useRef(false);
+  const completeFrames = useRef(0);
+  const signaled = useRef(false);
   const invalidate = useThree((state) => state.invalidate);
   useLayoutEffect(() => {
     invalidate();
   }, [invalidate]);
-  useFrame(() => {
-    if (called.current || !onReady) return;
-    called.current = true;
-    requestAnimationFrame(() => onReady());
+  useFrame((state) => {
+    if (signaled.current || !onReady) return;
+    // The first demand-frame after shader compile can present black.
+    // Wait for two frames that actually drew garden geometry.
+    if (state.gl.info.render.triangles < 1) {
+      invalidate();
+      return;
+    }
+    completeFrames.current += 1;
+    if (completeFrames.current < 2) {
+      invalidate();
+      return;
+    }
+    signaled.current = true;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => onReady());
+    });
   });
   return <group visible={false} />;
 }
@@ -1523,15 +1537,16 @@ export default function GardenScene(props: GardenSceneProps) {
           toneMappingExposure: editorial ? 1 : 1.02,
           powerPreference: "default",
         }}
-        onCreated={
-          editorial
-            ? ({ gl, scene }) => {
-                gl.setClearColor(0x000000, 0);
-                gl.outputColorSpace = THREE.LinearSRGBColorSpace;
-                scene.background = null;
-              }
-            : undefined
-        }
+        onCreated={({ gl, scene }) => {
+          if (editorial) {
+            gl.setClearColor(0x000000, 0);
+            gl.outputColorSpace = THREE.LinearSRGBColorSpace;
+            scene.background = null;
+            return;
+          }
+          // Warm clear so a late first present is paper, not black.
+          gl.setClearColor("#d8d4ca", 1);
+        }}
         fallback={canvasFallback}
       >
         <ContextLife onLost={onLost} onRestored={onRestored} />

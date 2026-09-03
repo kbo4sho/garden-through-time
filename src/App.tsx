@@ -10,6 +10,7 @@ import {
   Leaf,
   Link2,
   MapPin,
+  MoreHorizontal,
   Pause,
   Play,
   RotateCcw,
@@ -854,6 +855,7 @@ export default function App() {
   const [compositionOpen, setCompositionOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const [nativeOnly, setNativeOnly] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const reducedMotion = useMemo(
@@ -910,6 +912,7 @@ export default function App() {
   );
   const shareQuery = shareSearch.toString();
   const shareHref = composeShareHref(window.location, shareQuery);
+  const isShareRecipient = Boolean(authorName);
 
   useEffect(() => {
     if (!playing || reducedMotion) return;
@@ -948,6 +951,7 @@ export default function App() {
         setCompositionOpen(false);
         setShareOpen(false);
         setDetailsOpen(false);
+        setToolsOpen(false);
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -961,11 +965,24 @@ export default function App() {
       setCompositionOpen(false);
       setShareOpen(false);
       setDetailsOpen(true);
+      setToolsOpen(false);
     }
   };
 
   const closeDetails = () => setDetailsOpen(false);
   const markSceneReady = useCallback(() => setSceneReady(true), []);
+  const detailWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!detailsOpen) return;
+    const root = detailWrapRef.current;
+    if (!root) return;
+    root.scrollLeft = 0;
+    root.scrollTop = 0;
+    root.querySelectorAll<HTMLElement>("*").forEach((node) => {
+      node.scrollLeft = 0;
+    });
+  }, [detailsOpen, selectedPlant.id]);
 
   useEffect(() => {
     if (!activePlants.some((plant) => plant.id === selectedId)) {
@@ -998,7 +1015,7 @@ export default function App() {
 
   return (
     <main
-      className={`experience-shell${visualStyle === "editorial" ? " is-editorial" : ""}${phoneLayout ? " is-phone" : ""}${detailsOpen ? " is-details-open" : ""}`}
+      className={`experience-shell${visualStyle === "editorial" ? " is-editorial" : ""}${phoneLayout ? " is-phone" : ""}${isShareRecipient ? " is-share" : ""}${toolsOpen ? " is-tools-open" : ""}${detailsOpen ? " is-details-open" : ""}`}
       data-sent-from={authorName || undefined}
       data-layout={phoneLayout ? "phone" : "desktop"}
     >
@@ -1019,7 +1036,7 @@ export default function App() {
             data-view={view.id}
             aria-label={view.label}
           >
-            {phoneLayout && (
+            {phoneLayout && !sceneReady && (
               <div className="scene-pending" role="status" aria-live="polite">
                 <span className="scene-pending-orb" aria-hidden="true" />
                 <p>Loading the year</p>
@@ -1054,21 +1071,38 @@ export default function App() {
         <a className="brand" href="#top" aria-label="Year-Round Interest home">
           <span className="brand-mark"><span /></span>
           <span className="brand-copy">
-            <strong>Year-Round<br />Interest</strong>
+            <strong>
+              Year-Round
+              {phoneLayout && isShareRecipient ? " " : <br />}
+              Interest
+            </strong>
             <small>
               {authorName
-                ? `A living bed from ${authorName}`
+                ? `Sent by ${authorName}`
                 : "See the whole year before you plant."}
             </small>
           </span>
         </a>
-        <div className="topbar-actions">
+        {phoneLayout && isShareRecipient && (
+          <button
+            className="tools-toggle"
+            type="button"
+            aria-expanded={toolsOpen}
+            aria-controls="designer-tools"
+            aria-label={toolsOpen ? "Hide designer tools" : "More actions"}
+            onClick={() => setToolsOpen((open) => !open)}
+          >
+            {toolsOpen ? <X size={18} /> : <MoreHorizontal size={18} />}
+          </button>
+        )}
+        <div className="topbar-actions" id="designer-tools">
           <span className="region-label"><MapPin size={14} />Chicago · Zone 6a</span>
           <button
             className="composition-button"
             onClick={() => {
               setConditionsOpen(false);
               setShareOpen(false);
+              setToolsOpen(false);
               setCompositionOpen(true);
             }}
           >
@@ -1079,6 +1113,7 @@ export default function App() {
             onClick={() => {
               setConditionsOpen(false);
               setCompositionOpen(false);
+              setToolsOpen(false);
               setShareOpen(true);
             }}
           >
@@ -1089,6 +1124,7 @@ export default function App() {
             onClick={() => {
               setCompositionOpen(false);
               setShareOpen(false);
+              setToolsOpen(false);
               setConditionsOpen(true);
             }}
           >
@@ -1096,6 +1132,13 @@ export default function App() {
           </button>
         </div>
       </header>
+      {toolsOpen && phoneLayout && isShareRecipient && (
+        <button
+          className="tools-scrim"
+          aria-label="Hide designer tools"
+          onClick={() => setToolsOpen(false)}
+        />
+      )}
 
       <section className="story-panel" aria-live="polite">
         {authorName && (
@@ -1130,7 +1173,11 @@ export default function App() {
           onClick={closeDetails}
         />
       )}
-      <div id="selected-plant-details" className={detailsOpen ? "detail-wrap is-open" : "detail-wrap"}>
+      <div
+        id="selected-plant-details"
+        ref={detailWrapRef}
+        className={detailsOpen ? "detail-wrap is-open" : "detail-wrap"}
+      >
         <SelectedPlant
           plant={selectedPlant}
           day={day}

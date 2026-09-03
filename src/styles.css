@@ -583,6 +583,11 @@ input:focus-visible {
   transition: transform 170ms ease, background 170ms ease;
 }
 
+.tools-toggle,
+.tools-scrim {
+  display: none;
+}
+
 .play-button:hover {
   background: #fffdea;
   transform: scale(1.045);
@@ -1488,8 +1493,8 @@ input:focus-visible {
 .condition-score p,
 .conditions-note {
   margin: 0;
-  color: rgba(234, 239, 226, 0.48);
-  font-size: 10px;
+  color: rgba(234, 239, 226, 0.78);
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -1637,8 +1642,8 @@ input:focus-visible {
 
 .swap-explanation {
   margin: 10px 0;
-  color: rgba(234, 239, 226, 0.62);
-  font-size: 9px;
+  color: rgba(234, 239, 226, 0.78);
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -1707,13 +1712,18 @@ input:focus-visible {
 }
 
 .scene-frame.is-ready .scene-pending,
-.scene-frame:has(.canvas-fallback) .scene-pending {
+.scene-frame.is-unavailable .scene-pending {
   opacity: 0;
   visibility: hidden;
 }
 
-.scene-frame:not(.is-ready):not(:has(.canvas-fallback)) .garden-canvas {
+.scene-frame:not(.is-ready) .garden-canvas {
   opacity: 0;
+}
+
+.scene-frame:has(.scene-layer > .canvas-fallback) .scene-pending {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .scene-pending-orb {
@@ -1976,6 +1986,7 @@ input:focus-visible {
      frame. That stall shows up as GPU ReadPixels on the Play hot path
      and can lose the context on a phone. */
   filter: none;
+  background: #dedbd2;
 }
 
 .experience-shell.is-editorial .scene-frame {
@@ -2352,8 +2363,11 @@ input:focus-visible {
 @media (max-width: 760px) {
   .experience-shell {
     --page-margin: 12px;
-    --phone-timeline: 140px;
+    --phone-timeline: 160px;
+    --phone-timeline-inset: 8px;
     --phone-rail: 104px;
+    --phone-info: 44px;
+    --phone-stack-gap: 12px;
     min-height: 100dvh;
     height: 100dvh;
     overflow: hidden;
@@ -2403,7 +2417,7 @@ input:focus-visible {
   .scene-gallery {
     top: 120px;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + var(--phone-rail) + 54px);
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline) + var(--phone-rail) + var(--phone-info) + var(--phone-stack-gap) * 2);
     left: var(--page-margin);
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
@@ -2506,7 +2520,7 @@ input:focus-visible {
     position: absolute;
     top: auto;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + 54px);
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline) + var(--phone-info) + var(--phone-stack-gap) * 2);
     left: var(--page-margin);
     height: var(--phone-rail);
   }
@@ -2601,12 +2615,12 @@ input:focus-visible {
     display: inline-flex;
     top: auto;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + 8px);
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline) + var(--phone-stack-gap));
     left: var(--page-margin);
     width: auto;
     min-width: 44px;
     min-height: 44px;
-    height: 44px;
+    height: var(--phone-info);
     padding: 0 12px;
     justify-content: center;
     color: rgba(39, 52, 41, 0.78);
@@ -2627,12 +2641,54 @@ input:focus-visible {
     bottom: 12px;
     left: var(--page-margin);
     width: auto;
+    max-width: calc(100vw - var(--page-margin) * 2);
     max-height: min(72dvh, 620px);
+    overflow-x: hidden;
     z-index: 22;
   }
 
   .selected-plant {
+    max-width: 100%;
     max-height: min(72dvh, 620px);
+    overflow-x: hidden;
+    overflow-wrap: anywhere;
+  }
+
+  .selected-plant-heading {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .selected-plant-heading > div {
+    min-width: 0;
+    flex: 1 1 160px;
+  }
+
+  .selected-plant-tools {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+
+  .phase-pill {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .plant-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plant-facts span:nth-child(n + 5) {
+    grid-column: auto;
+  }
+
+  .timing-evidence dl > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .timing-evidence dd {
+    text-align: left;
   }
 
   .selected-plant h2 {
@@ -2724,6 +2780,271 @@ input:focus-visible {
 
   .month-ticks span.is-current {
     color: #f6f3e7;
+  }
+
+  /* Recipient share: garden first, play/scrub unmistakable, designer chrome tucked. */
+  .experience-shell.is-share {
+    --page-margin: 10px;
+    --phone-timeline: 176px;
+    --phone-timeline-inset: 10px;
+    --phone-rail: 94px;
+  }
+
+  .experience-shell.is-share .scene-gallery {
+    top: 0;
+    right: 0;
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline));
+    left: 0;
+  }
+
+  .experience-shell.is-share .scene-frame,
+  .experience-shell.is-share .scene-frame.is-primary {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .experience-shell.is-share .scene-frame::after {
+    display: none;
+  }
+
+  .experience-shell.is-share .scene-frame.is-primary .atmosphere {
+    background:
+      linear-gradient(180deg, rgba(231, 226, 213, 0.42) 0%, transparent 18%),
+      linear-gradient(0deg, rgba(80, 71, 57, 0.1), transparent 16%);
+  }
+
+  .experience-shell.is-share .photo-stamp,
+  .experience-shell.is-share .scene-frame:not(.is-primary) .photo-stamp {
+    display: none;
+  }
+
+  .experience-shell.is-share .topbar {
+    z-index: 13;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    pointer-events: none;
+  }
+
+  .experience-shell.is-share .brand,
+  .experience-shell.is-share .tools-toggle {
+    pointer-events: auto;
+  }
+
+  .experience-shell.is-share .brand {
+    min-height: 44px;
+    max-width: calc(100% - 60px);
+    padding: 4px 12px 4px 4px;
+    background: rgba(247, 244, 234, 0.82);
+    border: 1px solid rgba(39, 52, 41, 0.1);
+    border-radius: 999px;
+    backdrop-filter: blur(16px);
+  }
+
+  .experience-shell.is-share .brand-copy {
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .experience-shell.is-share .brand-copy strong {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .experience-shell.is-share .brand-copy small {
+    display: block;
+    overflow: hidden;
+    color: rgba(39, 52, 41, 0.58);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .experience-shell.is-share .tools-toggle {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    color: rgba(38, 53, 42, 0.72);
+    background: rgba(247, 244, 234, 0.82);
+    border: 1px solid rgba(39, 52, 41, 0.1);
+    border-radius: 50%;
+    backdrop-filter: blur(16px);
+    cursor: pointer;
+  }
+
+  .experience-shell.is-share .topbar-actions {
+    position: absolute;
+    top: 58px;
+    right: 12px;
+    left: auto;
+    z-index: 16;
+    display: none;
+    width: min(208px, calc(100vw - 24px));
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 8px;
+    background: rgba(247, 244, 234, 0.96);
+    border: 1px solid rgba(39, 52, 41, 0.12);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(26, 35, 28, 0.16);
+    pointer-events: auto;
+  }
+
+  .experience-shell.is-share.is-tools-open .topbar-actions {
+    display: grid;
+  }
+
+  .experience-shell.is-share.is-tools-open .tools-scrim {
+    display: block;
+    position: absolute;
+    z-index: 12;
+    inset: 0;
+    padding: 0;
+    background: rgba(18, 24, 19, 0.16);
+    border: 0;
+  }
+
+  .experience-shell.is-share .story-panel {
+    display: none;
+  }
+
+  .experience-shell.is-share .info-toggle {
+    display: none;
+  }
+
+  .experience-shell.is-share .plant-rail {
+    z-index: 8;
+    right: 12px;
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline) + 12px);
+    left: 12px;
+    height: var(--phone-rail);
+  }
+
+  .experience-shell.is-share .plant-rail::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: -18px -8px -8px;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(231, 226, 213, 0.78) 42%);
+  }
+
+  .experience-shell.is-share .plant-row {
+    background: rgba(247, 244, 234, 0.72);
+    border-color: rgba(39, 52, 41, 0.1);
+  }
+
+  .experience-shell.is-share .plant-name {
+    font-size: 12px;
+  }
+
+  .experience-shell.is-share .plant-phase {
+    color: rgba(39, 52, 41, 0.52);
+    font-size: 10px;
+  }
+
+  .experience-shell.is-share #year-timeline {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    z-index: 11;
+  }
+
+  .experience-shell.is-share .timeline-shell {
+    min-height: var(--phone-timeline);
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr);
+    grid-template-rows: 60px auto;
+    grid-template-areas:
+      "play date"
+      "control control";
+    gap: 4px 14px;
+    padding: 12px 14px 10px;
+    border-radius: 20px;
+  }
+
+  .experience-shell.is-share .play-button {
+    grid-area: play;
+    grid-column: 1;
+    grid-row: 1;
+    width: 60px;
+    height: 60px;
+    box-shadow: 0 10px 28px rgba(8, 14, 10, 0.28);
+  }
+
+  .experience-shell.is-share .play-button svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .experience-shell.is-share .timeline-date {
+    grid-area: date;
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+  }
+
+  .experience-shell.is-share .timeline-date small {
+    display: none;
+  }
+
+  .experience-shell.is-share .date-day {
+    min-width: 44px;
+    font-size: 40px;
+  }
+
+  .experience-shell.is-share .timeline-date strong {
+    font-size: 18px;
+  }
+
+  .experience-shell.is-share .timeline-control {
+    grid-area: control;
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .experience-shell.is-share .timeline-context {
+    margin: 0 0 4px 2px;
+  }
+
+  .experience-shell.is-share .timeline-context strong {
+    font-size: 14px;
+  }
+
+  .experience-shell.is-share .range-wrap input[type="range"] {
+    height: 40px;
+  }
+
+  .experience-shell.is-share .range-wrap input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+  }
+
+  .experience-shell.is-share .range-wrap input[type="range"]::-moz-range-track,
+  .experience-shell.is-share .range-wrap input[type="range"]::-moz-range-progress {
+    height: 4px;
+  }
+
+  .experience-shell.is-share .range-wrap input[type="range"]::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+    margin-top: -12px;
+  }
+
+  .experience-shell.is-share .range-wrap input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+
+  .experience-shell.is-share .month-ticks span {
+    min-height: 16px;
+    font-size: 11px;
   }
 }
 
