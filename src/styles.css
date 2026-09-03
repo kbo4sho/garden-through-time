@@ -1972,7 +1972,10 @@ input:focus-visible {
 }
 
 .garden-canvas {
-  filter: contrast(1.018) saturate(0.96);
+  /* CSS filters on a WebGL canvas force a compositor ReadPixels every
+     frame. That stall shows up as GPU ReadPixels on the Play hot path
+     and can lose the context on a phone. */
+  filter: none;
 }
 
 .experience-shell.is-editorial .scene-frame {

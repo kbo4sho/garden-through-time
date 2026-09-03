@@ -32,6 +32,9 @@ const {
   shouldWriteShareHistory,
 } = await import(toDataUrl(shareSource));
 
+const viewportSource = await compile("../src/lib/viewport.ts");
+const { readPhoneLayout, viewsForViewport } = await import(toDataUrl(viewportSource));
+
 const catalog = {
   templates: compositionTemplates,
   plantIds: new Set(plants.map((plant) => plant.id)),
@@ -175,6 +178,22 @@ assert(
   "Unthrottled play would exceed Safari's 100 replaceState calls per 30s",
 );
 
+const fourViews = ["portrait", "front-elevation", "planting-plan", "seasonal-detail"];
+equal(viewsForViewport(fourViews, true), ["portrait"], "Phone Play mounts one garden view");
+equal(viewsForViewport(fourViews, false), fourViews, "Desktop keeps the four-view sheet");
+assert(
+  readPhoneLayout(undefined, 390) === true,
+  "Unknown media at 390px must not mount four canvases",
+);
+assert(
+  readPhoneLayout(false, 390) === true,
+  "A late matchMedia miss at 390px still stays on one canvas",
+);
+assert(
+  readPhoneLayout(false, 1440) === false,
+  "Desktop width still gets the four-view sheet",
+);
+
 const pagesOrigin = "https://kbo4sho.github.io/garden-through-time/";
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 assert(!html.includes("chatgpt.site"), "Unfurl tags stay off chatgpt.site");
@@ -229,6 +248,6 @@ if (errors.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, playback does not write history on every tick, and unfurl tags point at a Pages OG card.",
+    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, playback does not write history on every tick, phone Play mounts one canvas, and unfurl tags point at a Pages OG card.",
   );
 }

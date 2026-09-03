@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import GardenScene, {
-  gardenViews,
+  viewsForViewport,
   type GardenViewId,
   type VisualStyle,
 } from "./components/GardenScene";
@@ -54,6 +54,7 @@ import {
   shouldWriteShareHistory,
   type ShareCatalog,
 } from "./lib/shareLink";
+import { PHONE_LAYOUT_QUERY, readPhoneLayout } from "./lib/viewport";
 
 const monthTicks = [
   { label: "Jan", day: 1 },
@@ -821,19 +822,21 @@ function Timeline({
   );
 }
 
-const PHONE_LAYOUT_QUERY = "(max-width: 760px)";
+const readWindowPhoneLayout = () =>
+  readPhoneLayout(window.matchMedia?.(PHONE_LAYOUT_QUERY)?.matches, window.innerWidth);
 
 function usePhoneLayout() {
-  const [phoneLayout, setPhoneLayout] = useState(
-    () => window.matchMedia?.(PHONE_LAYOUT_QUERY).matches ?? false,
-  );
+  const [phoneLayout, setPhoneLayout] = useState(readWindowPhoneLayout);
   useEffect(() => {
     const media = window.matchMedia?.(PHONE_LAYOUT_QUERY);
-    if (!media) return;
-    const onChange = () => setPhoneLayout(media.matches);
+    const onChange = () => setPhoneLayout(readWindowPhoneLayout());
     onChange();
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
+    media?.addEventListener("change", onChange);
+    window.addEventListener("resize", onChange);
+    return () => {
+      media?.removeEventListener("change", onChange);
+      window.removeEventListener("resize", onChange);
+    };
   }, []);
   return phoneLayout;
 }
@@ -857,7 +860,7 @@ export default function App() {
     () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
     [],
   );
-  const visibleViews = phoneLayout ? gardenViews.slice(0, 1) : gardenViews;
+  const visibleViews = viewsForViewport(phoneLayout);
   const availableProfiles = useMemo(
     () => compositionPlants(nativeOnly, libraryAccess),
     [libraryAccess, nativeOnly],
@@ -1002,6 +1005,7 @@ export default function App() {
       <a href="#year-timeline" className="skip-link">Skip to year timeline</a>
       <section
         className="scene-gallery"
+        data-scene-count={visibleViews.length}
         aria-label={
           phoneLayout
             ? "Garden portrait of one year-round composition"
