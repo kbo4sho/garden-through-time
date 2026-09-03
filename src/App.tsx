@@ -49,7 +49,9 @@ import {
   parseShareSearch,
   sanitizeFromName,
   serializeShareSearch,
+  SHARE_HISTORY_SYNC_MS,
   shouldCommitTimelineDay,
+  shouldWriteShareHistory,
   type ShareCatalog,
 } from "./lib/shareLink";
 
@@ -915,12 +917,20 @@ export default function App() {
   }, [playing, reducedMotion]);
 
   useEffect(() => {
-    const next = `${window.location.pathname}${shareQuery ? `?${shareQuery}` : ""}${window.location.hash}`;
-    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    if (next !== current) {
-      window.history.replaceState(null, "", next);
-    }
-  }, [shareQuery]);
+    if (!shouldWriteShareHistory(playing)) return;
+    const writeShareUrl = () => {
+      const next = `${window.location.pathname}${shareQuery ? `?${shareQuery}` : ""}${window.location.hash}`;
+      const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (next === current) return;
+      try {
+        window.history.replaceState(null, "", next);
+      } catch {
+        // Safari and Chrome throttle History API writes. Do not take down playback.
+      }
+    };
+    const timer = window.setTimeout(writeShareUrl, SHARE_HISTORY_SYNC_MS);
+    return () => window.clearTimeout(timer);
+  }, [playing, shareQuery]);
 
   useEffect(() => {
     document.title = authorName

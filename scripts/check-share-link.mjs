@@ -27,7 +27,9 @@ const {
   YEAR_RANGE_MIDPOINT,
   parseShareSearch,
   serializeShareSearch,
+  SHARE_HISTORY_SYNC_MS,
   shouldCommitTimelineDay,
+  shouldWriteShareHistory,
 } = await import(toDataUrl(shareSource));
 
 const catalog = {
@@ -155,6 +157,24 @@ assert(
   "A short unsolicited step is still a legal scrub",
 );
 
+assert(
+  shouldWriteShareHistory(true) === false,
+  "Playback must not write history on every day tick",
+);
+assert(
+  shouldWriteShareHistory(false) === true,
+  "Pause and scrub still park the date in the URL",
+);
+assert(
+  SHARE_HISTORY_SYNC_MS >= 310,
+  "Share URL sync stays slower than Safari's History API floor",
+);
+const playTicksInThirtySeconds = Math.floor(30_000 / 42);
+assert(
+  playTicksInThirtySeconds > 100,
+  "Unthrottled play would exceed Safari's 100 replaceState calls per 30s",
+);
+
 const pagesOrigin = "https://kbo4sho.github.io/garden-through-time/";
 const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
 assert(!html.includes("chatgpt.site"), "Unfurl tags stay off chatgpt.site");
@@ -209,6 +229,6 @@ if (errors.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, and unfurl tags point at a Pages OG card.",
+    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, playback does not write history on every tick, and unfurl tags point at a Pages OG card.",
   );
 }
