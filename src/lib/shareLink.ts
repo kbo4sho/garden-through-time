@@ -1,4 +1,7 @@
 export const DEFAULT_SHARE_DAY = 172;
+export const YEAR_DAY_MIN = 1;
+export const YEAR_DAY_MAX = 365;
+export const YEAR_RANGE_MIDPOINT = Math.round((YEAR_DAY_MIN + YEAR_DAY_MAX) / 2);
 export const MAX_FROM_NAME_LENGTH = 80;
 export const CLUSTER_SIZES = [3, 5, 7] as const;
 
@@ -38,7 +41,26 @@ export const sanitizeFromName = (value: string) =>
     .slice(0, MAX_FROM_NAME_LENGTH);
 
 export const clampDayOfYear = (value: number) =>
-  Math.min(365, Math.max(1, Math.round(value)));
+  Math.min(YEAR_DAY_MAX, Math.max(YEAR_DAY_MIN, Math.round(value)));
+
+// Native range inputs on some phone browsers fire a layout `input` at the
+// track midpoint (day 183 / 2 July) before anyone touches the slider. A
+// designer-pitched January bed must not accept that as a recipient scrub.
+export const shouldCommitTimelineDay = (
+  currentDay: number,
+  nextDay: number,
+  userAdjusting: boolean,
+) => {
+  if (!Number.isFinite(nextDay)) return false;
+  const next = clampDayOfYear(nextDay);
+  if (userAdjusting) return true;
+  // Keep real one-pixel scrubs working even if pointer events are late;
+  // only drop the layout event that parks a January bed on 2 July.
+  if (next === YEAR_RANGE_MIDPOINT && currentDay !== YEAR_RANGE_MIDPOINT) {
+    return false;
+  }
+  return next !== currentDay;
+};
 
 export const plantingMatchesTemplate = (
   planting: readonly string[],

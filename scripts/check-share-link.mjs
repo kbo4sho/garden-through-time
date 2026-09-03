@@ -1,4 +1,5 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 const compile = async (relativePath) => {
@@ -23,8 +24,10 @@ const { compositionTemplates, defaultTemplateId, plants } = await import(
 );
 const {
   DEFAULT_SHARE_DAY,
+  YEAR_RANGE_MIDPOINT,
   parseShareSearch,
   serializeShareSearch,
+  shouldCommitTimelineDay,
 } = await import(toDataUrl(shareSource));
 
 const catalog = {
@@ -123,6 +126,68 @@ equal(defaultLoad.day, DEFAULT_SHARE_DAY, "Default day stays midsummer");
 equal(defaultLoad.templateId, defaultTemplateId, "Default template is protected");
 assert(!defaultLoad.customized, "Default composition is not customized");
 
+const designerPitch = parseShareSearch(
+  "?day=15&template=layered-seasons-5&plants=fothergilla,smooth-hydrangea,dogwood,fothergilla,boxwood&from=Test Landscape Studio",
+  catalog,
+);
+equal(designerPitch.day, 15, "Designer January pitch parks day 15");
+equal(designerPitch.templateId, "layered-seasons-5", "Designer January pitch keeps the five-plant template");
+equal(
+  designerPitch.planting,
+  ["fothergilla", "smooth-hydrangea", "dogwood", "fothergilla", "boxwood"],
+  "Designer January pitch keeps in-slot swaps",
+);
+equal(designerPitch.from, "Test Landscape Studio", "Designer January pitch keeps the byline");
+assert(designerPitch.customized, "Annabelle-for-oakleaf swap stays customized");
+
+equal(YEAR_RANGE_MIDPOINT, 183, "Native range midpoint is 2 July");
+assert(
+  !shouldCommitTimelineDay(15, YEAR_RANGE_MIDPOINT, false),
+  "Layout midpoint from January is not a recipient scrub",
+);
+assert(
+  shouldCommitTimelineDay(15, YEAR_RANGE_MIDPOINT, true),
+  "A real pointer scrub may pass through July",
+);
+assert(shouldCommitTimelineDay(15, 16, false), "Keyboard still steps one day");
+assert(
+  shouldCommitTimelineDay(15, 20, false),
+  "A short unsolicited step is still a legal scrub",
+);
+
+const pagesOrigin = "https://kbo4sho.github.io/garden-through-time/";
+const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+assert(!html.includes("chatgpt.site"), "Unfurl tags stay off chatgpt.site");
+assert(html.includes("<noscript>"), "Crawlers get a noscript living-bed fallback");
+
+const metaContent = (key) => {
+  const tag = html.match(
+    new RegExp(`<meta\\s[^>]*(?:property|name)="${key}"[^>]*>`, "si"),
+  );
+  return tag?.[0].match(/content="([^"]+)"/)?.[1] ?? null;
+};
+
+equal(metaContent("og:url"), pagesOrigin, "og:url is the Pages origin");
+equal(
+  metaContent("og:image"),
+  `${pagesOrigin}og.jpg`,
+  "og:image is a Pages JPEG",
+);
+equal(
+  metaContent("twitter:image"),
+  `${pagesOrigin}og.jpg`,
+  "twitter:image matches og:image",
+);
+equal(metaContent("twitter:card"), "summary_large_image", "twitter:card is a large image");
+
+const ogImage = metaContent("og:image");
+assert(ogImage?.startsWith(pagesOrigin), "OG image is on the Pages origin");
+const ogFileName = ogImage.slice(pagesOrigin.length);
+const ogPath = fileURLToPath(new URL(`../public/${ogFileName}`, import.meta.url));
+const ogStat = await stat(ogPath);
+assert(ogStat.size > 10_000, "OG image is a real card, not an empty file");
+assert(ogStat.size < 1_000_000, "OG image stays under 1MB for iMessage and Slack");
+
 const invalidPlants = parseShareSearch(
   "?template=balanced-year-3&plants=not-a-plant,also-fake",
   catalog,
@@ -144,6 +209,6 @@ if (errors.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Share link check passed: customized January compositions round-trip, and existing ?day=&template= preview links still parse.",
+    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, and unfurl tags point at a Pages OG card.",
   );
 }

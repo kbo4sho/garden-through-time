@@ -59,6 +59,15 @@ seasonal capture, and tracing the content/access boundary.
 - Conditions disclose the representative-year assumption and the composition's Chicago / Zone 6a fit.
 - The Native species filter replaces Mount Airy fothergilla with dwarf fothergilla throughout the scene, plant rail, and detail card. It explains the retained design role and compatibility, updates scale and identity, exposes all six source fields, and toggles back without stale state.
 - Desktop and 390×844 phone captures retain the scene, plant identity, and year control.
+- A pasted living-bed URL must unfurl from the GitHub Pages origin. `og:image` /
+  `twitter:image` point at `https://kbo4sho.github.io/garden-through-time/og.jpg`
+  (1200×630, well under 1MB). Crawlers do not run the SPA; `chatgpt.site` is not
+  in the unfurl path.
+- Phone first-paint keeps the parked day. Native range controls that fire a layout
+  `input` at day 183 (2 July) are ignored unless the recipient is actually
+  scrubbing. A January pitch must not open as summer. Chromium at 390×844 did
+  not reproduce the live July first-paint; the attached iOS-style capture remains
+  the observation, and the midpoint guard is the shipped defense.
 
 ## Thirteen-plant library expansion
 
