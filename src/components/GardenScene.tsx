@@ -1,4 +1,4 @@
-import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   Billboard,
@@ -16,6 +16,7 @@ import type {
   PlantProfile,
 } from "../data/plants";
 import { mulberry32, plantState, smoothstep } from "../lib/season";
+import { viewsForViewport as sliceViews } from "../lib/viewport";
 
 const assetPath = (path: string) =>
   `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
@@ -40,6 +41,9 @@ export const gardenViews = [
   { id: "planting-plan", number: "03", label: "Planting plan", note: "Spacing and repetition" },
   { id: "seasonal-detail", number: "04", label: "Seasonal detail", note: "The selected plant" },
 ] as const;
+
+export const viewsForViewport = (phoneLayout: boolean) =>
+  sliceViews(gardenViews, phoneLayout);
 
 export type GardenViewId = (typeof gardenViews)[number]["id"];
 
@@ -1457,44 +1461,85 @@ function SceneReady({ onReady }: { onReady?: () => void }) {
   return <group visible={false} />;
 }
 
+const canvasFallback = (
+  <div className="canvas-fallback">
+    <p>3D view unavailable.</p>
+    <p>The seasonal plant timeline remains available below.</p>
+  </div>
+);
+
+function ContextLife({
+  onLost,
+  onRestored,
+}: {
+  onLost: () => void;
+  onRestored: () => void;
+}) {
+  const gl = useThree((state) => state.gl);
+  const invalidate = useThree((state) => state.invalidate);
+  useEffect(() => {
+    const canvas = gl.domElement;
+    const handleLost = (event: Event) => {
+      event.preventDefault();
+      onLost();
+    };
+    const handleRestored = () => {
+      if (canvas.clientWidth && canvas.clientHeight) {
+        gl.setSize(canvas.clientWidth, canvas.clientHeight, false);
+      }
+      invalidate();
+      onRestored();
+    };
+    canvas.addEventListener("webglcontextlost", handleLost, false);
+    canvas.addEventListener("webglcontextrestored", handleRestored, false);
+    return () => {
+      canvas.removeEventListener("webglcontextlost", handleLost, false);
+      canvas.removeEventListener("webglcontextrestored", handleRestored, false);
+    };
+  }, [gl, invalidate, onLost, onRestored]);
+  return null;
+}
+
 export default function GardenScene(props: GardenSceneProps) {
   const editorial = props.visualStyle === "editorial";
+  const [gpuLost, setGpuLost] = useState(false);
+  const onLost = useCallback(() => setGpuLost(true), []);
+  const onRestored = useCallback(() => setGpuLost(false), []);
   return (
-    <Canvas
-      className="garden-canvas"
-      shadows={!editorial}
-      orthographic={editorial}
-      frameloop="demand"
-      dpr={editorial ? 2 : props.primary ? [1, 1.5] : [0.8, 1.15]}
-      gl={{
-        antialias: !editorial,
-        alpha: editorial,
-        premultipliedAlpha: editorial,
-        toneMapping: editorial
-          ? THREE.NoToneMapping
-          : THREE.ACESFilmicToneMapping,
-        toneMappingExposure: editorial ? 1 : 1.02,
-        powerPreference: "high-performance",
-      }}
-      onCreated={
-        editorial
-          ? ({ gl, scene }) => {
-              gl.setClearColor(0x000000, 0);
-              gl.outputColorSpace = THREE.LinearSRGBColorSpace;
-              scene.background = null;
-            }
-          : undefined
-      }
-      fallback={
-        <div className="canvas-fallback">
-          <p>3D view unavailable.</p>
-          <p>The seasonal plant timeline remains available below.</p>
-        </div>
-      }
-    >
-      <Suspense fallback={null}>
-        <Scene {...props} />
-      </Suspense>
-    </Canvas>
+    <>
+      <Canvas
+        className="garden-canvas"
+        shadows={!editorial}
+        orthographic={editorial}
+        frameloop="demand"
+        dpr={editorial ? 2 : props.primary ? [1, 1.5] : [0.8, 1.15]}
+        gl={{
+          antialias: !editorial,
+          alpha: editorial,
+          premultipliedAlpha: editorial,
+          toneMapping: editorial
+            ? THREE.NoToneMapping
+            : THREE.ACESFilmicToneMapping,
+          toneMappingExposure: editorial ? 1 : 1.02,
+          powerPreference: "default",
+        }}
+        onCreated={
+          editorial
+            ? ({ gl, scene }) => {
+                gl.setClearColor(0x000000, 0);
+                gl.outputColorSpace = THREE.LinearSRGBColorSpace;
+                scene.background = null;
+              }
+            : undefined
+        }
+        fallback={canvasFallback}
+      >
+        <ContextLife onLost={onLost} onRestored={onRestored} />
+        <Suspense fallback={null}>
+          <Scene {...props} />
+        </Suspense>
+      </Canvas>
+      {gpuLost ? canvasFallback : null}
+    </>
   );
 }

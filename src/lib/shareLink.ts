@@ -175,3 +175,12 @@ export const composeShareHref = (
   const query = typeof search === "string" ? search : search.toString();
   return `${location.origin}${location.pathname}${query ? `?${query}` : ""}${location.hash}`;
 };
+
+// Safari (especially iOS) rate-limits history.replaceState / pushState to
+// 100 calls per 30 seconds and can snapshot the document — including WebGL
+// canvases — on each write. Year playback ticks about 24 days per second,
+// which both throws SecurityError after a few seconds and can kill the tab.
+// Stay slower than Safari's ~310ms floor when a write is allowed.
+export const SHARE_HISTORY_SYNC_MS = 350;
+
+export const shouldWriteShareHistory = (playing: boolean) => !playing;
