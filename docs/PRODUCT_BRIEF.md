@@ -78,7 +78,7 @@ earn space.
 - Experience model: representative year rather than live forecasting.
 - Initial content: one deeply authored composition plus a small substitution set.
 - Primary surface: desktop browser, followed by tablet.
-- Phone: a useful simplified seasonal view; full 3D parity is not required initially.
+- Phone: a useful simplified seasonal view; full 3D parity is not required initially. A sent-link first-paint on a phone is one garden portrait the recipient can see, with readable byline, date, and why-this-date copy — not a squeezed four-up contact sheet.
 
 ## Composition editing proof
 
