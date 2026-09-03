@@ -68,6 +68,13 @@ seasonal capture, and tracing the content/access boundary.
   scrubbing. A January pitch must not open as summer. Chromium at 390×844 did
   not reproduce the live July first-paint; the attached iOS-style capture remains
   the observation, and the midpoint guard is the shipped defense.
+- Phone recipient first-paint is a simplified seasonal view: one garden portrait
+  owns the 390×844 viewport, the byline and why-this-date copy stay readable,
+  hit targets are at least 44px, and tapping a plant opens its record. The
+  desktop four-up contact sheet is unchanged. While WebGL loads, the portrait
+  shows “The garden is arriving” instead of empty gray frames. Plant names do
+  not clip mid-word; a fade marks a scrollable rail. All twelve month labels
+  remain visible. Gallery captions sit on a backing at 11px or larger.
 
 ## Thirteen-plant library expansion
 

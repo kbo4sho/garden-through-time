@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   Check,
@@ -126,10 +126,38 @@ function PlantRail({
   profiles: PlantProfile[];
   counts: Record<PlantId, number>;
 }) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [peek, setPeek] = useState({ start: false, end: profiles.length > 2 });
+
+  useEffect(() => {
+    const node = listRef.current;
+    if (!node) return;
+    const update = () => {
+      const maxScroll = node.scrollWidth - node.clientWidth;
+      setPeek({
+        start: node.scrollLeft > 6,
+        end: maxScroll > 6 && node.scrollLeft < maxScroll - 6,
+      });
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    node.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      observer.disconnect();
+      node.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [profiles]);
+
   return (
-    <aside className="plant-rail" aria-label="Plants in this composition">
+    <aside
+      className={`plant-rail${peek.start ? " has-peek-start" : ""}${peek.end ? " has-peek-end" : ""}`}
+      aria-label="Plants in this composition"
+    >
       <p className="rail-kicker">In this composition</p>
-      <div className="plant-list">
+      <div className="plant-list" ref={listRef}>
         {profiles.map((plant, index) => {
           const state = plantState(plant, day);
           const active =
@@ -164,7 +192,15 @@ function PlantRail({
   );
 }
 
-function SelectedPlant({ plant, day }: { plant: PlantProfile; day: number }) {
+function SelectedPlant({
+  plant,
+  day,
+  onClose,
+}: {
+  plant: PlantProfile;
+  day: number;
+  onClose?: () => void;
+}) {
   const timingEvidence = seasonalEvidenceFor(plant);
   const dayLabel = (dayOfYear: number) =>
     new Intl.DateTimeFormat("en-US", {
@@ -183,7 +219,19 @@ function SelectedPlant({ plant, day }: { plant: PlantProfile; day: number }) {
             <em>{plant.botanicalName}</em> {plant.cultivar}
           </p>
         </div>
-        <span className="phase-pill">{dayPhase(plant, day)}</span>
+        <div className="selected-plant-tools">
+          <span className="phase-pill">{dayPhase(plant, day)}</span>
+          {onClose ? (
+            <button
+              type="button"
+              className="icon-button"
+              onClick={onClose}
+              aria-label="Close plant record"
+            >
+              <X size={18} />
+            </button>
+          ) : null}
+        </div>
       </div>
       <div className="plant-facts">
         <span><Ruler size={14} />{plant.matureSize}</span>
@@ -771,8 +819,26 @@ function Timeline({
   );
 }
 
+const PHONE_LAYOUT_QUERY = "(max-width: 760px)";
+
+function usePhoneLayout() {
+  const [phoneLayout, setPhoneLayout] = useState(
+    () => window.matchMedia?.(PHONE_LAYOUT_QUERY).matches ?? false,
+  );
+  useEffect(() => {
+    const media = window.matchMedia?.(PHONE_LAYOUT_QUERY);
+    if (!media) return;
+    const onChange = () => setPhoneLayout(media.matches);
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+  return phoneLayout;
+}
+
 export default function App() {
   const libraryAccess: LibraryAccess = "full-library";
+  const phoneLayout = usePhoneLayout();
   const [day, setDay] = useState(initialShare.day);
   const [selectedId, setSelectedId] = useState<PlantId>(initialSelectedId);
   const [planting, setPlanting] = useState<PlantId[]>(() => [...initialPlanting]);
@@ -784,10 +850,12 @@ export default function App() {
   const [shareOpen, setShareOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [nativeOnly, setNativeOnly] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
   const reducedMotion = useMemo(
     () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
     [],
   );
+  const visibleViews = phoneLayout ? gardenViews.slice(0, 1) : gardenViews;
   const availableProfiles = useMemo(
     () => compositionPlants(nativeOnly, libraryAccess),
     [libraryAccess, nativeOnly],
@@ -866,11 +934,25 @@ export default function App() {
         setConditionsOpen(false);
         setCompositionOpen(false);
         setShareOpen(false);
+        setDetailsOpen(false);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  const selectPlant = (id: PlantId) => {
+    setSelectedId(id);
+    if (phoneLayout) {
+      setConditionsOpen(false);
+      setCompositionOpen(false);
+      setShareOpen(false);
+      setDetailsOpen(true);
+    }
+  };
+
+  const closeDetails = () => setDetailsOpen(false);
+  const markSceneReady = useCallback(() => setSceneReady(true), []);
 
   useEffect(() => {
     if (!activePlants.some((plant) => plant.id === selectedId)) {
@@ -903,28 +985,43 @@ export default function App() {
 
   return (
     <main
-      className={`experience-shell${visualStyle === "editorial" ? " is-editorial" : ""}`}
+      className={`experience-shell${visualStyle === "editorial" ? " is-editorial" : ""}${phoneLayout ? " is-phone" : ""}${detailsOpen ? " is-details-open" : ""}`}
       data-sent-from={authorName || undefined}
+      data-layout={phoneLayout ? "phone" : "desktop"}
     >
       <a href="#year-timeline" className="skip-link">Skip to year timeline</a>
-      <section className="scene-gallery" aria-label="Four synchronized views of one year-round garden composition">
-        {gardenViews.map((view, index) => (
+      <section
+        className="scene-gallery"
+        aria-label={
+          phoneLayout
+            ? "Garden portrait of one year-round composition"
+            : "Four synchronized views of one year-round garden composition"
+        }
+      >
+        {visibleViews.map((view, index) => (
           <article
             key={view.id}
-            className={index === 0 ? "scene-frame is-primary" : "scene-frame"}
+            className={`${index === 0 ? "scene-frame is-primary" : "scene-frame"}${sceneReady ? " is-ready" : ""}`}
             data-view={view.id}
             aria-label={view.label}
           >
+            {phoneLayout && (
+              <div className="scene-pending" role="status" aria-live="polite">
+                <span className="scene-pending-orb" aria-hidden="true" />
+                <p>The garden is arriving</p>
+              </div>
+            )}
             <div className="scene-layer">
               <GardenScene
                 day={day}
                 selectedId={selectedId}
-                onSelect={setSelectedId}
+                onSelect={selectPlant}
                 reducedMotion={reducedMotion || index > 0}
                 instances={instances}
                 viewId={view.id as GardenViewId}
                 visualStyle={visualStyle}
                 primary={index === 0}
+                onReady={index === 0 ? markSceneReady : undefined}
               />
             </div>
             <div className="atmosphere" aria-hidden="true" />
@@ -999,7 +1096,7 @@ export default function App() {
       <PlantRail
         day={day}
         selectedId={selectedId}
-        onSelect={setSelectedId}
+        onSelect={selectPlant}
         profiles={activePlants}
         counts={plantCounts}
       />
@@ -1012,8 +1109,19 @@ export default function App() {
       >
         <Info size={16} /> Plant details <ChevronRight size={15} />
       </button>
+      {detailsOpen && phoneLayout && (
+        <button
+          className="panel-scrim"
+          aria-label="Close plant record"
+          onClick={closeDetails}
+        />
+      )}
       <div id="selected-plant-details" className={detailsOpen ? "detail-wrap is-open" : "detail-wrap"}>
-        <SelectedPlant plant={selectedPlant} day={day} />
+        <SelectedPlant
+          plant={selectedPlant}
+          day={day}
+          onClose={phoneLayout ? closeDetails : undefined}
+        />
       </div>
 
       <div id="year-timeline">

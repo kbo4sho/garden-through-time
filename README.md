@@ -36,7 +36,9 @@ An interactive proof is now implemented in React and WebGL. It includes:
   authored position, plus nine named templates;
 - a shareable composition URL that recreates cluster size, template, in-slot
   swaps, parked day, and designer or nursery name — no accounts;
-- desktop, tablet, and simplified phone layouts.
+- desktop, tablet, and simplified phone layouts. A client opening a parked share
+  URL on a phone sees one garden, readable date and story, and a usable year
+  scrub; they can tap a plant for its record.
 
 The current sellable slice is the designer-pitch living-bed link. Do not treat a
 five-person unbriefed homeowner study as the next required build. It is an

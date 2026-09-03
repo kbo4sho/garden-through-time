@@ -29,6 +29,7 @@ type GardenSceneProps = {
   viewId: GardenViewId;
   visualStyle: VisualStyle;
   primary?: boolean;
+  onReady?: () => void;
 };
 
 export type VisualStyle = "photographic" | "editorial";
@@ -1384,6 +1385,7 @@ function Scene({
   viewId,
   visualStyle,
   primary = false,
+  onReady,
 }: GardenSceneProps) {
   const seasonalWarmth =
     (1 + Math.cos(((day - 188) / 365) * Math.PI * 2)) / 2;
@@ -1436,8 +1438,16 @@ function Scene({
           viewId={viewId}
         />
       ))}
+      <SceneReady onReady={onReady} />
     </>
   );
+}
+
+function SceneReady({ onReady }: { onReady?: () => void }) {
+  useLayoutEffect(() => {
+    onReady?.();
+  }, [onReady]);
+  return <group visible={false} />;
 }
 
 export default function GardenScene(props: GardenSceneProps) {
