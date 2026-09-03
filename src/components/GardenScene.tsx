@@ -1444,9 +1444,16 @@ function Scene({
 }
 
 function SceneReady({ onReady }: { onReady?: () => void }) {
+  const called = useRef(false);
+  const invalidate = useThree((state) => state.invalidate);
   useLayoutEffect(() => {
-    onReady?.();
-  }, [onReady]);
+    invalidate();
+  }, [invalidate]);
+  useFrame(() => {
+    if (called.current || !onReady) return;
+    called.current = true;
+    requestAnimationFrame(() => onReady());
+  });
   return <group visible={false} />;
 }
 

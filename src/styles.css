@@ -673,17 +673,15 @@ input:focus-visible {
   margin-top: 7px;
 }
 
-.month-ticks button {
+.month-ticks span {
   padding: 0;
   color: rgba(245, 242, 233, 0.36);
   font-size: 8px;
+  line-height: 1.2;
   text-align: left;
-  background: transparent;
-  border: 0;
-  pointer-events: none;
 }
 
-.month-ticks button.is-current {
+.month-ticks span.is-current {
   color: rgba(246, 243, 231, 0.9);
 }
 
@@ -1701,7 +1699,9 @@ input:focus-visible {
   justify-items: center;
   gap: 12px;
   color: #2d3b31;
-  background: #dedbd2;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 253, 246, 0.55), transparent 46%),
+    #dedbd2;
   pointer-events: none;
   transition: opacity 280ms ease, visibility 280ms ease;
 }
@@ -1710,6 +1710,10 @@ input:focus-visible {
 .scene-frame:has(.canvas-fallback) .scene-pending {
   opacity: 0;
   visibility: hidden;
+}
+
+.scene-frame:not(.is-ready):not(:has(.canvas-fallback)) .garden-canvas {
+  opacity: 0;
 }
 
 .scene-pending-orb {
@@ -1879,7 +1883,7 @@ input:focus-visible {
     display: inline;
   }
 
-  .month-ticks button:nth-child(even) {
+  .month-ticks span:nth-child(even) {
     visibility: visible;
   }
 }
@@ -2345,8 +2349,8 @@ input:focus-visible {
 @media (max-width: 760px) {
   .experience-shell {
     --page-margin: 12px;
-    --phone-timeline: 152px;
-    --phone-rail: 68px;
+    --phone-timeline: 140px;
+    --phone-rail: 104px;
     min-height: 100dvh;
     height: 100dvh;
     overflow: hidden;
@@ -2396,7 +2400,7 @@ input:focus-visible {
   .scene-gallery {
     top: 120px;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + var(--phone-rail) + 14px);
+    bottom: calc(var(--phone-timeline) + var(--phone-rail) + 54px);
     left: var(--page-margin);
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
@@ -2470,9 +2474,10 @@ input:focus-visible {
     right: 12px;
     bottom: 12px;
     gap: 8px;
-    padding: 7px 9px 6px;
-    background: rgba(239, 236, 226, 0.94);
-    border: 1px solid rgba(57, 66, 56, 0.12);
+    padding: 8px 10px 7px;
+    color: #26352a;
+    background: #f3eee2;
+    border: 1px solid rgba(57, 66, 56, 0.16);
   }
 
   .photo-stamp > span:first-child {
@@ -2490,56 +2495,62 @@ input:focus-visible {
     letter-spacing: 0.06em;
   }
 
+  .photo-stamp-copy small {
+    color: rgba(38, 53, 42, 0.72);
+  }
+
   .plant-rail {
     position: absolute;
     top: auto;
-    right: calc(var(--page-margin) + 108px);
-    bottom: calc(var(--phone-timeline) + 10px);
+    right: var(--page-margin);
+    bottom: calc(var(--phone-timeline) + 54px);
     left: var(--page-margin);
     height: var(--phone-rail);
   }
 
   .plant-list {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     align-items: stretch;
     gap: 6px;
     height: 100%;
-    overflow-x: auto;
-    padding: 0 22px 0 0;
+    max-height: var(--phone-rail);
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0;
     border: 0;
-    scrollbar-width: none;
-    scroll-padding-inline-end: 28px;
+    scrollbar-width: thin;
   }
 
   .plant-list::-webkit-scrollbar {
-    display: none;
+    width: 3px;
   }
 
   .plant-rail.has-peek-end .plant-list {
-    -webkit-mask-image: linear-gradient(90deg, #000 72%, transparent 100%);
-    mask-image: linear-gradient(90deg, #000 72%, transparent 100%);
+    -webkit-mask-image: linear-gradient(#000 72%, transparent 100%);
+    mask-image: linear-gradient(#000 72%, transparent 100%);
   }
 
   .plant-rail.has-peek-start .plant-list {
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 18%);
-    mask-image: linear-gradient(90deg, transparent, #000 18%);
+    -webkit-mask-image: linear-gradient(transparent, #000 22%);
+    mask-image: linear-gradient(transparent, #000 22%);
   }
 
   .plant-rail.has-peek-start.has-peek-end .plant-list {
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 72%, transparent 100%);
-    mask-image: linear-gradient(90deg, transparent, #000 14%, #000 72%, transparent 100%);
+    -webkit-mask-image: linear-gradient(transparent, #000 16%, #000 72%, transparent 100%);
+    mask-image: linear-gradient(transparent, #000 16%, #000 72%, transparent 100%);
   }
 
   .plant-row {
-    width: 156px;
-    min-width: 156px;
-    max-width: 156px;
+    width: auto;
+    min-width: 0;
+    max-width: none;
     min-height: 44px;
-    height: 100%;
-    flex: 0 0 156px;
+    height: auto;
+    flex: none;
     display: flex;
-    padding: 8px 12px;
-    background: rgba(247, 244, 234, 0.9);
+    padding: 8px 10px;
+    background: rgba(247, 244, 234, 0.92);
     border: 1px solid rgba(39, 52, 41, 0.14);
     border-radius: 8px;
   }
@@ -2575,27 +2586,29 @@ input:focus-visible {
     content: "";
     position: absolute;
     z-index: 2;
-    top: 0;
     right: 0;
-    width: 36px;
-    height: 100%;
+    bottom: 0;
+    left: 0;
+    height: 22px;
     pointer-events: none;
-    background: linear-gradient(90deg, rgba(231, 226, 213, 0), #e7e2d5 78%);
+    background: linear-gradient(180deg, rgba(231, 226, 213, 0), #e7e2d5 80%);
   }
 
   .info-toggle {
     display: inline-flex;
     top: auto;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + 10px);
-    left: auto;
+    bottom: calc(var(--phone-timeline) + 8px);
+    left: var(--page-margin);
+    width: auto;
     min-width: 44px;
     min-height: 44px;
-    height: var(--phone-rail);
-    padding: 0 10px;
+    height: 44px;
+    padding: 0 12px;
+    justify-content: center;
     color: rgba(39, 52, 41, 0.78);
     font-size: 12px;
-    background: rgba(247, 244, 234, 0.9);
+    background: rgba(247, 244, 234, 0.92);
     border: 1px solid rgba(39, 52, 41, 0.14);
     border-radius: 8px;
   }
@@ -2661,7 +2674,7 @@ input:focus-visible {
   }
 
   .timeline-date small,
-  .month-ticks button,
+  .month-ticks span,
   .timeline-context span {
     font-size: 12px;
   }
@@ -2697,18 +2710,17 @@ input:focus-visible {
     margin-top: 0;
   }
 
-  .month-ticks button {
+  .month-ticks span {
     min-height: 18px;
     overflow: visible;
-    color: rgba(245, 242, 233, 0.7);
+    color: rgba(245, 242, 233, 0.78);
     font-size: 12px;
-    line-height: 1.1;
+    line-height: 1.2;
     text-align: center;
-    visibility: visible;
   }
 
-  .month-ticks button.is-current {
-    color: rgba(246, 243, 231, 0.95);
+  .month-ticks span.is-current {
+    color: #f6f3e7;
   }
 }
 

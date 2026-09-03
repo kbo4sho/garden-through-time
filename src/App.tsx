@@ -127,16 +127,19 @@ function PlantRail({
   counts: Record<PlantId, number>;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
-  const [peek, setPeek] = useState({ start: false, end: profiles.length > 2 });
+  const [peek, setPeek] = useState({ start: false, end: false });
 
   useEffect(() => {
     const node = listRef.current;
     if (!node) return;
     const update = () => {
-      const maxScroll = node.scrollWidth - node.clientWidth;
+      const maxX = node.scrollWidth - node.clientWidth;
+      const maxY = node.scrollHeight - node.clientHeight;
       setPeek({
-        start: node.scrollLeft > 6,
-        end: maxScroll > 6 && node.scrollLeft < maxScroll - 6,
+        start: node.scrollLeft > 6 || node.scrollTop > 6,
+        end:
+          (maxX > 6 && node.scrollLeft < maxX - 6) ||
+          (maxY > 6 && node.scrollTop < maxY - 6),
       });
     };
     update();
@@ -802,15 +805,12 @@ function Timeline({
           />
           <div className="month-ticks" aria-hidden="true">
             {monthTicks.map((tick) => (
-              <button
+              <span
                 key={tick.label}
-                type="button"
-                tabIndex={-1}
-                onClick={() => onDayChange(tick.day)}
                 className={date.shortMonth === tick.label ? "is-current" : ""}
               >
                 {tick.label}
-              </button>
+              </span>
             ))}
           </div>
         </div>
@@ -1008,7 +1008,7 @@ export default function App() {
             {phoneLayout && (
               <div className="scene-pending" role="status" aria-live="polite">
                 <span className="scene-pending-orb" aria-hidden="true" />
-                <p>The garden is arriving</p>
+                <p>Loading the year</p>
               </div>
             )}
             <div className="scene-layer">
