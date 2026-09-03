@@ -971,6 +971,18 @@ export default function App() {
 
   const closeDetails = () => setDetailsOpen(false);
   const markSceneReady = useCallback(() => setSceneReady(true), []);
+  const detailWrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!detailsOpen) return;
+    const root = detailWrapRef.current;
+    if (!root) return;
+    root.scrollLeft = 0;
+    root.scrollTop = 0;
+    root.querySelectorAll<HTMLElement>("*").forEach((node) => {
+      node.scrollLeft = 0;
+    });
+  }, [detailsOpen, selectedPlant.id]);
 
   useEffect(() => {
     if (!activePlants.some((plant) => plant.id === selectedId)) {
@@ -1161,7 +1173,11 @@ export default function App() {
           onClick={closeDetails}
         />
       )}
-      <div id="selected-plant-details" className={detailsOpen ? "detail-wrap is-open" : "detail-wrap"}>
+      <div
+        id="selected-plant-details"
+        ref={detailWrapRef}
+        className={detailsOpen ? "detail-wrap is-open" : "detail-wrap"}
+      >
         <SelectedPlant
           plant={selectedPlant}
           day={day}

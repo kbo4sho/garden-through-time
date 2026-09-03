@@ -1493,8 +1493,8 @@ input:focus-visible {
 .condition-score p,
 .conditions-note {
   margin: 0;
-  color: rgba(234, 239, 226, 0.48);
-  font-size: 10px;
+  color: rgba(234, 239, 226, 0.78);
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -1642,8 +1642,8 @@ input:focus-visible {
 
 .swap-explanation {
   margin: 10px 0;
-  color: rgba(234, 239, 226, 0.62);
-  font-size: 9px;
+  color: rgba(234, 239, 226, 0.78);
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -1981,6 +1981,7 @@ input:focus-visible {
      frame. That stall shows up as GPU ReadPixels on the Play hot path
      and can lose the context on a phone. */
   filter: none;
+  background: #dedbd2;
 }
 
 .experience-shell.is-editorial .scene-frame {
@@ -2357,8 +2358,10 @@ input:focus-visible {
 @media (max-width: 760px) {
   .experience-shell {
     --page-margin: 12px;
-    --phone-timeline: 140px;
+    --phone-timeline: 160px;
     --phone-rail: 104px;
+    --phone-info: 44px;
+    --phone-stack-gap: 12px;
     min-height: 100dvh;
     height: 100dvh;
     overflow: hidden;
@@ -2408,7 +2411,7 @@ input:focus-visible {
   .scene-gallery {
     top: 120px;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + var(--phone-rail) + 54px);
+    bottom: calc(var(--phone-timeline) + var(--phone-rail) + var(--phone-info) + var(--phone-stack-gap) * 2);
     left: var(--page-margin);
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
@@ -2511,7 +2514,7 @@ input:focus-visible {
     position: absolute;
     top: auto;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + 54px);
+    bottom: calc(var(--phone-timeline) + var(--phone-info) + var(--phone-stack-gap) * 2);
     left: var(--page-margin);
     height: var(--phone-rail);
   }
@@ -2606,12 +2609,12 @@ input:focus-visible {
     display: inline-flex;
     top: auto;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + 8px);
+    bottom: calc(var(--phone-timeline) + var(--phone-stack-gap));
     left: var(--page-margin);
     width: auto;
     min-width: 44px;
     min-height: 44px;
-    height: 44px;
+    height: var(--phone-info);
     padding: 0 12px;
     justify-content: center;
     color: rgba(39, 52, 41, 0.78);
@@ -2632,12 +2635,54 @@ input:focus-visible {
     bottom: 12px;
     left: var(--page-margin);
     width: auto;
+    max-width: calc(100vw - var(--page-margin) * 2);
     max-height: min(72dvh, 620px);
+    overflow-x: hidden;
     z-index: 22;
   }
 
   .selected-plant {
+    max-width: 100%;
     max-height: min(72dvh, 620px);
+    overflow-x: hidden;
+    overflow-wrap: anywhere;
+  }
+
+  .selected-plant-heading {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .selected-plant-heading > div {
+    min-width: 0;
+    flex: 1 1 160px;
+  }
+
+  .selected-plant-tools {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+
+  .phase-pill {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .plant-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .plant-facts span:nth-child(n + 5) {
+    grid-column: auto;
+  }
+
+  .timing-evidence dl > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .timing-evidence dd {
+    text-align: left;
   }
 
   .selected-plant h2 {

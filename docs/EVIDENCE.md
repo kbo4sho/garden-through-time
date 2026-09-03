@@ -75,9 +75,12 @@ seasonal capture, and tracing the content/access boundary.
   control. Editorial headline and plant-details chrome recede. Plant names stay
   in a quiet two-by-two grid; tapping a plant still opens its record. Hit
   targets remain at least 44px. The desktop four-up contact sheet is unchanged.
-  While WebGL loads, the portrait shows “Loading the year” until the first
-  frame is painted — not empty gray panels, and not the “3D view unavailable”
-  fallback. Month labels are spans, not empty buttons; all twelve are visible.
+  While WebGL loads, the portrait keeps a warm “Loading the year” overlay
+  until two complete garden frames have drawn — not a black canvas, empty
+  gray panels, or the “3D view unavailable” fallback. The plant record wraps
+  on a 390px sheet with no horizontal scroll, and Plant details keeps a 44px
+  row above the year dock. Month labels are spans, not empty buttons; all
+  twelve are visible.
 
 ## Thirteen-plant library expansion
 
