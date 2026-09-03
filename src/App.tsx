@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   Check,
@@ -49,6 +49,7 @@ import {
   parseShareSearch,
   sanitizeFromName,
   serializeShareSearch,
+  shouldCommitTimelineDay,
   type ShareCatalog,
 } from "./lib/shareLink";
 
@@ -672,10 +673,32 @@ function Timeline({
   onDayChange: (day: number) => void;
   onTogglePlay: () => void;
 }) {
+  const pointerAdjusting = useRef(false);
+  const pointerClear = useRef(0);
   const date = dayToDate(day);
   const season = seasonCopy(day);
+  const setPointerAdjusting = (active: boolean) => {
+    window.clearTimeout(pointerClear.current);
+    if (active) {
+      pointerAdjusting.current = true;
+      return;
+    }
+    // Native range `input` can arrive after pointerup; keep the gesture
+    // open for one frame so a real scrub still commits.
+    pointerClear.current = window.setTimeout(() => {
+      pointerAdjusting.current = false;
+    }, 50);
+  };
+  const commitRangeDay = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextDay = Number(event.currentTarget.value);
+    if (!shouldCommitTimelineDay(day, nextDay, pointerAdjusting.current)) {
+      event.currentTarget.value = String(day);
+      return;
+    }
+    onDayChange(nextDay);
+  };
   return (
-    <section className="timeline-shell" aria-label="Year timeline">
+    <section className="timeline-shell" aria-label="Year timeline" data-parked-day={day}>
       <div className="timeline-date">
         <span className="date-day">{date.day}</span>
         <span>
@@ -702,7 +725,13 @@ function Timeline({
             max="365"
             step="1"
             value={day}
-            onChange={(event) => onDayChange(Number(event.currentTarget.value))}
+            onPointerDown={() => setPointerAdjusting(true)}
+            onPointerUp={() => setPointerAdjusting(false)}
+            onPointerCancel={() => setPointerAdjusting(false)}
+            onTouchStart={() => setPointerAdjusting(true)}
+            onTouchEnd={() => setPointerAdjusting(false)}
+            onTouchCancel={() => setPointerAdjusting(false)}
+            onChange={commitRangeDay}
             onKeyDown={(event) => {
               const nextByKey: Partial<Record<string, number>> = {
                 Home: 1,
