@@ -2734,7 +2734,7 @@ input:focus-visible {
   /* Recipient share: garden first, play/scrub unmistakable, designer chrome tucked. */
   .experience-shell.is-share {
     --page-margin: 10px;
-    --phone-timeline: 158px;
+    --phone-timeline: 176px;
     --phone-rail: 94px;
   }
 
@@ -2870,7 +2870,7 @@ input:focus-visible {
   .experience-shell.is-share .plant-rail {
     z-index: 8;
     right: 12px;
-    bottom: calc(var(--phone-timeline) + 14px);
+    bottom: calc(var(--phone-timeline) + 20px);
     left: 12px;
     height: var(--phone-rail);
   }
@@ -2909,17 +2909,19 @@ input:focus-visible {
     min-height: var(--phone-timeline);
     display: grid;
     grid-template-columns: 60px minmax(0, 1fr);
+    grid-template-rows: 60px auto;
     grid-template-areas:
       "play date"
       "control control";
-    gap: 6px 14px;
-    padding: 14px 16px 12px;
+    gap: 4px 14px;
+    padding: 12px 14px 10px;
     border-radius: 20px;
   }
 
   .experience-shell.is-share .play-button {
     grid-area: play;
-    grid-column: auto;
+    grid-column: 1;
+    grid-row: 1;
     width: 60px;
     height: 60px;
     box-shadow: 0 10px 28px rgba(8, 14, 10, 0.28);
@@ -2932,13 +2934,18 @@ input:focus-visible {
 
   .experience-shell.is-share .timeline-date {
     grid-area: date;
-    grid-column: auto;
+    grid-column: 2;
+    grid-row: 1;
     align-self: center;
   }
 
+  .experience-shell.is-share .timeline-date small {
+    display: none;
+  }
+
   .experience-shell.is-share .date-day {
-    min-width: 46px;
-    font-size: 44px;
+    min-width: 44px;
+    font-size: 40px;
   }
 
   .experience-shell.is-share .timeline-date strong {
@@ -2947,7 +2954,8 @@ input:focus-visible {
 
   .experience-shell.is-share .timeline-control {
     grid-area: control;
-    grid-column: auto;
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 
   .experience-shell.is-share .timeline-context {
@@ -2959,7 +2967,7 @@ input:focus-visible {
   }
 
   .experience-shell.is-share .range-wrap input[type="range"] {
-    height: 48px;
+    height: 40px;
   }
 
   .experience-shell.is-share .range-wrap input[type="range"]::-webkit-slider-runnable-track {
