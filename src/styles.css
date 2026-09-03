@@ -1712,13 +1712,18 @@ input:focus-visible {
 }
 
 .scene-frame.is-ready .scene-pending,
-.scene-frame:has(.canvas-fallback) .scene-pending {
+.scene-frame.is-unavailable .scene-pending {
   opacity: 0;
   visibility: hidden;
 }
 
-.scene-frame:not(.is-ready):not(:has(.canvas-fallback)) .garden-canvas {
+.scene-frame:not(.is-ready) .garden-canvas {
   opacity: 0;
+}
+
+.scene-frame:has(.scene-layer > .canvas-fallback) .scene-pending {
+  opacity: 0;
+  visibility: hidden;
 }
 
 .scene-pending-orb {
@@ -2359,6 +2364,7 @@ input:focus-visible {
   .experience-shell {
     --page-margin: 12px;
     --phone-timeline: 160px;
+    --phone-timeline-inset: 8px;
     --phone-rail: 104px;
     --phone-info: 44px;
     --phone-stack-gap: 12px;
@@ -2411,7 +2417,7 @@ input:focus-visible {
   .scene-gallery {
     top: 120px;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + var(--phone-rail) + var(--phone-info) + var(--phone-stack-gap) * 2);
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline) + var(--phone-rail) + var(--phone-info) + var(--phone-stack-gap) * 2);
     left: var(--page-margin);
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
@@ -2514,7 +2520,7 @@ input:focus-visible {
     position: absolute;
     top: auto;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + var(--phone-info) + var(--phone-stack-gap) * 2);
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline) + var(--phone-info) + var(--phone-stack-gap) * 2);
     left: var(--page-margin);
     height: var(--phone-rail);
   }
@@ -2609,7 +2615,7 @@ input:focus-visible {
     display: inline-flex;
     top: auto;
     right: var(--page-margin);
-    bottom: calc(var(--phone-timeline) + var(--phone-stack-gap));
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline) + var(--phone-stack-gap));
     left: var(--page-margin);
     width: auto;
     min-width: 44px;
@@ -2780,13 +2786,14 @@ input:focus-visible {
   .experience-shell.is-share {
     --page-margin: 10px;
     --phone-timeline: 176px;
+    --phone-timeline-inset: 10px;
     --phone-rail: 94px;
   }
 
   .experience-shell.is-share .scene-gallery {
     top: 0;
     right: 0;
-    bottom: calc(var(--phone-timeline) + 8px);
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline));
     left: 0;
   }
 
@@ -2915,7 +2922,7 @@ input:focus-visible {
   .experience-shell.is-share .plant-rail {
     z-index: 8;
     right: 12px;
-    bottom: calc(var(--phone-timeline) + 20px);
+    bottom: calc(var(--phone-timeline-inset) + var(--phone-timeline) + 12px);
     left: 12px;
     height: var(--phone-rail);
   }

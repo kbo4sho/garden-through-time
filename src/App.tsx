@@ -1036,7 +1036,7 @@ export default function App() {
             data-view={view.id}
             aria-label={view.label}
           >
-            {phoneLayout && (
+            {phoneLayout && !sceneReady && (
               <div className="scene-pending" role="status" aria-live="polite">
                 <span className="scene-pending-orb" aria-hidden="true" />
                 <p>Loading the year</p>
