@@ -33,7 +33,31 @@ Exact days remain the existing Chicago representative-year interpolation, not a 
 | Redtwig dogwood | [NC State Extension](https://plants.ces.ncsu.edu/plants/cornus-sericea/common-name/redtwig-dogwood/): red stems, flat white flower clusters, white fruit, deciduous foliage | Fine upright branching, paired leaf placement, small corymbs and pale berries. Fruit disappears by the existing autumn window; bare red stems remain in winter. |
 | Boxwood | [Morton Arboretum](https://mortonarb.org/plant-and-protect/trees-and-plants/boxwood-hybrids/): small evergreen foliage and rounded form | Persistent small leaves, inconspicuous spring flowers, restrained winter bronzing that crosses New Year continuously and recedes in spring. |
 
-`modelSeason` consumes `plantState` and profile windows. Two explicit visual interpolations supplement them: hydrangea heads bridge late summer to the winter persistence window rather than disappear and respawn; evergreen bronzing bridges New Year and fades before spring bloom. Neither changes photographic behavior or plant records.
+`modelSeason` consumes `plantState` and profile windows. Two explicit visual interpolations supplement them: hydrangea heads bridge late summer to the winter persistence window rather than disappear and respawn; evergreen bronzing bridges New Year and fades before spring bloom. A third renderer-only interpolation, still driven by `plantState.leaves`, lets leafless dogwood stems read more vividly red in winter. None of these change photographic behavior or plant records.
+
+## Gauntlet craft pass (attempt 1)
+
+The first optional glTF slice used flat vertex colors and `MeshStandardMaterial` with no wrap or backside response. Leaves and blooms read as low-poly plastic next to the photographic billboards. This pass keeps the same four original procedural assets and the same `plantState` calendar. It raises perceived richness by:
+
+- Species-specific leaf silhouettes: five-lobe oakleaf, toothed obovate fothergilla, ovate dogwood, small notched boxwood.
+- Folded four-petal florets and filament bottlebrushes instead of disks and octahedra.
+- Bark radius irregularity on woody stems, mottled vertex color, and extra fine deciduous twiglets for winter structure.
+- Leaf wrap lighting, backside warm-up, and a restrained backlight lobe so foliage answers the same key light the billboards use.
+- Softer model-mode lighting: slightly lower hemisphere and key, plus a warm fill, so the 3D plants sit in the same warm-neutral field as the photographs.
+
+No image textures and no third-party meshes. Photographic and editorial defaults are unchanged.
+
+### Asset byte delta
+
+| Asset | PR #7 (bytes) | This pass (bytes) | Delta |
+| --- | ---: | ---: | ---: |
+| fothergilla.glb | 1,298,716 | 1,210,688 | −88,028 |
+| hydrangea.glb | 913,820 | 940,800 | +26,980 |
+| dogwood.glb | 1,067,600 | 1,152,044 | +84,444 |
+| boxwood.glb | 1,354,328 | 1,582,488 | +228,160 |
+| **Four-model total** | **4,634,464** | **4,886,020** | **+251,556 (+5.4%)** |
+
+Download stays under the 5 MB check (`4,886,020 < 5,000,000`). Decoded attributes: 10,213,517 bytes, well under the 24 MB shared-geometry budget.
 
 ## Safeguards and checks
 
