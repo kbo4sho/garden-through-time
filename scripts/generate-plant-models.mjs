@@ -1,4 +1,6 @@
 // Original, deterministic glTF geometry. No downloaded meshes or image textures.
+// Attempt 2: cheap UV cluster cards + winter spray cards. Silhouette mass is
+// authored in the runtime canopy shader (hashed alpha), not as discrete leaf ribbons.
 import * as T from "three";
 import {
   mergeGeometries,
@@ -31,8 +33,10 @@ const configs = {
     h: 2.55,
     w: 1.25,
     stems: 15,
-    leaf: 0.2,
-    leaves: 8,
+    leaf: 0.5,
+    leaves: 6,
+    fill: 520,
+    spray: 220,
     color: "#66834b",
   },
   hydrangea: {
@@ -40,8 +44,10 @@ const configs = {
     h: 2.72,
     w: 1.38,
     stems: 13,
-    leaf: 0.3,
+    leaf: 0.62,
     leaves: 6,
+    fill: 480,
+    spray: 180,
     color: "#547449",
   },
   dogwood: {
@@ -49,8 +55,10 @@ const configs = {
     h: 3.05,
     w: 1.18,
     stems: 22,
-    leaf: 0.185,
-    leaves: 7,
+    leaf: 0.44,
+    leaves: 6,
+    fill: 500,
+    spray: 200,
     color: "#5a804e",
   },
   boxwood: {
@@ -58,8 +66,10 @@ const configs = {
     h: 2.32,
     w: 1.14,
     stems: 20,
-    leaf: 0.1,
-    leaves: 10,
+    leaf: 0.26,
+    leaves: 8,
+    fill: 900,
+    spray: 0,
     color: "#3f653f",
   },
 };
@@ -76,102 +86,44 @@ const manifest = {
   models: {},
 };
 
-function leafRibbon(length, rows, widthAt, cup = 0.055, midrib = 0.16) {
-  const points = [];
-  const indices = [];
-  for (let i = 0; i <= rows; i++) {
-    const t = i / rows;
-    const width = widthAt(t);
-    const lift = Math.sin(t * Math.PI);
-    points.push(
-      -width,
-      t * length,
-      lift * length * cup,
-      0,
-      t * length,
-      lift * length * midrib,
-      width,
-      t * length,
-      lift * length * cup,
-    );
-    if (i < rows) {
-      const k = i * 3;
-      indices.push(
-        k,
-        k + 3,
-        k + 1,
-        k + 1,
-        k + 3,
-        k + 4,
-        k + 1,
-        k + 4,
-        k + 2,
-        k + 2,
-        k + 4,
-        k + 5,
-      );
-    }
-  }
-  const g = new T.BufferGeometry();
-  g.setAttribute("position", new T.Float32BufferAttribute(points, 3));
-  g.setIndex(indices);
-  g.computeVertexNormals();
-  return g;
-}
-
-function oakWidth(t, length) {
-  const body = Math.pow(Math.sin(Math.PI * Math.pow(t, 0.92)), 0.7);
-  const peaks = [0.18, 0.38, 0.58, 0.76, 0.93];
-  const amps = [0.48, 0.82, 1, 0.68, 0.3];
-  const spans = [0.13, 0.14, 0.15, 0.13, 0.1];
-  let lobe = 0.22;
-  for (let i = 0; i < peaks.length; i++) {
-    const d = (t - peaks[i]) / spans[i];
-    lobe = Math.max(lobe, amps[i] * Math.exp(-d * d * 1.6));
-  }
-  return length * 0.48 * body * lobe;
-}
-
-function fothergillaWidth(t, length) {
-  const body = Math.pow(Math.sin(Math.PI * Math.pow(t, 0.78)), 0.7);
-  const tooth = 1 + 0.14 * Math.sin(t * Math.PI * 10);
-  return length * 0.34 * body * tooth;
-}
-
-function dogwoodWidth(t, length) {
-  const body = Math.pow(Math.sin(Math.PI * Math.pow(t, 1.06)), 0.82);
-  return length * 0.3 * body;
-}
-
-function boxwoodWidth(t, length) {
-  const body = Math.pow(Math.sin(Math.PI * t), 0.42);
-  return length * 0.44 * body;
-}
-
-function petalGeom(length, width) {
-  const cup = length * 0.22;
+function clusterCard(width, height, cup = 0.11) {
+  const hw = width * 0.5;
+  const lift = height * cup;
   const g = new T.BufferGeometry();
   g.setAttribute(
     "position",
     new T.Float32BufferAttribute(
       [
-        -width,
-        length * 0.08,
+        -hw,
         0,
         0,
         0,
-        cup,
-        width,
-        length * 0.08,
+        0,
+        lift * 0.28,
+        hw,
         0,
         0,
-        length,
-        cup * 0.2,
+        -hw,
+        height,
+        lift * 0.42,
+        0,
+        height,
+        lift,
+        hw,
+        height,
+        lift * 0.42,
       ],
       3,
     ),
   );
-  g.setIndex([0, 1, 3, 1, 2, 3]);
+  g.setAttribute(
+    "uv",
+    new T.Float32BufferAttribute(
+      [0, 0, 0.5, 0, 1, 0, 0, 1, 0.5, 1, 1, 1],
+      2,
+    ),
+  );
+  g.setIndex([0, 1, 4, 0, 4, 3, 1, 2, 5, 1, 5, 4]);
   g.computeVertexNormals();
   return g;
 }
@@ -188,26 +140,6 @@ for (const [id, c] of Object.entries(configs)) {
   const layers = { branches: [], leaves: [], blooms: [], fruit: [] };
   const v = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
 
-  function paintLeaf(g, length, tint) {
-    const pos = g.attributes.position;
-    const colors = [];
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const y = pos.getY(i);
-      const midrib = Math.max(0, 1 - Math.abs(x) / Math.max(0.004, length * 0.07));
-      const along = y / Math.max(0.001, length);
-      const mottling = 0.82 + r() * 0.22;
-      const shade =
-        mottling * (1 - midrib * 0.18) * (0.88 + along * 0.16);
-      const col = tint.clone();
-      col.r *= shade;
-      col.g *= shade * (1 + midrib * 0.05);
-      col.b *= shade * 0.96;
-      colors.push(col.r, col.g, col.b);
-    }
-    g.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
-  }
-
   function paintBark(g, tint) {
     const pos = g.attributes.position;
     const colors = [];
@@ -219,10 +151,24 @@ for (const [id, c] of Object.entries(configs)) {
     g.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
   }
 
-  function add(layer, geometry, anchor, tint = "#ffffff", phase = r()) {
+  function paintCard(g, tint) {
+    const colors = [];
+    const col = tint.clone();
+    for (let i = 0; i < g.attributes.position.count; i++) {
+      const shade = 0.84 + r() * 0.2;
+      colors.push(col.r * shade, col.g * shade, col.b * shade);
+    }
+    g.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
+  }
+
+  function add(layer, geometry, anchor, tint = "#ffffff", phase = r(), cluster = 0) {
     let g = geometry.index ? geometry.toNonIndexed() : geometry;
-    g.deleteAttribute("uv");
     const n = g.attributes.position.count;
+    if (!g.getAttribute("uv")) {
+      const uvs = [];
+      for (let i = 0; i < n; i++) uvs.push(0, 0);
+      g.setAttribute("uv", new T.Float32BufferAttribute(uvs, 2));
+    }
     if (!g.getAttribute("color")) {
       const colors = [];
       const col = tint instanceof T.Color ? tint : new T.Color(tint);
@@ -234,12 +180,15 @@ for (const [id, c] of Object.entries(configs)) {
     }
     const a = [];
     const p = [];
+    const cl = [];
     for (let i = 0; i < n; i++) {
       a.push(...anchor);
       p.push(phase);
+      cl.push(cluster);
     }
     g.setAttribute("anchor", new T.Float32BufferAttribute(a, 3));
     g.setAttribute("phase", new T.Float32BufferAttribute(p, 1));
+    g.setAttribute("cluster", new T.Float32BufferAttribute(cl, 1));
     layers[layer].push(g);
   }
 
@@ -278,74 +227,31 @@ for (const [id, c] of Object.entries(configs)) {
           );
     paintBark(g, bark);
     g.translate(...a.clone().add(b).multiplyScalar(0.5));
-    add(layer, g, anchor, bark);
+    add(layer, g, anchor, bark, r(), 0);
   }
 
-  function tinyLeaf(size) {
-    const w = size * 0.4;
-    const g = new T.BufferGeometry();
-    g.setAttribute(
-      "position",
-      new T.Float32BufferAttribute(
-        [
-          -w,
-          size * 0.08,
-          0,
-          0,
-          0,
-          size * 0.14,
-          w,
-          size * 0.08,
-          0,
-          0,
-          size,
-          size * 0.03,
-        ],
-        3,
-      ),
-    );
-    g.setIndex([0, 1, 3, 1, 2, 3]);
-    g.computeVertexNormals();
-    return g;
+  function orientCard(g, yaw) {
+    g.rotateX(0.28 + r() * 1.05);
+    g.rotateY(yaw + (r() - 0.5) * 0.95);
+    g.rotateZ((r() - 0.5) * 0.32);
   }
 
-  function leafShape(size) {
-    if (id === "hydrangea")
-      return leafRibbon(size, 12, (t) => oakWidth(t, size), 0.045, 0.14);
-    if (id === "boxwood") return tinyLeaf(size);
-    if (id === "dogwood")
-      return leafRibbon(size, 6, (t) => dogwoodWidth(t, size), 0.05, 0.17);
-    return leafRibbon(size, 7, (t) => fothergillaWidth(t, size), 0.05, 0.15);
-  }
-
-  function leaf(at, angle, size, phase) {
-    const g = leafShape(size);
-    paintLeaf(g, size, new T.Color("#f2f4ee"));
-    g.rotateX(0.55 + r() * 1.55);
-    g.rotateY(angle);
-    g.rotateZ((r() - 0.5) * 0.48);
+  function leaf(at, yaw, size, phase) {
+    const width = size * (id === "boxwood" ? 1.05 : 1.12);
+    const height = size * (id === "hydrangea" ? 1.18 : id === "boxwood" ? 0.92 : 1.08);
+    const g = clusterCard(width, height, id === "boxwood" ? 0.08 : 0.12);
+    paintCard(g, new T.Color("#f2f4ee"));
+    orientCard(g, yaw);
     g.translate(...at);
-    add("leaves", g, at, "#ffffff", phase);
+    add("leaves", g, at, "#ffffff", phase, 1);
   }
 
-  function floret(at, size, anchor, tint, phase, cup = 1.08) {
-    const col = tint instanceof T.Color ? tint : new T.Color(tint);
-    for (let p = 0; p < 4; p++) {
-      const g = petalGeom(size * 1.05, size * 0.42);
-      const colors = [];
-      const pos = g.attributes.position;
-      for (let i = 0; i < pos.count; i++) {
-        const along = pos.getY(i) / Math.max(0.001, size);
-        const shade = 0.84 + along * 0.16 + r() * 0.06;
-        colors.push(col.r * shade, col.g * shade, col.b * shade * 0.97);
-      }
-      g.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
-      g.translate(0, size * 0.12, 0);
-      g.rotateX(cup);
-      g.rotateY((p * Math.PI) / 2 + (r() - 0.5) * 0.12);
-      g.translate(...at);
-      add("blooms", g, anchor, col, phase);
-    }
+  function puff(layer, at, yaw, width, height, tint, phase) {
+    const g = clusterCard(width, height, 0.16);
+    paintCard(g, tint instanceof T.Color ? tint : new T.Color(tint));
+    orientCard(g, yaw);
+    g.translate(...at);
+    add(layer, g, at, tint, phase, 1);
   }
 
   const terminals = [];
@@ -432,7 +338,7 @@ for (const [id, c] of Object.entries(configs)) {
               );
             }
           }
-          const leafCount = id === "boxwood" ? c.leaves + 6 : c.leaves;
+          const leafCount = c.leaves;
           for (let j = 0; j < leafCount; j++) {
             const lt =
               id === "dogwood" || id === "hydrangea"
@@ -447,13 +353,11 @@ for (const [id, c] of Object.entries(configs)) {
             leaf(
               petiole,
               la,
-              c.leaf * (id === "boxwood" ? 0.72 + r() * 0.35 : 1.08 + r() * 0.82),
+              c.leaf * (id === "boxwood" ? 0.82 + r() * 0.28 : 0.92 + r() * 0.28),
               r(),
             );
             if (id === "boxwood") {
-              leaf(petiole, la + Math.PI, c.leaf * (0.65 + r() * 0.4), r());
-              if (j % 2 === 0)
-                leaf(petiole, la + 1.1, c.leaf * (0.55 + r() * 0.3), r());
+              leaf(petiole, la + Math.PI, c.leaf * (0.78 + r() * 0.24), r());
             }
           }
           if (step >= 4 && side === 0) terminals.push(end);
@@ -494,88 +398,105 @@ for (const [id, c] of Object.entries(configs)) {
     }
   }
 
+  const fillCount = c.fill;
+  for (let i = 0; i < fillCount; i++) {
+    const theta = r() * Math.PI * 2;
+    const u = Math.sqrt(r());
+    const rad = c.w * (id === "boxwood" ? 0.22 + u * 0.92 : 0.18 + u * 0.88);
+    const cap =
+      Math.sqrt(Math.max(0.04, 1 - (rad / (c.w * 1.18)) ** 2));
+    const y =
+      id === "boxwood"
+        ? c.h * (0.1 + r() * 0.78 * cap)
+        : c.h * (0.2 + r() * 0.74);
+    const at = v(Math.cos(theta) * rad, y, Math.sin(theta) * rad);
+    leaf(
+      at,
+      theta + (r() - 0.5) * 1.4,
+      c.leaf * (id === "boxwood" ? 0.88 + r() * 0.32 : 0.95 + r() * 0.34),
+      r(),
+    );
+  }
+
+  for (let i = 0; i < c.spray; i++) {
+    const theta = r() * Math.PI * 2;
+    const rad = c.w * (0.12 + Math.sqrt(r()) * 0.9);
+    const at = v(
+      Math.cos(theta) * rad,
+      c.h * (0.22 + r() * 0.7),
+      Math.sin(theta) * rad,
+    );
+    const size = 0.34 + r() * 0.28;
+    const g = clusterCard(size, size * (0.9 + r() * 0.35), 0.06);
+    paintCard(
+      g,
+      id === "dogwood" ? new T.Color("#b83a30") : new T.Color(barkTint[id]),
+    );
+    orientCard(g, theta);
+    g.translate(...at);
+    add("branches", g, at, barkTint[id], r(), 1);
+  }
+
   terminals.forEach((at, i) => {
     const phase = r();
+    const yaw = r() * Math.PI * 2;
     if (id === "hydrangea" && i % 2 === 0) {
       const top = at.clone().add(v(0.03, 0.46, 0.01));
       twig(at, top, 0.0075, "blooms", at, "#b9ab83");
-      for (let j = 0; j < 36; j++) {
-        const t = j / 36;
+      for (let j = 0; j < 12; j++) {
+        const t = j / 12;
         const a = j * 2.4;
-        const rad = 0.2 * (1 - t) + 0.01;
+        const rad = 0.16 * (1 - t) + 0.02;
         const p = at
           .clone()
-          .add(v(Math.cos(a) * rad, t * 0.46, Math.sin(a) * rad));
-        floret(
+          .add(v(Math.cos(a) * rad, t * 0.42, Math.sin(a) * rad));
+        puff(
+          "blooms",
           p,
-          0.082 + r() * 0.028,
-          at,
-          new T.Color("#fff8ee").multiplyScalar(0.86 + r() * 0.14),
+          a,
+          0.28 + r() * 0.08,
+          0.26 + r() * 0.08,
+          new T.Color("#fff8ee").multiplyScalar(0.88 + r() * 0.12),
           phase,
-          0.92 + r() * 0.14,
         );
       }
     } else if (id === "fothergilla") {
       const tip = at.clone().add(v(0, 0.24, 0));
       twig(at, tip, 0.0055, "blooms", at, "#d4ce9e");
-      for (let j = 0; j < 32; j++) {
-        const a = j * 2.4;
-        const t = j / 32;
-        const root = at.clone().add(v(0, t * 0.24, 0));
-        const end = root
-          .clone()
-          .add(v(Math.cos(a) * 0.085, 0.04, Math.sin(a) * 0.085));
-        twig(root, end, 0.0022, "blooms", at, "#eee9cd");
-        const anther = new T.BufferGeometry();
-        anther.setAttribute(
-          "position",
-          new T.Float32BufferAttribute(
-            [
-              0,
-              0.012,
-              0,
-              0.008,
-              0,
-              0,
-              -0.008,
-              0,
-              0,
-              0,
-              -0.004,
-              0.006,
-            ],
-            3,
-          ),
-        );
-        anther.setIndex([0, 1, 2, 0, 2, 3, 0, 3, 1]);
-        anther.computeVertexNormals();
-        anther.rotateY(a);
-        anther.translate(...end);
-        add("blooms", anther, at, "#fffbed", phase);
+      for (let j = 0; j < 8; j++) {
+        const p = at.clone().add(v((r() - 0.5) * 0.07, 0.02 + (j % 4) * 0.055, (r() - 0.5) * 0.07));
+        puff("blooms", p, yaw + j, 0.22, 0.3, "#f4f0dc", phase);
       }
     } else if (id === "dogwood" && i % 3 === 0) {
-      for (let j = 0; j < 16; j++) {
+      puff("blooms", at.clone().add(v(0, 0.04, 0)), yaw, 0.26, 0.2, "#f4f0de", phase);
+      puff(
+        "blooms",
+        at.clone().add(v(0.04, 0.02, -0.03)),
+        yaw + 1.1,
+        0.2,
+        0.16,
+        "#efe8d2",
+        phase,
+      );
+      for (let j = 0; j < 6; j++) {
         const a = j * 2.4;
-        const rad = Math.sqrt(j / 16) * 0.14;
+        const rad = Math.sqrt(j / 6) * 0.1;
         const p = at
           .clone()
-          .add(v(Math.cos(a) * rad, 0.02 + r() * 0.04, Math.sin(a) * rad));
-        floret(p, 0.028, at, "#f4f0de", phase, 1.22);
-        if (j < 8) {
-          const berry = new T.SphereGeometry(0.026, 5, 3);
-          berry.scale(1, 0.88, 1);
-          const colors = [];
-          for (let k = 0; k < berry.attributes.position.count; k++) {
-            const s = 0.88 + r() * 0.14;
-            colors.push(0.84 * s, 0.87 * s, 0.8 * s);
-          }
-          berry.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
-          berry.translate(...p.clone().add(v(0, -0.02, 0)));
-          add("fruit", berry, at, "#d8ddd1", phase);
+          .add(v(Math.cos(a) * rad, 0.01 + r() * 0.03, Math.sin(a) * rad));
+        const berry = new T.SphereGeometry(0.026, 5, 3);
+        berry.scale(1, 0.88, 1);
+        const colors = [];
+        for (let k = 0; k < berry.attributes.position.count; k++) {
+          const s = 0.88 + r() * 0.14;
+          colors.push(0.84 * s, 0.87 * s, 0.8 * s);
         }
+        berry.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
+        berry.translate(...p.clone().add(v(0, -0.02, 0)));
+        add("fruit", berry, at, "#d8ddd1", phase, 0);
       }
     } else if (id === "boxwood" && i % 5 === 0) {
-      floret(at, 0.016, at, "#d9d4a7", phase, 1.15);
+      puff("blooms", at, yaw, 0.08, 0.07, "#d9d4a7", phase);
     }
   });
 
@@ -585,7 +506,8 @@ for (const [id, c] of Object.entries(configs)) {
   for (const [name, parts] of Object.entries(layers)) {
     if (!parts.length) continue;
     const geometry = mergeVertices(mergeGeometries(parts));
-    for (const attr of ["position", "anchor", "phase"]) {
+    for (const attr of ["position", "anchor", "phase", "cluster"]) {
+      if (!geometry.attributes[attr]) continue;
       const values = geometry.attributes[attr].array;
       for (let i = 0; i < values.length; i++)
         values[i] = Math.round(values[i] * 4096) / 4096;

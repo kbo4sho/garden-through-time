@@ -35,6 +35,29 @@ Exact days remain the existing Chicago representative-year interpolation, not a 
 
 `modelSeason` consumes `plantState` and profile windows. Two explicit visual interpolations supplement them: hydrangea heads bridge late summer to the winter persistence window rather than disappear and respawn; evergreen bronzing bridges New Year and fades before spring bloom. A third renderer-only interpolation, still driven by `plantState.leaves`, lets leafless dogwood stems read more vividly red in winter. None of these change photographic behavior or plant records.
 
+## Gauntlet craft pass (attempt 2)
+
+Attempt 1 lost at phone distance (390px): discrete leaf cards still read as toys next to photographic billboards. This pass keeps the same four original procedural Meshopt assets, the same `plantState` calendar, and the same layer contract. It changes how foliage *reads at mid-distance*:
+
+- Leaves and blooms are cheap UV cluster cards, not high-vert single-leaf ribbons.
+- Extra volume-fill cards pack the canopy ellipsoid so the silhouette is a mass, not a lace of stems.
+- Winter spray cards on deciduous branch layers draw hashed-alpha twig tufts so January is a textured thicket.
+- Runtime canopy shader stamps species-shaped leaf clusters, a soft interior core, albedo fleck, and interleaved-gradient hashed alpha so card rectangles disappear and the edge goes photographic-fuzzy. No image textures, no sorted transparency, no splats.
+
+Photographic and editorial defaults remain unchanged. Winterberry stays a billboard.
+
+### Asset byte delta
+
+| Asset | PR #7 | Attempt 1 | Attempt 2 | vs #7 |
+| --- | ---: | ---: | ---: | ---: |
+| fothergilla.glb | 1,298,716 | 1,331,700 | 632,228 | −666,488 |
+| hydrangea.glb | 913,820 | 946,884 | 516,004 | −397,816 |
+| dogwood.glb | 1,067,600 | 1,205,656 | 894,724 | −172,876 |
+| boxwood.glb | 1,354,328 | 1,143,672 | 933,032 | −421,296 |
+| **Four-model total** | **4,634,464** | **4,627,912** | **2,975,988** | **−1,658,476 (−36%)** |
+
+Download stays under the 5 MB check. Decoded attributes: 6,297,676 bytes (budget 24 MB). Cheaper cards fund more overlapping canopy at a smaller download.
+
 ## Gauntlet craft pass (attempt 1)
 
 The first optional glTF slice used flat vertex colors and `MeshStandardMaterial` with no wrap or backside response. Leaves and blooms read as low-poly plastic next to the photographic billboards. This pass keeps the same four original procedural assets and the same `plantState` calendar. It raises perceived richness by:
