@@ -75,25 +75,27 @@ function makeMaterial(
         float grain = fract(sin(dot(vStudioWorld.xy, vec2(17.13, 41.27))) * 43758.5453);
         float ring = 0.9 + 0.12 * sin(vStudioWorld.y * 38.0 + grain * 6.2831);
         diffuseColor.rgb *= ring * (0.92 + 0.1 * grain);
-        vec3 winterStem = mix(diffuseColor.rgb, vec3(0.69, 0.24, 0.2), stemAccent * bare);
+        vec3 winterStem = mix(diffuseColor.rgb, vec3(0.56, 0.13, 0.11), stemAccent * bare);
         diffuseColor.rgb = winterStem;
       `,
       );
     }
     // Studio wrap + stylized leaf transmission. Distinct from photographic billboards.
+    // Attempt 2: a little more interior lift so 390px canopies read as volume.
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <opaque_fragment>",
       `
       vec3 studioV = normalize(vViewPosition);
       float ndv = abs(dot(normal, studioV));
-      float wrap = clamp((ndv * 0.35) + 0.22, 0.0, 1.0);
-      float interior = clamp(length(vStudioWorld.xz) * 0.22 + vStudioWorld.y * 0.08, 0.0, 1.0);
-      outgoingLight *= 0.86 + 0.18 * interior;
-      outgoingLight += diffuseColor.rgb * wrap * ${name === "leaves" ? "0.28" : "0.14"};
+      float wrap = clamp((ndv * 0.42) + 0.26, 0.0, 1.0);
+      float interior = clamp(length(vStudioWorld.xz) * 0.18 + vStudioWorld.y * 0.1, 0.0, 1.0);
+      float rim = pow(clamp(1.0 - ndv, 0.0, 1.0), 1.45);
+      outgoingLight *= 0.88 + 0.2 * interior;
+      outgoingLight += diffuseColor.rgb * wrap * ${name === "leaves" ? "0.34" : "0.18"};
       ${
         name === "leaves"
-          ? `outgoingLight += diffuseColor.rgb * vec3(1.08, 0.96, 0.74) * (1.0 - ndv) * 0.2;`
-          : ""
+          ? `outgoingLight += diffuseColor.rgb * vec3(1.06, 0.97, 0.78) * rim * 0.22;`
+          : `outgoingLight += diffuseColor.rgb * rim * 0.08;`
       }
       ${
         name === "blooms"
@@ -105,7 +107,7 @@ function makeMaterial(
     );
   };
   material.customProgramCacheKey = () =>
-    `studio-botanical-v1-${name}-${profileId}`;
+    `studio-botanical-v2-${name}-${profileId}`;
   if (name === "leaves") material.color.set("#ffffff");
   return { material, uniforms };
 }

@@ -1190,7 +1190,9 @@ function SnapshotCamera({
         distance = Math.max(distance, corner.dot(direction) + Math.max(Math.abs(corner.dot(up)) / tan, Math.abs(corner.dot(right)) / (tan * aspect)));
       }
       // Fit the same authored bed in narrow phone and wide contact-sheet frames.
-      return { position: center.clone().addScaledVector(direction, distance * 1.06).toArray() as [number, number, number], target: center.toArray() as [number, number, number], fov: base.fov, halfH: 0 };
+      // Phone 390px is the fidelity gate: hold plants closer so canopy mass reads.
+      const pad = size.width <= 480 ? 1.02 : 1.06;
+      return { position: center.clone().addScaledVector(direction, distance * pad).toArray() as [number, number, number], target: center.toArray() as [number, number, number], fov: base.fov, halfH: 0 };
     }
     if (viewId !== "seasonal-detail" || !focus) {
       return { ...base, halfH: 0 };
