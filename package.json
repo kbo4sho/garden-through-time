@@ -10,7 +10,9 @@
     "dev": "vite",
     "build": "node scripts/build-sites.mjs",
     "preview": "vite preview",
-    "check": "tsc -b --pretty false && node scripts/check-share-link.mjs"
+    "check": "tsc -b --pretty false && node scripts/check-share-link.mjs && node scripts/check-models.mjs",
+    "models:generate": "node scripts/generate-plant-models.mjs",
+    "check:models": "node scripts/check-models.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.4",
@@ -23,10 +25,14 @@
     "three": "^0.181.1"
   },
   "devDependencies": {
+    "@gltf-transform/core": "^4.5.0",
+    "@gltf-transform/extensions": "^4.5.0",
+    "@gltf-transform/functions": "^4.5.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/three": "^0.181.0",
     "@vitejs/plugin-react": "^5.1.1",
+    "meshoptimizer": "^1.2.0",
     "typescript": "^5.9.3",
     "vite": "^7.2.2"
   }

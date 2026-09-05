@@ -27,16 +27,16 @@ import GardenScene, {
 } from "./components/GardenScene";
 import {
   buildComposition,
-  compositionTemplates,
+  compositionTemplates as photographicTemplates,
   compositionPlants,
   defaultTemplateId,
   nativeFothergilla,
   plantGroups,
   plants,
-  previewTemplateForSize,
+  previewTemplateForSize as photographicPreviewTemplateForSize,
   seasonalEvidenceFor,
   templateIsAvailable,
-  templatesForSize,
+
   type ClusterSize,
   type CompositionTemplate,
   type LibraryAccess,
@@ -57,6 +57,8 @@ import {
 } from "./lib/shareLink";
 import { PHONE_LAYOUT_QUERY, readPhoneLayout } from "./lib/viewport";
 
+import { modelYearTemplate } from './data/modelPlants';
+
 const monthTicks = [
   { label: "Jan", day: 1 },
   { label: "Feb", day: 32 },
@@ -74,7 +76,11 @@ const monthTicks = [
 
 const previewParams = new URLSearchParams(window.location.search);
 const visualStyle: VisualStyle =
-  previewParams.get("style") === "editorial" ? "editorial" : "photographic";
+  previewParams.get("renderer") === "gltf" || previewParams.get("style") === "model3d"
+    ? "model3d" : previewParams.get("style") === "editorial" ? "editorial" : "photographic";
+const compositionTemplates = visualStyle === "model3d" ? [...photographicTemplates, modelYearTemplate] : photographicTemplates;
+const templatesForSize = (size: ClusterSize) => compositionTemplates.filter((template) => template.size === size);
+const previewTemplateForSize = (size: ClusterSize) => visualStyle === "model3d" && size === 7 ? modelYearTemplate : photographicPreviewTemplateForSize(size);
 const shareCatalog: ShareCatalog = {
   templates: compositionTemplates,
   plantIds: new Set<string>(plants.map((plant) => plant.id)),
@@ -1016,6 +1022,7 @@ export default function App() {
   return (
     <main
       className={`experience-shell${visualStyle === "editorial" ? " is-editorial" : ""}${phoneLayout ? " is-phone" : ""}${isShareRecipient ? " is-share" : ""}${toolsOpen ? " is-tools-open" : ""}${detailsOpen ? " is-details-open" : ""}`}
+      data-renderer={visualStyle}
       data-sent-from={authorName || undefined}
       data-layout={phoneLayout ? "phone" : "desktop"}
     >

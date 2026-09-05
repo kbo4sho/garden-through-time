@@ -144,6 +144,7 @@ export const serializeShareSearch = (
   extras: ShareSerializeExtras = {},
 ) => {
   const params = new URLSearchParams();
+  if (extras.style === "model3d") params.set("renderer", "gltf");
   if (extras.style === "editorial") params.set("style", "editorial");
   params.set("day", String(clampDayOfYear(snapshot.day)));
   params.set("template", snapshot.templateId);
