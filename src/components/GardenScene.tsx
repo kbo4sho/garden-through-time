@@ -542,7 +542,7 @@ function SeasonalBillboardCanopy({
       },
       uHueEase: {
         value:
-          profile.id === "winterberry" && visualStyle === "model3d" ? 0.2 : 0,
+          profile.id === "winterberry" && visualStyle === "model3d" ? 0.42 : 0,
       },
       uBrightness: {
         value:
@@ -1197,7 +1197,7 @@ function SnapshotCamera({
       }
       // Fit the same authored bed in narrow phone and wide contact-sheet frames.
       // Phone 390px is the fidelity gate: hold plants closer so canopy mass reads.
-      const pad = size.width <= 480 ? 1.012 : 1.06;
+      const pad = size.width <= 480 ? 0.994 : 1.06;
       return { position: center.clone().addScaledVector(direction, distance * pad).toArray() as [number, number, number], target: center.toArray() as [number, number, number], fov: base.fov, halfH: 0 };
     }
     if (viewId !== "seasonal-detail" || !focus) {

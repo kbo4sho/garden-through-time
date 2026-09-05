@@ -80,26 +80,29 @@ function makeMaterial(
       `,
       );
     }
-    // Studio wrap + stylized leaf transmission. Distinct from photographic billboards.
-    // Attempt 2: a little more interior lift so 390px canopies read as volume.
+    // Studio wrap. Attempt 3: darker cores for winter volume; less leaf rim so
+    // 390px canopies read as soft mass instead of outlined jagged cards.
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <opaque_fragment>",
       `
       vec3 studioV = normalize(vViewPosition);
       float ndv = abs(dot(normal, studioV));
-      float wrap = clamp((ndv * 0.42) + 0.26, 0.0, 1.0);
-      float interior = clamp(length(vStudioWorld.xz) * 0.18 + vStudioWorld.y * 0.1, 0.0, 1.0);
-      float rim = pow(clamp(1.0 - ndv, 0.0, 1.0), 1.45);
-      outgoingLight *= 0.88 + 0.2 * interior;
-      outgoingLight += diffuseColor.rgb * wrap * ${name === "leaves" ? "0.34" : name === "branches" ? "0.09" : "0.16"};
+      float wrap = clamp((ndv * ${name === "leaves" ? "0.52" : "0.28"}) + ${name === "leaves" ? "0.34" : "0.18"}, 0.0, 1.0);
+      float radial = length(vStudioWorld.xz);
+      float interior = clamp(radial * 0.16 + vStudioWorld.y * 0.08, 0.0, 1.0);
+      float core = 1.0 - smoothstep(0.06, 0.92, radial * 0.58 + vStudioWorld.y * 0.06);
+      float rim = pow(clamp(1.0 - ndv, 0.0, 1.0), 1.7);
+      outgoingLight *= 0.84 + 0.16 * interior;
+      outgoingLight *= mix(1.0, ${name === "branches" ? "0.56" : "0.74"}, core * ${name === "branches" ? "max(bare, 0.35)" : "0.42"});
+      outgoingLight += diffuseColor.rgb * wrap * ${name === "leaves" ? "0.26" : name === "branches" ? "0.04" : "0.14"};
       ${
         name === "leaves"
-          ? `outgoingLight += diffuseColor.rgb * vec3(1.06, 0.97, 0.78) * rim * 0.22;`
-          : `outgoingLight += diffuseColor.rgb * rim * 0.08;`
+          ? `outgoingLight += diffuseColor.rgb * vec3(1.03, 0.96, 0.8) * rim * 0.07;`
+          : `outgoingLight += diffuseColor.rgb * rim * 0.04;`
       }
       ${
         name === "blooms"
-          ? `outgoingLight += diffuseColor.rgb * 0.08;`
+          ? `outgoingLight += diffuseColor.rgb * 0.07;`
           : ""
       }
       #include <opaque_fragment>
@@ -107,7 +110,7 @@ function makeMaterial(
     );
   };
   material.customProgramCacheKey = () =>
-    `studio-botanical-v2-${name}-${profileId}`;
+    `studio-botanical-v3-${name}-${profileId}`;
   if (name === "leaves") material.color.set("#ffffff");
   return { material, uniforms };
 }
