@@ -1459,13 +1459,20 @@ function Scene({
       {editorial ? null : (
         <>
           <hemisphereLight
-            args={["#fffaf0", "#9d9b8d", (visualStyle === "model3d" ? 1.9 : 1.3) + seasonalWarmth * 0.12]}
+            args={["#fffaf0", "#9d9b8d", (visualStyle === "model3d" ? 1.55 : 1.3) + seasonalWarmth * 0.12]}
           />
           <directionalLight
             position={[-4.5, 7.8, 5.2]}
             color={seasonalWarmth > 0.4 ? "#fff2dc" : "#eef0ec"}
-            intensity={1.62}
+            intensity={visualStyle === "model3d" ? 1.38 : 1.62}
           />
+          {visualStyle === "model3d" ? (
+            <directionalLight
+              position={[3.6, 3.4, -2.8]}
+              color="#e6e2d4"
+              intensity={0.4}
+            />
+          ) : null}
         </>
       )}
       <Ground day={day} visualStyle={visualStyle} />
