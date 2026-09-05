@@ -305,24 +305,62 @@ reduced.yaw = PEEK_YAW_LIMIT;
 stepPeekGesture(reduced, 1 / 60, { reducedMotion: true });
 nearly(reduced.yaw, 0, "Reduced motion snaps back to the authored frame");
 
-const gardenSource = await readFile(
+const gardenScene = await readFile(
   new URL("../src/components/GardenScene.tsx", import.meta.url),
   "utf8",
 );
-assert(
-  gardenSource.includes('powerPreference: "default"'),
-  "WebGL powerPreference stays default",
+const ambientLife = await readFile(
+  new URL("../src/components/AmbientLife.tsx", import.meta.url),
+  "utf8",
 );
-assert(!gardenSource.includes("OrbitControls"), "No free-orbit control chrome");
+const styles = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
+assert(gardenScene.includes('frameloop="demand"'), "Canvas stays on demand frames");
 assert(
-  gardenSource.includes("webglcontextlost"),
+  !gardenScene.includes('frameloop="always"'),
+  "Ambient life must not switch the Canvas to always-on frames",
+);
+assert(
+  gardenScene.includes('powerPreference: "default"'),
+  "Phone Play keeps the default GPU preference",
+);
+assert(
+  gardenScene.includes("webglcontextlost"),
   "Context-loss recovery stays mounted",
 );
-
-const css = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
-assert(css.includes(".garden-canvas"), "Garden canvas selector remains");
+assert(!gardenScene.includes("OrbitControls"), "No free-orbit control chrome");
 assert(
-  /filter:\s*none/.test(css),
+  gardenScene.includes("LimitedPeek"),
+  "Living-bed views mount the limited perspective peek",
+);
+assert(
+  gardenScene.includes("AmbientLife"),
+  "Primary living-bed views mount ambient birds and butterflies",
+);
+assert(
+  gardenScene.includes("getContactTextures"),
+  "Plant–ground contact uses shared shadow and disk textures",
+);
+assert(
+  gardenScene.includes("MODEL_CONTACT_SINK"),
+  "glTF plants sink slightly into the soil",
+);
+assert(
+  (ambientLife.match(/<instancedMesh/g) ?? []).length >= 2,
+  "Birds and butterflies share instanced meshes",
+);
+assert(
+  ambientLife.includes("LIFE_FRAME_MS = 90"),
+  "Ambient motion stays on a demand-frame cadence, not 60 fps",
+);
+assert(styles.includes(".garden-canvas"), "Garden canvas selector remains");
+assert(
+  /\.garden-canvas\s*\{[^}]*filter:\s*none/.test(styles),
+  "WebGL canvas keeps an explicit filter: none",
+);
+assert(
+  !/\.garden-canvas[\s\S]{0,240}filter:\s*(contrast|saturate|blur|brightness)/.test(
+    styles,
+  ),
   "WebGL canvas still has no CSS filter",
 );
 
@@ -331,6 +369,6 @@ if (errors.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, playback does not write history on every tick, phone Play mounts one canvas, unfurl tags point at a Pages OG card, and living-bed peek stays limited and springs back.",
+    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, playback does not write history on every tick, phone Play mounts one canvas, unfurl tags point at a Pages OG card, living-bed peek stays limited and springs back, and ambient life / soft contact keep the Play safeguards.",
   );
 }
