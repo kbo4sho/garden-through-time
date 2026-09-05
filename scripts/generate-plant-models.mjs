@@ -38,8 +38,8 @@ const configs = {
     leaf: 0.28,
     leaves: 8,
     cluster: 3,
-    sprays: 5,
-    fills: 156,
+    sprays: 6,
+    fills: 210,
     color: "#66834b",
   },
   hydrangea: {
@@ -51,8 +51,8 @@ const configs = {
     leaf: 0.41,
     leaves: 4,
     cluster: 3,
-    sprays: 3,
-    fills: 116,
+    sprays: 4,
+    fills: 150,
     color: "#547449",
   },
   dogwood: {
@@ -64,8 +64,8 @@ const configs = {
     leaf: 0.25,
     leaves: 6,
     cluster: 3,
-    sprays: 4,
-    fills: 168,
+    sprays: 5,
+    fills: 230,
     color: "#5a804e",
   },
   boxwood: {
@@ -272,7 +272,7 @@ for (const [id, c] of Object.entries(configs)) {
       const end = clampHabit(
         origin.clone().add(v(Math.cos(a) * len, 0.02 + r() * 0.1, Math.sin(a) * len)),
       );
-      twig(origin, end, 0.0024 + r() * 0.0012);
+      twig(origin, end, 0.0044 + r() * 0.0022);
     }
   }
   function floret(at, size, anchor, tint, phase) {
@@ -313,7 +313,7 @@ for (const [id, c] of Object.entries(configs)) {
       twig(
         prev,
         next,
-        (id === "dogwood" ? 0.015 : 0.022) * (1 - t * 0.58),
+        (id === "dogwood" ? 0.018 : 0.026) * (1 - t * 0.5),
         "branches",
         prev,
       );
@@ -330,7 +330,7 @@ for (const [id, c] of Object.entries(configs)) {
               ),
             ),
           );
-          twig(next, end, 0.0064);
+          twig(next, end, 0.0084);
           if (c.sprays && step >= 2) spray(end, c.sprays);
           for (let j = 0; j < c.leaves; j++) {
             const along =
@@ -372,7 +372,7 @@ for (const [id, c] of Object.entries(configs)) {
     const end = clampHabit(
       origin.clone().add(v(Math.cos(a2) * len, 0.015 + r() * 0.07, Math.sin(a2) * len)),
     );
-    twig(origin, end, 0.0022 + r() * 0.0014);
+    twig(origin, end, 0.0056 + r() * 0.003);
     if (i % 3 === 0) {
       leafCluster(end, a2, c.leaf * (0.86 + r() * 0.28), r());
     }

@@ -538,7 +538,11 @@ function SeasonalBillboardCanopy({
       uOpacity: { value: 1 },
       uSaturation: {
         value:
-          profile.id === "dogwood" && visualStyle === "photographic" ? 0.38 : 0.9,
+          profile.id === "dogwood" && visualStyle !== "editorial" ? 0.38 : 0.9,
+      },
+      uHueEase: {
+        value:
+          profile.id === "winterberry" && visualStyle === "model3d" ? 0.2 : 0,
       },
       uBrightness: {
         value:
@@ -652,6 +656,7 @@ function SeasonalBillboardCanopy({
           uniform vec4 uExtraWeights;
           uniform float uOpacity;
           uniform float uSaturation;
+          uniform float uHueEase;
           uniform float uBrightness;
           uniform float uEditorial;
           varying vec2 vUv;
@@ -679,6 +684,7 @@ function SeasonalBillboardCanopy({
             float dormant = clamp(uWeights.x, 0.0, 1.0);
             float seasonalSaturation = mix(uSaturation, min(uSaturation, 0.58), dormant);
             color = mix(vec3(luminance), color, seasonalSaturation);
+            color = mix(color, vec3(color.r * 1.14, color.g * 0.8, color.b * 0.7), uHueEase);
             color = clamp((color - 0.5) * 1.045 + 0.5, 0.0, 1.0);
             color *= mix(1.0, 0.86, dormant) * uBrightness;
             float diffuse = 0.95 + 0.07 * max(dot(normalize(vNormal), normalize(vec3(-0.35, 0.72, 0.6))), 0.0);
@@ -1191,7 +1197,7 @@ function SnapshotCamera({
       }
       // Fit the same authored bed in narrow phone and wide contact-sheet frames.
       // Phone 390px is the fidelity gate: hold plants closer so canopy mass reads.
-      const pad = size.width <= 480 ? 1.02 : 1.06;
+      const pad = size.width <= 480 ? 1.012 : 1.06;
       return { position: center.clone().addScaledVector(direction, distance * pad).toArray() as [number, number, number], target: center.toArray() as [number, number, number], fov: base.fov, halfH: 0 };
     }
     if (viewId !== "seasonal-detail" || !focus) {

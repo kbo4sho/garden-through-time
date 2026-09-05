@@ -75,7 +75,7 @@ function makeMaterial(
         float grain = fract(sin(dot(vStudioWorld.xy, vec2(17.13, 41.27))) * 43758.5453);
         float ring = 0.9 + 0.12 * sin(vStudioWorld.y * 38.0 + grain * 6.2831);
         diffuseColor.rgb *= ring * (0.92 + 0.1 * grain);
-        vec3 winterStem = mix(diffuseColor.rgb, vec3(0.56, 0.13, 0.11), stemAccent * bare);
+        vec3 winterStem = mix(diffuseColor.rgb, vec3(0.4, 0.075, 0.068), stemAccent * bare);
         diffuseColor.rgb = winterStem;
       `,
       );
@@ -91,7 +91,7 @@ function makeMaterial(
       float interior = clamp(length(vStudioWorld.xz) * 0.18 + vStudioWorld.y * 0.1, 0.0, 1.0);
       float rim = pow(clamp(1.0 - ndv, 0.0, 1.0), 1.45);
       outgoingLight *= 0.88 + 0.2 * interior;
-      outgoingLight += diffuseColor.rgb * wrap * ${name === "leaves" ? "0.34" : "0.18"};
+      outgoingLight += diffuseColor.rgb * wrap * ${name === "leaves" ? "0.34" : name === "branches" ? "0.09" : "0.16"};
       ${
         name === "leaves"
           ? `outgoingLight += diffuseColor.rgb * vec3(1.06, 0.97, 0.78) * rim * 0.22;`
