@@ -538,7 +538,11 @@ function SeasonalBillboardCanopy({
       uOpacity: { value: 1 },
       uSaturation: {
         value:
-          profile.id === "dogwood" && visualStyle === "photographic" ? 0.38 : 0.9,
+          profile.id === "dogwood" && visualStyle !== "editorial" ? 0.38 : 0.9,
+      },
+      uHueEase: {
+        value:
+          profile.id === "winterberry" && visualStyle === "model3d" ? 0.2 : 0,
       },
       uBrightness: {
         value:
@@ -652,6 +656,7 @@ function SeasonalBillboardCanopy({
           uniform vec4 uExtraWeights;
           uniform float uOpacity;
           uniform float uSaturation;
+          uniform float uHueEase;
           uniform float uBrightness;
           uniform float uEditorial;
           varying vec2 vUv;
@@ -679,6 +684,7 @@ function SeasonalBillboardCanopy({
             float dormant = clamp(uWeights.x, 0.0, 1.0);
             float seasonalSaturation = mix(uSaturation, min(uSaturation, 0.58), dormant);
             color = mix(vec3(luminance), color, seasonalSaturation);
+            color = mix(color, vec3(color.r * 1.14, color.g * 0.8, color.b * 0.7), uHueEase);
             color = clamp((color - 0.5) * 1.045 + 0.5, 0.0, 1.0);
             color *= mix(1.0, 0.86, dormant) * uBrightness;
             float diffuse = 0.95 + 0.07 * max(dot(normalize(vNormal), normalize(vec3(-0.35, 0.72, 0.6))), 0.0);
@@ -1190,7 +1196,9 @@ function SnapshotCamera({
         distance = Math.max(distance, corner.dot(direction) + Math.max(Math.abs(corner.dot(up)) / tan, Math.abs(corner.dot(right)) / (tan * aspect)));
       }
       // Fit the same authored bed in narrow phone and wide contact-sheet frames.
-      return { position: center.clone().addScaledVector(direction, distance * 1.06).toArray() as [number, number, number], target: center.toArray() as [number, number, number], fov: base.fov, halfH: 0 };
+      // Phone 390px is the fidelity gate: hold plants closer so canopy mass reads.
+      const pad = size.width <= 480 ? 1.012 : 1.06;
+      return { position: center.clone().addScaledVector(direction, distance * pad).toArray() as [number, number, number], target: center.toArray() as [number, number, number], fov: base.fov, halfH: 0 };
     }
     if (viewId !== "seasonal-detail" || !focus) {
       return { ...base, halfH: 0 };
@@ -1456,10 +1464,31 @@ function Scene({
         visualStyle={visualStyle}
         instances={visibleInstances}
       />
-      {editorial ? null : (
+      {editorial ? null : visualStyle === "model3d" ? (
         <>
           <hemisphereLight
-            args={["#fffaf0", "#9d9b8d", (visualStyle === "model3d" ? 1.9 : 1.3) + seasonalWarmth * 0.12]}
+            args={["#f3efe4", "#7d786c", 2.12 + seasonalWarmth * 0.08]}
+          />
+          <directionalLight
+            position={[-3.6, 6.2, 4.4]}
+            color={seasonalWarmth > 0.4 ? "#ffe6c2" : "#e6e9e4"}
+            intensity={1.04}
+          />
+          <directionalLight
+            position={[3.4, 2.6, -2.6]}
+            color="#c4d0d6"
+            intensity={0.4}
+          />
+          <directionalLight
+            position={[0.2, 5.4, -5.0]}
+            color="#fff3e4"
+            intensity={0.2}
+          />
+        </>
+      ) : (
+        <>
+          <hemisphereLight
+            args={["#fffaf0", "#9d9b8d", 1.3 + seasonalWarmth * 0.12]}
           />
           <directionalLight
             position={[-4.5, 7.8, 5.2]}
@@ -1576,7 +1605,11 @@ export default function GardenScene(props: GardenSceneProps) {
           toneMapping: editorial
             ? THREE.NoToneMapping
             : THREE.ACESFilmicToneMapping,
-          toneMappingExposure: editorial ? 1 : 1.02,
+          toneMappingExposure: editorial
+            ? 1
+            : props.visualStyle === "model3d"
+              ? 1.08
+              : 1.02,
           powerPreference: "default",
         }}
         onCreated={({ gl, scene }) => {

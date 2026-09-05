@@ -30,6 +30,10 @@ export function modelSeason(profile: PlantProfile, day: number) {
     : state.fall;
   const leafColor = new THREE.Color(profile.leaf.summer);
   const fallColor = new THREE.Color(profile.leaf.fall);
+  // Light ease of dogwood's magenta-leaning fall toward orange-red stems.
+  if (profile.id === "dogwood") {
+    fallColor.lerp(new THREE.Color("#a44632"), 0.32);
+  }
   const flowerColor = new THREE.Color(profile.bloom.color);
   if (profile.id === "hydrangea") {
     flowerColor.lerp(
