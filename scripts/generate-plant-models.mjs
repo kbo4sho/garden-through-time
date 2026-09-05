@@ -243,14 +243,14 @@ for (const [id, c] of Object.entries(configs)) {
     layers[layer].push(g);
   }
 
-  function twig(a, b, radius, layer = "branches", anchor = a, tint) {
+  function twig(a, b, radius, layer = "branches", anchor = a, tint, radial = 5) {
     const d = b.clone().sub(a);
     const len = Math.max(0.004, d.length());
     const g = new T.CylinderGeometry(
       radius * (0.5 + r() * 0.12),
       radius * (1.02 + r() * 0.1),
       len,
-      5,
+      radial,
       1,
       true,
     );
@@ -281,11 +281,38 @@ for (const [id, c] of Object.entries(configs)) {
     add(layer, g, anchor, bark);
   }
 
+  function tinyLeaf(size) {
+    const w = size * 0.4;
+    const g = new T.BufferGeometry();
+    g.setAttribute(
+      "position",
+      new T.Float32BufferAttribute(
+        [
+          -w,
+          size * 0.08,
+          0,
+          0,
+          0,
+          size * 0.14,
+          w,
+          size * 0.08,
+          0,
+          0,
+          size,
+          size * 0.03,
+        ],
+        3,
+      ),
+    );
+    g.setIndex([0, 1, 3, 1, 2, 3]);
+    g.computeVertexNormals();
+    return g;
+  }
+
   function leafShape(size) {
     if (id === "hydrangea")
       return leafRibbon(size, 12, (t) => oakWidth(t, size), 0.045, 0.14);
-    if (id === "boxwood")
-      return leafRibbon(size, 4, (t) => boxwoodWidth(t, size), 0.08, 0.18);
+    if (id === "boxwood") return tinyLeaf(size);
     if (id === "dogwood")
       return leafRibbon(size, 6, (t) => dogwoodWidth(t, size), 0.05, 0.17);
     return leafRibbon(size, 7, (t) => fothergillaWidth(t, size), 0.05, 0.15);
@@ -381,32 +408,53 @@ for (const [id, c] of Object.entries(configs)) {
             end.y = Math.min(end.y, limit);
           }
           twig(next, end, baseRadius * 0.42, "branches", next, barkColor);
-          if (id !== "boxwood" && step >= 4 && r() > 0.62) {
-            const twigEnd = end
-              .clone()
-              .add(
-                v(
-                  Math.cos(a + 0.4) * (0.08 + r() * 0.12),
-                  0.05 + r() * 0.1,
-                  Math.sin(a + 0.4) * (0.08 + r() * 0.12),
-                ),
+          if (id !== "boxwood") {
+            const twigs = id === "dogwood" ? 4 : 3;
+            for (let k = 0; k < twigs; k++) {
+              const twigAngle = a + (k - 1) * (0.4 + r() * 0.7);
+              const twigEnd = end
+                .clone()
+                .add(
+                  v(
+                    Math.cos(twigAngle) * (0.12 + r() * 0.22),
+                    0.03 + r() * 0.18,
+                    Math.sin(twigAngle) * (0.12 + r() * 0.22),
+                  ),
+                );
+              twig(
+                end.clone().lerp(next, r() * 0.4),
+                twigEnd,
+                baseRadius * 0.14,
+                "branches",
+                end,
+                barkColor,
+                3,
               );
-            twig(end, twigEnd, baseRadius * 0.22, "branches", end, barkColor);
+            }
           }
-          for (let j = 0; j < c.leaves; j++) {
+          const leafCount = id === "boxwood" ? c.leaves + 6 : c.leaves;
+          for (let j = 0; j < leafCount; j++) {
             const lt =
               id === "dogwood" || id === "hydrangea"
-                ? (Math.floor(j / 2) + 1) / (Math.ceil(c.leaves / 2) + 1)
-                : (j + 1) / (c.leaves + 1);
+                ? (Math.floor(j / 2) + 1) / (Math.ceil(leafCount / 2) + 1)
+                : (j + 1) / (leafCount + 1);
             const at = next.clone().lerp(end, lt);
             const la = a + (j % 2 ? 1 : -1) * 1.25;
             const petiole = at
               .clone()
               .add(v(Math.cos(la) * 0.055, 0.022, Math.sin(la) * 0.055));
-            twig(at, petiole, 0.0024, "branches", at, barkColor);
-            leaf(petiole, la, c.leaf * (1.08 + r() * 0.82), r());
-            if (id === "boxwood")
-              leaf(petiole, la + Math.PI, c.leaf * (1 + r() * 0.55), r());
+            twig(at, petiole, 0.0022, "branches", at, barkColor, 3);
+            leaf(
+              petiole,
+              la,
+              c.leaf * (id === "boxwood" ? 0.72 + r() * 0.35 : 1.08 + r() * 0.82),
+              r(),
+            );
+            if (id === "boxwood") {
+              leaf(petiole, la + Math.PI, c.leaf * (0.65 + r() * 0.4), r());
+              if (j % 2 === 0)
+                leaf(petiole, la + 1.1, c.leaf * (0.55 + r() * 0.3), r());
+            }
           }
           if (step >= 4 && side === 0) terminals.push(end);
         }
@@ -414,6 +462,36 @@ for (const [id, c] of Object.entries(configs)) {
       prev = next;
     }
     terminals.push(prev);
+    if (id === "fothergilla" || id === "dogwood") {
+      for (let spray = 0; spray < (id === "dogwood" ? 9 : 8); spray++) {
+        const sa = angle + (r() - 0.5) * 1.4;
+        const start = v(
+          Math.cos(sa) * reach * (0.15 + r() * 0.45),
+          height * (0.35 + r() * 0.45),
+          Math.sin(sa) * reach * (0.15 + r() * 0.45),
+        );
+        const finish = start
+          .clone()
+          .add(
+            v(
+              Math.cos(sa) * (0.08 + r() * 0.16),
+              0.12 + r() * 0.28,
+              Math.sin(sa) * (0.08 + r() * 0.16),
+            ),
+          );
+        twig(
+          start,
+          finish,
+          id === "dogwood" ? 0.006 : 0.005,
+          "branches",
+          start,
+          id === "dogwood"
+            ? new T.Color("#b83a30")
+            : new T.Color(barkTint[id]),
+          3,
+        );
+      }
+    }
   }
 
   terminals.forEach((at, i) => {
@@ -440,9 +518,9 @@ for (const [id, c] of Object.entries(configs)) {
     } else if (id === "fothergilla") {
       const tip = at.clone().add(v(0, 0.24, 0));
       twig(at, tip, 0.0055, "blooms", at, "#d4ce9e");
-      for (let j = 0; j < 24; j++) {
+      for (let j = 0; j < 32; j++) {
         const a = j * 2.4;
-        const t = j / 24;
+        const t = j / 32;
         const root = at.clone().add(v(0, t * 0.24, 0));
         const end = root
           .clone()

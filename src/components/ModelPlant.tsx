@@ -68,10 +68,11 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial) {
         vec3 autumnColor = mix(fallColor, fallColor * vec3(1.16, .86, .6), vSeasonPhase);
         vec3 foliage = mix(summerColor, autumnColor, autumn);
         float vein = 0.86 + 0.16 * diffuseColor.g;
-        float mottling = 0.86 + 0.2 * fract(sin(vSeasonPhase * 127.1) * 43758.5453);
-        diffuseColor.rgb *= foliage * vein * mottling;
+        float mottling = 0.84 + 0.22 * fract(sin(vSeasonPhase * 127.1 + vWorldPosition.x * 9.0) * 43758.5453);
+        float canopy = mix(0.7, 1.0, clamp(vWorldPosition.y * 0.42, 0.0, 1.0));
+        diffuseColor.rgb *= foliage * vein * mottling * canopy;
         if (!gl_FrontFacing) {
-          diffuseColor.rgb *= vec3(1.12, 1.04, 0.82);
+          diffuseColor.rgb *= vec3(1.14, 1.05, 0.8);
         }
       `,
       );
@@ -80,9 +81,10 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial) {
         "#include <color_fragment>",
         `
         #include <color_fragment>
-        float mottling = 0.9 + 0.12 * vSeasonPhase;
-        vec3 winterRed = vec3(0.78, 0.22, 0.18);
-        diffuseColor.rgb = mix(diffuseColor.rgb * mottling, winterRed * (0.72 + 0.28 * mottling), stemBoost);
+        float grain = 0.78 + 0.28 * fract(sin(vWorldPosition.y * 52.0 + vWorldPosition.x * 13.7) * 43758.5453);
+        float mottling = (0.88 + 0.14 * vSeasonPhase) * grain;
+        vec3 winterRed = vec3(0.74, 0.2, 0.16);
+        diffuseColor.rgb = mix(diffuseColor.rgb * mottling, winterRed * (0.7 + 0.3 * grain), stemBoost);
       `,
       );
       shader.fragmentShader = shader.fragmentShader.replace(
@@ -130,7 +132,7 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial) {
     `,
     );
   };
-  material.customProgramCacheKey = () => `seasonal-gltf-v2-${name}`;
+  material.customProgramCacheKey = () => `seasonal-gltf-v3-${name}`;
   if (name === "leaves") material.color.set("#ffffff");
   return { material, uniforms };
 }

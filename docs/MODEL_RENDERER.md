@@ -51,13 +51,13 @@ No image textures and no third-party meshes. Photographic and editorial defaults
 
 | Asset | PR #7 (bytes) | This pass (bytes) | Delta |
 | --- | ---: | ---: | ---: |
-| fothergilla.glb | 1,298,716 | 1,212,164 | −86,552 |
-| hydrangea.glb | 913,820 | 942,788 | +28,968 |
-| dogwood.glb | 1,067,600 | 1,152,044 | +84,444 |
-| boxwood.glb | 1,354,328 | 1,583,660 | +229,332 |
-| **Four-model total** | **4,634,464** | **4,890,656** | **+256,192 (+5.5%)** |
+| fothergilla.glb | 1,298,716 | 1,331,700 | +32,984 |
+| hydrangea.glb | 913,820 | 946,884 | +33,064 |
+| dogwood.glb | 1,067,600 | 1,205,656 | +138,056 |
+| boxwood.glb | 1,354,328 | 1,143,672 | −210,656 |
+| **Four-model total** | **4,634,464** | **4,627,912** | **−6,552 (−0.1%)** |
 
-Download stays under the 5 MB check (`4,890,656 < 5,000,000`). Decoded attributes: 10,213,517 bytes, well under the 24 MB shared-geometry budget.
+Download stays under the 5 MB check (`4,627,912 < 5,000,000`). Decoded attributes: 9,561,614 bytes, well under the 24 MB shared-geometry budget. Boxwood leaf cards are cheaper folded quads so the same download funds denser evergreen cover and more deciduous winter twiglets.
 
 ## Safeguards and checks
 
