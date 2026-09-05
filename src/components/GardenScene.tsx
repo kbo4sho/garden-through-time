@@ -1151,14 +1151,29 @@ function LimitedPeek({
   useEffect(() => {
     if (!enabled) return;
     const canvas = gl.domElement;
+    const host = canvas.parentElement;
+    const roots = [canvas, host].filter((node): node is HTMLElement => Boolean(node));
     canvas.style.touchAction = "none";
     canvas.style.cursor = "grab";
+    if (host) host.style.touchAction = "none";
     const state = gesture.current;
+
+    const publish = () => {
+      const frame = canvas.closest("[data-view]");
+      if (!(frame instanceof HTMLElement)) return;
+      frame.dataset.peekYaw = state.yaw.toFixed(5);
+      frame.dataset.peekPitch = state.pitch.toFixed(5);
+      frame.dataset.peekHolding = state.holding ? "1" : "0";
+    };
+
+    const pointerIdOf = (event: PointerEvent) =>
+      Number.isFinite(event.pointerId) ? event.pointerId : 1;
 
     const onDown = (event: PointerEvent) => {
       if (state.pointerId !== null) return;
+      if (event.isPrimary === false) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
-      state.pointerId = event.pointerId;
+      state.pointerId = pointerIdOf(event);
       state.lastX = event.clientX;
       state.lastY = event.clientY;
       state.moved = 0;
@@ -1167,18 +1182,23 @@ function LimitedPeek({
       state.targetYaw = state.yaw;
       state.targetPitch = state.pitch;
       try {
-        canvas.setPointerCapture(event.pointerId);
+        canvas.setPointerCapture(state.pointerId);
       } catch {
         // Capture is best-effort; move/up still land on the canvas.
       }
       canvas.style.cursor = "grabbing";
+      publish();
       invalidate();
     };
 
     const onMove = (event: PointerEvent) => {
-      if (state.pointerId !== event.pointerId) return;
+      if (state.pointerId === null) return;
+      if (event.pointerId !== state.pointerId && Number.isFinite(event.pointerId)) {
+        return;
+      }
       const dx = event.clientX - state.lastX;
       const dy = event.clientY - state.lastY;
+      if (dx === 0 && dy === 0) return;
       state.lastX = event.clientX;
       state.lastY = event.clientY;
       state.moved += Math.hypot(dx, dy);
@@ -1191,11 +1211,15 @@ function LimitedPeek({
       );
       state.targetYaw = next.yaw;
       state.targetPitch = next.pitch;
+      publish();
       invalidate();
     };
 
     const release = (event: PointerEvent) => {
-      if (state.pointerId !== event.pointerId) return;
+      if (state.pointerId === null) return;
+      if (event.pointerId !== state.pointerId && Number.isFinite(event.pointerId)) {
+        return;
+      }
       state.pointerId = null;
       state.holding = false;
       state.targetYaw = 0;
@@ -1208,20 +1232,55 @@ function LimitedPeek({
         }
       }
       canvas.style.cursor = "grab";
+      publish();
       invalidate();
     };
 
-    canvas.addEventListener("pointerdown", onDown);
-    canvas.addEventListener("pointermove", onMove);
-    canvas.addEventListener("pointerup", release);
-    canvas.addEventListener("pointercancel", release);
+    let pump = 0;
+    const pumpFrames = () => {
+      invalidate();
+      const live =
+        state.holding ||
+        state.yaw !== 0 ||
+        state.pitch !== 0 ||
+        state.yawVel !== 0 ||
+        state.pitchVel !== 0;
+      pump = live ? window.requestAnimationFrame(pumpFrames) : 0;
+    };
+    const ensurePump = () => {
+      if (!pump) pump = window.requestAnimationFrame(pumpFrames);
+    };
+
+    const options = { capture: true } as const;
+    const onDownWithPump = (event: PointerEvent) => {
+      onDown(event);
+      ensurePump();
+    };
+    const onMoveWithPump = (event: PointerEvent) => {
+      onMove(event);
+      if (state.holding) ensurePump();
+    };
+    const releaseWithPump = (event: PointerEvent) => {
+      release(event);
+      ensurePump();
+    };
+    for (const root of roots) {
+      root.addEventListener("pointerdown", onDownWithPump, options);
+      root.addEventListener("pointermove", onMoveWithPump, options);
+      root.addEventListener("pointerup", releaseWithPump, options);
+      root.addEventListener("pointercancel", releaseWithPump, options);
+    }
     return () => {
-      canvas.removeEventListener("pointerdown", onDown);
-      canvas.removeEventListener("pointermove", onMove);
-      canvas.removeEventListener("pointerup", release);
-      canvas.removeEventListener("pointercancel", release);
+      if (pump) window.cancelAnimationFrame(pump);
+      for (const root of roots) {
+        root.removeEventListener("pointerdown", onDownWithPump, options);
+        root.removeEventListener("pointermove", onMoveWithPump, options);
+        root.removeEventListener("pointerup", releaseWithPump, options);
+        root.removeEventListener("pointercancel", releaseWithPump, options);
+      }
       canvas.style.touchAction = "";
       canvas.style.cursor = "";
+      if (host) host.style.touchAction = "";
     };
   }, [enabled, gesture, gl, invalidate]);
 
@@ -1235,6 +1294,12 @@ function LimitedPeek({
       before.yawVel !== 0 ||
       before.pitchVel !== 0;
     stepPeekGesture(before, dt, { reducedMotion });
+    const frame = gl.domElement.closest("[data-view]");
+    if (frame instanceof HTMLElement) {
+      frame.dataset.peekYaw = before.yaw.toFixed(5);
+      frame.dataset.peekPitch = before.pitch.toFixed(5);
+      frame.dataset.peekHolding = before.holding ? "1" : "0";
+    }
     if (wasLive) invalidate();
   });
 

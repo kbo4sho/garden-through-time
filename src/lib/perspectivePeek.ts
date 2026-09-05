@@ -8,10 +8,10 @@ export const PEEK_DRAG_THRESHOLD_PX = 7;
 /** Follow the pointer while held. Higher is snappier. */
 export const PEEK_FOLLOW = 16;
 /** Critically damped spring back to the authored frame. */
-export const PEEK_SPRING_STIFFNESS = 42;
+export const PEEK_SPRING_STIFFNESS = 54;
 export const PEEK_SPRING_DAMPING = 2 * Math.sqrt(PEEK_SPRING_STIFFNESS);
-export const PEEK_SETTLE_ANGLE = 0.0003;
-export const PEEK_SETTLE_VELOCITY = 0.0009;
+export const PEEK_SETTLE_ANGLE = 0.01;
+export const PEEK_SETTLE_VELOCITY = 0.08;
 
 export type PeekAngles = {
   yaw: number;

@@ -56,6 +56,7 @@ seasonal capture, and tracing the content/access boundary.
 - Pointer, keyboard, and touch-oriented range input reach every day from January 1 through December 31.
 - The date, seasonal narrative, plant phases, and scene update together.
 - Plant selection exposes identity, bloom range, foliage behavior, mature size, light, moisture, hardiness, and an Extension source.
+- Photographic and glTF living-bed canvases accept a damped pointer/touch peek of at most ±13° yaw and ±7° pitch. Release springs back to the authored frame. A tap still selects a plant; a drag of 7px or more does not. Editorial ortho views stay fixed. Chromium at 1440×900 and 390×844 confirmed the peek, spring-back, one-canvas phone share, and Play still advancing the year.
 - Conditions disclose the representative-year assumption and the composition's Chicago / Zone 6a fit.
 - The Native species filter replaces Mount Airy fothergilla with dwarf fothergilla throughout the scene, plant rail, and detail card. It explains the retained design role and compatibility, updates scale and identity, exposes all six source fields, and toggles back without stale state.
 - Desktop and 390×844 phone captures retain the scene, plant identity, and year control.
