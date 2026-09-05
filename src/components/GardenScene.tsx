@@ -538,7 +538,15 @@ function SeasonalBillboardCanopy({
       uOpacity: { value: 1 },
       uSaturation: {
         value:
-          profile.id === "dogwood" && visualStyle === "photographic" ? 0.38 : 0.9,
+          profile.id === "dogwood" && visualStyle !== "editorial" ? 0.38 : 0.9,
+      },
+      uHueEase: {
+        value:
+          profile.id === "winterberry" && visualStyle === "model3d" ? 0.62 : 0,
+      },
+      uFillMass: {
+        value:
+          profile.id === "winterberry" && visualStyle === "model3d" ? 1 : 0,
       },
       uBrightness: {
         value:
@@ -652,6 +660,8 @@ function SeasonalBillboardCanopy({
           uniform vec4 uExtraWeights;
           uniform float uOpacity;
           uniform float uSaturation;
+          uniform float uHueEase;
+          uniform float uFillMass;
           uniform float uBrightness;
           uniform float uEditorial;
           varying vec2 vUv;
@@ -663,11 +673,13 @@ function SeasonalBillboardCanopy({
             vec4 summer = texture2D(uSummer, vUv);
             vec4 fall = texture2D(uFall, vUv);
             float sourceAlpha = winter.a * uWeights.x + leafout.a * uWeights.y + bloom.a * uWeights.z + summer.a * uWeights.w + fall.a * uExtraWeights.x;
-            if (sourceAlpha < 0.072) discard;
-            float alpha = smoothstep(0.072, 0.19, sourceAlpha) * uOpacity;
-            float groundFeather = smoothstep(0.18, 0.32, vUv.y);
-            alpha *= groundFeather * groundFeather;
-            if (alpha < 0.035) discard;
+            float gate = mix(0.072, 0.032, uFillMass);
+            if (sourceAlpha < gate) discard;
+            float alpha = smoothstep(gate, mix(0.19, 0.1, uFillMass), sourceAlpha) * uOpacity;
+            float groundFeather = smoothstep(mix(0.18, 0.09, uFillMass), mix(0.32, 0.2, uFillMass), vUv.y);
+            alpha *= mix(groundFeather * groundFeather, pow(groundFeather, 1.12), uFillMass);
+            alpha = mix(alpha, min(1.0, sourceAlpha * 1.7 + 0.1), uFillMass * 0.7);
+            if (alpha < mix(0.035, 0.02, uFillMass)) discard;
             vec3 premultiplied =
               winter.rgb * winter.a * uWeights.x +
               leafout.rgb * leafout.a * uWeights.y +
@@ -679,8 +691,9 @@ function SeasonalBillboardCanopy({
             float dormant = clamp(uWeights.x, 0.0, 1.0);
             float seasonalSaturation = mix(uSaturation, min(uSaturation, 0.58), dormant);
             color = mix(vec3(luminance), color, seasonalSaturation);
+            color = mix(color, vec3(min(color.r * 1.2 + 0.05, 1.0), color.g * 0.68, color.b * 0.36), uHueEase);
             color = clamp((color - 0.5) * 1.045 + 0.5, 0.0, 1.0);
-            color *= mix(1.0, 0.86, dormant) * uBrightness;
+            color *= mix(1.0, mix(0.86, 0.74, uFillMass), dormant) * uBrightness;
             float diffuse = 0.95 + 0.07 * max(dot(normalize(vNormal), normalize(vec3(-0.35, 0.72, 0.6))), 0.0);
             gl_FragColor = vec4(color * diffuse, alpha);
             #include <tonemapping_fragment>
@@ -1094,6 +1107,16 @@ function Shrub({
     >
       <GroundingShadow profile={instance.profile} visualStyle={visualStyle} />
       {selected && visualStyle !== "editorial" && <SelectionWash profile={instance.profile} />}
+      {visualStyle === "model3d" && instance.profile.id === "winterberry" ? (
+        <mesh
+          position={[0, instance.profile.photoHeight * 0.42, 0]}
+          scale={[0.72, 1.18, 0.7]}
+          renderOrder={-2}
+        >
+          <sphereGeometry args={[instance.profile.photoHeight * 0.24, 14, 10]} />
+          <meshStandardMaterial color="#4a1c22" roughness={0.97} metalness={0} />
+        </mesh>
+      ) : null}
       {visualStyle === "model3d" && hasPlantModel(instance.profile.id) ? (
         <ModelBoundary key={instance.profile.id} fallback={
           <SeasonalBillboardCanopy profile={instance.profile} day={day} visualStyle="photographic" viewId={viewId} />
@@ -1190,7 +1213,9 @@ function SnapshotCamera({
         distance = Math.max(distance, corner.dot(direction) + Math.max(Math.abs(corner.dot(up)) / tan, Math.abs(corner.dot(right)) / (tan * aspect)));
       }
       // Fit the same authored bed in narrow phone and wide contact-sheet frames.
-      return { position: center.clone().addScaledVector(direction, distance * 1.06).toArray() as [number, number, number], target: center.toArray() as [number, number, number], fov: base.fov, halfH: 0 };
+      // Phone 390px is the fidelity gate: hold plants closer so canopy mass reads.
+      const pad = size.width <= 480 ? 0.994 : 1.06;
+      return { position: center.clone().addScaledVector(direction, distance * pad).toArray() as [number, number, number], target: center.toArray() as [number, number, number], fov: base.fov, halfH: 0 };
     }
     if (viewId !== "seasonal-detail" || !focus) {
       return { ...base, halfH: 0 };
@@ -1456,10 +1481,31 @@ function Scene({
         visualStyle={visualStyle}
         instances={visibleInstances}
       />
-      {editorial ? null : (
+      {editorial ? null : visualStyle === "model3d" ? (
         <>
           <hemisphereLight
-            args={["#fffaf0", "#9d9b8d", (visualStyle === "model3d" ? 1.9 : 1.3) + seasonalWarmth * 0.12]}
+            args={["#f3efe4", "#7d786c", 2.12 + seasonalWarmth * 0.08]}
+          />
+          <directionalLight
+            position={[-3.6, 6.2, 4.4]}
+            color={seasonalWarmth > 0.4 ? "#ffe6c2" : "#e6e9e4"}
+            intensity={1.04}
+          />
+          <directionalLight
+            position={[3.4, 2.6, -2.6]}
+            color="#c4d0d6"
+            intensity={0.4}
+          />
+          <directionalLight
+            position={[0.2, 5.4, -5.0]}
+            color="#fff3e4"
+            intensity={0.2}
+          />
+        </>
+      ) : (
+        <>
+          <hemisphereLight
+            args={["#fffaf0", "#9d9b8d", 1.3 + seasonalWarmth * 0.12]}
           />
           <directionalLight
             position={[-4.5, 7.8, 5.2]}
@@ -1576,7 +1622,11 @@ export default function GardenScene(props: GardenSceneProps) {
           toneMapping: editorial
             ? THREE.NoToneMapping
             : THREE.ACESFilmicToneMapping,
-          toneMappingExposure: editorial ? 1 : 1.02,
+          toneMappingExposure: editorial
+            ? 1
+            : props.visualStyle === "model3d"
+              ? 1.08
+              : 1.02,
           powerPreference: "default",
         }}
         onCreated={({ gl, scene }) => {

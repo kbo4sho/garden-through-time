@@ -7,23 +7,30 @@ import { modelSeason } from "../lib/modelSeason";
 
 type LayerName = "branches" | "leaves" | "blooms" | "fruit";
 
-function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial) {
+function makeMaterial(
+  name: LayerName,
+  source: THREE.MeshStandardMaterial,
+  profileId: PlantProfile["id"],
+) {
   const material = source.clone();
   const uniforms = {
     growth: { value: 1 },
     fall: { value: 0 },
     summerColor: { value: new THREE.Color() },
     fallColor: { value: new THREE.Color() },
+    bare: { value: 0 },
+    stemAccent: { value: profileId === "dogwood" ? 1 : 0 },
   };
-  material.roughness = name === "fruit" ? 0.65 : 0.88;
+  material.roughness = name === "fruit" ? 0.58 : name === "blooms" ? 0.84 : 0.93;
   // Opaque folded geometry avoids sorted alpha layers and mobile overdraw.
   material.side = THREE.DoubleSide;
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader =
       `attribute vec3 _anchor; attribute float _phase;
-      uniform float growth; varying float vSeasonPhase;\n` +
-      shader.vertexShader;
+      uniform float growth;
+      varying float vSeasonPhase;
+      varying vec3 vStudioWorld;\n` + shader.vertexShader;
     shader.vertexShader = shader.vertexShader.replace(
       "#include <begin_vertex>",
       `
@@ -37,30 +44,73 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial) {
       }
     `,
     );
+    shader.vertexShader = shader.vertexShader.replace(
+      "#include <project_vertex>",
+      `
+      #include <project_vertex>
+      vStudioWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;
+      `,
+    );
+    shader.fragmentShader =
+      `uniform float fall; uniform vec3 summerColor; uniform vec3 fallColor;
+      uniform float bare; uniform float stemAccent;
+      varying float vSeasonPhase;
+      varying vec3 vStudioWorld;\n` + shader.fragmentShader;
     if (name === "leaves") {
-      shader.fragmentShader =
-        `uniform float fall; uniform vec3 summerColor; uniform vec3 fallColor;
-        varying float vSeasonPhase;\n` + shader.fragmentShader;
       shader.fragmentShader = shader.fragmentShader.replace(
         "#include <color_fragment>",
         `
         #include <color_fragment>
         float autumn = smoothstep(vSeasonPhase * .35, .65 + vSeasonPhase * .35, fall);
-        vec3 autumnColor = mix(fallColor, fallColor * vec3(1.14, .83, .62), vSeasonPhase);
+        vec3 autumnColor = mix(fallColor, fallColor * vec3(1.12, .86, .64), vSeasonPhase);
         diffuseColor.rgb *= mix(summerColor, autumnColor, autumn);
       `,
       );
-      // A restrained backlit lift, retaining standard PBR directional shading.
+    }
+    if (name === "branches") {
       shader.fragmentShader = shader.fragmentShader.replace(
-        "#include <opaque_fragment>",
+        "#include <color_fragment>",
         `
-        outgoingLight += diffuseColor.rgb * 0.075;
-        #include <opaque_fragment>
+        #include <color_fragment>
+        float grain = fract(sin(dot(vStudioWorld.xy, vec2(17.13, 41.27))) * 43758.5453);
+        float ring = 0.9 + 0.12 * sin(vStudioWorld.y * 38.0 + grain * 6.2831);
+        diffuseColor.rgb *= ring * (0.92 + 0.1 * grain);
+        vec3 winterStem = mix(diffuseColor.rgb, vec3(0.4, 0.075, 0.068), stemAccent * bare);
+        diffuseColor.rgb = winterStem;
       `,
       );
     }
+    // Studio wrap. Attempt 3: darker cores for winter volume; less leaf rim so
+    // 390px canopies read as soft mass instead of outlined jagged cards.
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <opaque_fragment>",
+      `
+      vec3 studioV = normalize(vViewPosition);
+      float ndv = abs(dot(normal, studioV));
+      float wrap = clamp((ndv * ${name === "leaves" ? "0.52" : "0.28"}) + ${name === "leaves" ? "0.34" : "0.18"}, 0.0, 1.0);
+      float radial = length(vStudioWorld.xz);
+      float interior = clamp(radial * 0.16 + vStudioWorld.y * 0.08, 0.0, 1.0);
+      float core = 1.0 - smoothstep(0.06, 0.92, radial * 0.58 + vStudioWorld.y * 0.06);
+      float rim = pow(clamp(1.0 - ndv, 0.0, 1.0), 1.7);
+      outgoingLight *= 0.84 + 0.16 * interior;
+      outgoingLight *= mix(1.0, ${name === "branches" ? "0.48" : "0.78"}, core * ${name === "branches" ? "max(bare, 0.45)" : "0.28"});
+      outgoingLight += diffuseColor.rgb * wrap * ${name === "leaves" ? "0.26" : name === "branches" ? "0.04" : "0.14"};
+      ${
+        name === "leaves"
+          ? `outgoingLight += diffuseColor.rgb * vec3(1.03, 0.96, 0.8) * rim * 0.07;`
+          : `outgoingLight += diffuseColor.rgb * rim * 0.04;`
+      }
+      ${
+        name === "blooms"
+          ? `outgoingLight += diffuseColor.rgb * 0.07;`
+          : ""
+      }
+      #include <opaque_fragment>
+      `,
+    );
   };
-  material.customProgramCacheKey = () => `seasonal-gltf-v1-${name}`;
+  material.customProgramCacheKey = () =>
+    `studio-botanical-v3b-${name}-${profileId}`;
   if (name === "leaves") material.color.set("#ffffff");
   return { material, uniforms };
 }
@@ -99,13 +149,17 @@ export default function ModelPlant({
       result.push({
         name,
         geometry: object.geometry,
-        ...makeMaterial(name, object.material as THREE.MeshStandardMaterial),
+        ...makeMaterial(
+          name,
+          object.material as THREE.MeshStandardMaterial,
+          profile.id,
+        ),
       });
     });
     if (!result.some((layer) => layer.name === "branches"))
       throw new Error("Missing seasonal model scaffold");
     return result;
-  }, [gltf]);
+  }, [gltf, profile.id]);
   const state = modelSeason(profile, day);
   useLayoutEffect(() => {
     for (const layer of layers) {
@@ -121,9 +175,10 @@ export default function ModelPlant({
       uniforms.fall.value = state.fall;
       uniforms.summerColor.value.copy(state.leafColor);
       uniforms.fallColor.value.copy(state.fallColor);
+      uniforms.bare.value = profile.evergreen ? 0 : 1 - state.leaves;
       if (name === "blooms") material.color.copy(state.flowerColor);
     }
-  }, [layers, state]);
+  }, [layers, profile.evergreen, state]);
   useEffect(
     () => () => {
       layers.forEach(({ material }) => material.dispose());
