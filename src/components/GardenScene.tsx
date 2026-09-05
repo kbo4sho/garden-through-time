@@ -542,7 +542,7 @@ function SeasonalBillboardCanopy({
       },
       uHueEase: {
         value:
-          profile.id === "winterberry" && visualStyle === "model3d" ? 0.42 : 0,
+          profile.id === "winterberry" && visualStyle === "model3d" ? 0.62 : 0,
       },
       uBrightness: {
         value:
@@ -684,7 +684,7 @@ function SeasonalBillboardCanopy({
             float dormant = clamp(uWeights.x, 0.0, 1.0);
             float seasonalSaturation = mix(uSaturation, min(uSaturation, 0.58), dormant);
             color = mix(vec3(luminance), color, seasonalSaturation);
-            color = mix(color, vec3(color.r * 1.14, color.g * 0.8, color.b * 0.7), uHueEase);
+            color = mix(color, vec3(min(color.r * 1.2 + 0.05, 1.0), color.g * 0.68, color.b * 0.36), uHueEase);
             color = clamp((color - 0.5) * 1.045 + 0.5, 0.0, 1.0);
             color *= mix(1.0, 0.86, dormant) * uBrightness;
             float diffuse = 0.95 + 0.07 * max(dot(normalize(vNormal), normalize(vec3(-0.35, 0.72, 0.6))), 0.0);
