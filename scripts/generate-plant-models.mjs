@@ -33,10 +33,10 @@ const configs = {
     h: 2.55,
     w: 1.25,
     stems: 15,
-    leaf: 0.5,
+    leaf: 0.34,
     leaves: 6,
-    fill: 520,
-    spray: 220,
+    fill: 980,
+    spray: 420,
     color: "#66834b",
   },
   hydrangea: {
@@ -44,10 +44,10 @@ const configs = {
     h: 2.72,
     w: 1.38,
     stems: 13,
-    leaf: 0.62,
+    leaf: 0.4,
     leaves: 6,
-    fill: 480,
-    spray: 180,
+    fill: 900,
+    spray: 340,
     color: "#547449",
   },
   dogwood: {
@@ -55,10 +55,10 @@ const configs = {
     h: 3.05,
     w: 1.18,
     stems: 22,
-    leaf: 0.44,
+    leaf: 0.3,
     leaves: 6,
-    fill: 500,
-    spray: 200,
+    fill: 960,
+    spray: 400,
     color: "#5a804e",
   },
   boxwood: {
@@ -66,9 +66,9 @@ const configs = {
     h: 2.32,
     w: 1.14,
     stems: 20,
-    leaf: 0.26,
+    leaf: 0.18,
     leaves: 8,
-    fill: 900,
+    fill: 1600,
     spray: 0,
     color: "#3f653f",
   },
@@ -426,7 +426,7 @@ for (const [id, c] of Object.entries(configs)) {
       c.h * (0.22 + r() * 0.7),
       Math.sin(theta) * rad,
     );
-    const size = 0.34 + r() * 0.28;
+    const size = 0.22 + r() * 0.18;
     const g = clusterCard(size, size * (0.9 + r() * 0.35), 0.06);
     paintCard(
       g,
@@ -434,7 +434,7 @@ for (const [id, c] of Object.entries(configs)) {
     );
     orientCard(g, theta);
     g.translate(...at);
-    add("branches", g, at, barkTint[id], r(), 1);
+    add("branches", g, at, barkTint[id], 1.15 + r() * 0.35, 1);
   }
 
   terminals.forEach((at, i) => {
@@ -442,7 +442,7 @@ for (const [id, c] of Object.entries(configs)) {
     const yaw = r() * Math.PI * 2;
     if (id === "hydrangea" && i % 2 === 0) {
       const top = at.clone().add(v(0.03, 0.46, 0.01));
-      twig(at, top, 0.0075, "blooms", at, "#b9ab83");
+      twig(at, top, 0.0075, "branches", at, "#b9ab83");
       for (let j = 0; j < 12; j++) {
         const t = j / 12;
         const a = j * 2.4;
@@ -454,18 +454,18 @@ for (const [id, c] of Object.entries(configs)) {
           "blooms",
           p,
           a,
-          0.28 + r() * 0.08,
-          0.26 + r() * 0.08,
+          0.16 + r() * 0.05,
+          0.15 + r() * 0.05,
           new T.Color("#fff8ee").multiplyScalar(0.88 + r() * 0.12),
           phase,
         );
       }
     } else if (id === "fothergilla") {
       const tip = at.clone().add(v(0, 0.24, 0));
-      twig(at, tip, 0.0055, "blooms", at, "#d4ce9e");
-      for (let j = 0; j < 8; j++) {
-        const p = at.clone().add(v((r() - 0.5) * 0.07, 0.02 + (j % 4) * 0.055, (r() - 0.5) * 0.07));
-        puff("blooms", p, yaw + j, 0.22, 0.3, "#f4f0dc", phase);
+      twig(at, tip, 0.0055, "branches", at, "#d4ce9e");
+      for (let j = 0; j < 14; j++) {
+        const p = at.clone().add(v((r() - 0.5) * 0.08, 0.02 + (j % 5) * 0.045, (r() - 0.5) * 0.08));
+        puff("blooms", p, yaw + j, 0.14, 0.2, "#f4f0dc", phase);
       }
     } else if (id === "dogwood" && i % 3 === 0) {
       puff("blooms", at.clone().add(v(0, 0.04, 0)), yaw, 0.26, 0.2, "#f4f0de", phase);

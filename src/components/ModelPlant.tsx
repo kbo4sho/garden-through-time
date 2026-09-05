@@ -10,124 +10,37 @@ type LayerName = "branches" | "leaves" | "blooms" | "fruit";
 const SPECIES = { fothergilla: 0, hydrangea: 1, dogwood: 2, boxwood: 3 } as const;
 
 const CANOPY_GLSL = /* glsl */ `
-float canopyHash(vec2 p) {
-  return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
-}
-float fothLeaf(vec2 p) {
-  float t = clamp(p.y * 0.5 + 0.42, 0.0, 1.0);
-  float body = pow(max(0.0, sin(3.14159 * pow(t, 0.78))), 0.7);
-  float tooth = 1.0 + 0.15 * sin(t * 34.0);
-  float halfW = 0.36 * body * tooth;
-  float d = abs(p.x) / max(0.02, halfW);
-  return (1.0 - smoothstep(0.78, 1.06, d)) * smoothstep(-0.08, 0.06, t) * smoothstep(1.05, 0.88, t);
-}
-float oakLeaf(vec2 p) {
-  float t = clamp(p.y * 0.48 + 0.46, 0.0, 1.0);
-  float lobe = 0.2;
-  lobe = max(lobe, 0.44 * exp(-pow((t - 0.2) / 0.12, 2.0) * 1.7));
-  lobe = max(lobe, 0.74 * exp(-pow((t - 0.38) / 0.13, 2.0) * 1.7));
-  lobe = max(lobe, 0.98 * exp(-pow((t - 0.56) / 0.14, 2.0) * 1.7));
-  lobe = max(lobe, 0.66 * exp(-pow((t - 0.74) / 0.12, 2.0) * 1.7));
-  lobe = max(lobe, 0.3 * exp(-pow((t - 0.9) / 0.1, 2.0) * 1.7));
-  float body = pow(max(0.0, sin(3.14159 * pow(t, 0.92))), 0.68);
-  float halfW = 0.52 * body * lobe;
-  float d = abs(p.x) / max(0.02, halfW);
-  return (1.0 - smoothstep(0.8, 1.06, d)) * smoothstep(-0.06, 0.08, t) * smoothstep(1.04, 0.9, t);
-}
-float dogLeaf(vec2 p) {
-  float t = clamp(p.y * 0.5 + 0.44, 0.0, 1.0);
-  float body = pow(max(0.0, sin(3.14159 * pow(t, 1.05))), 0.82);
-  float halfW = 0.32 * body;
-  float d = abs(p.x) / max(0.02, halfW);
-  return (1.0 - smoothstep(0.78, 1.05, d)) * smoothstep(-0.06, 0.07, t) * smoothstep(1.04, 0.9, t);
-}
-float boxLeaf(vec2 p) {
-  vec2 q = p * vec2(1.35, 1.0);
-  return 1.0 - smoothstep(0.42, 0.62, length(q));
-}
-float speciesLeaf(vec2 p, float species) {
-  if (species < 0.5) return fothLeaf(p);
-  if (species < 1.5) return oakLeaf(p);
-  if (species < 2.5) return dogLeaf(p);
-  return boxLeaf(p);
+float tuftMask(vec2 uv, float phase, float lobes, float fat) {
+  vec2 p = (uv - 0.5) * vec2(1.04, 0.9);
+  float r = length(p);
+  float ang = atan(p.y, p.x);
+  float wobble = 0.055 * sin(ang * lobes + phase * 8.4);
+  wobble += 0.02 * sin(ang * (lobes * 1.7) - phase * 5.1);
+  return smoothstep(fat + wobble, fat - 0.2 + wobble * 0.4, r);
 }
 float foliageMask(vec2 uv, float species, float phase) {
-  float edge = smoothstep(0.0, 0.07, uv.x) * smoothstep(0.0, 0.07, uv.y)
-    * smoothstep(1.0, 0.93, uv.x) * smoothstep(1.0, 0.93, uv.y);
-  float mask = 0.0;
-  float count = species > 2.5 ? 14.0 : 10.0;
-  for (int i = 0; i < 14; i++) {
-    float fi = float(i);
-    if (fi >= count) break;
-    float ang = fi * 2.39996 + phase * 5.7;
-    float rad = sqrt((fi + 0.35) / count) * 0.34;
-    vec2 c = vec2(0.5) + vec2(cos(ang), sin(ang) * 0.82) * rad;
-    float scale = species > 2.5 ? 7.4 : species < 1.5 ? 3.15 : 3.55;
-    vec2 p = (uv - c) * scale;
-    float ca = cos(ang + phase);
-    float sa = sin(ang + phase);
-    p = vec2(ca * p.x - sa * p.y, sa * p.x + ca * p.y);
-    mask = max(mask, speciesLeaf(p, species));
-  }
-  float core = smoothstep(0.46, 0.14, length((uv - vec2(0.5)) * vec2(1.05, 0.88)));
-  float coreAmt = species > 2.5 ? 0.78 : 0.52;
-  mask = max(mask, core * coreAmt);
-  return mask * edge;
+  float edge = smoothstep(0.0, 0.04, uv.x) * smoothstep(0.0, 0.04, uv.y)
+    * smoothstep(1.0, 0.96, uv.x) * smoothstep(1.0, 0.96, uv.y);
+  float lobes = species > 2.5 ? 11.0 : species > 0.5 && species < 1.5 ? 5.0 : 6.5;
+  float fat = species > 2.5 ? 0.5 : 0.47;
+  return tuftMask(uv, phase, lobes, fat) * edge;
 }
 float bloomMask(vec2 uv, float species, float phase) {
-  float edge = smoothstep(0.0, 0.06, uv.x) * smoothstep(0.0, 0.06, uv.y)
-    * smoothstep(1.0, 0.94, uv.x) * smoothstep(1.0, 0.94, uv.y);
-  vec2 p = uv - 0.5;
-  float mask = 0.0;
-  if (species < 0.5) {
-    for (int i = 0; i < 18; i++) {
-      float fi = float(i);
-      float ang = fi * 2.39996 + phase * 4.0;
-      float t = fi / 18.0;
-      vec2 c = vec2(cos(ang), (t - 0.5) * 1.15) * (0.12 + t * 0.08);
-      float filament = 1.0 - smoothstep(0.012, 0.03, length(p - c));
-      mask = max(mask, filament);
-    }
-    mask = max(mask, smoothstep(0.34, 0.1, length(p * vec2(1.35, 0.72))) * 0.55);
-  } else if (species < 1.5) {
-    for (int i = 0; i < 12; i++) {
-      float fi = float(i);
-      float ang = fi * 2.39996 + phase * 3.2;
-      float rad = sqrt((fi + 0.2) / 12.0) * 0.32;
-      vec2 c = vec2(cos(ang), sin(ang) * 0.86) * rad;
-      mask = max(mask, 1.0 - smoothstep(0.07, 0.14, length(p - c)));
-    }
-    mask = max(mask, smoothstep(0.36, 0.12, length(p * vec2(1.05, 0.9))) * 0.62);
-  } else if (species < 2.5) {
-    for (int i = 0; i < 9; i++) {
-      float fi = float(i);
-      float ang = fi * 2.39996;
-      vec2 c = vec2(cos(ang), sin(ang)) * 0.16 * sqrt((fi + 0.4) / 9.0);
-      mask = max(mask, 1.0 - smoothstep(0.05, 0.1, length(p - c)));
-    }
-    mask = max(mask, smoothstep(0.28, 0.1, length(p)) * 0.45);
-  } else {
-    mask = smoothstep(0.28, 0.1, length(p * vec2(1.1, 1.0)));
-  }
-  return mask * edge;
+  float edge = smoothstep(0.0, 0.04, uv.x) * smoothstep(0.0, 0.04, uv.y)
+    * smoothstep(1.0, 0.96, uv.x) * smoothstep(1.0, 0.96, uv.y);
+  float fat = species < 0.5 ? 0.42 : 0.46;
+  float lobes = species < 0.5 ? 8.0 : 5.5;
+  return tuftMask(uv, phase, lobes, fat) * edge;
 }
 float sprayMask(vec2 uv, float phase) {
-  float edge = smoothstep(0.0, 0.05, uv.x) * smoothstep(0.0, 0.05, uv.y)
-    * smoothstep(1.0, 0.95, uv.x) * smoothstep(1.0, 0.95, uv.y);
-  vec2 p = uv - 0.5;
-  float mask = 0.0;
-  for (int i = 0; i < 18; i++) {
-    float fi = float(i);
-    float ang = fi * 2.39996 + phase * 6.28;
-    vec2 dir = vec2(cos(ang), sin(ang) * 1.15);
-    float along = dot(p, dir);
-    float span = 0.18 + fract(phase * 17.0 + fi * 0.13) * 0.28;
-    float line = abs(p.x * dir.y - p.y * dir.x);
-    float stroke = (1.0 - smoothstep(0.003, 0.011, line)) * smoothstep(0.0, 0.02, along) * smoothstep(span, span * 0.72, along);
-    mask = max(mask, stroke);
-  }
-  mask = max(mask, smoothstep(0.16, 0.04, length(p * vec2(1.1, 0.95))) * 0.35);
-  return mask * edge;
+  float edge = smoothstep(0.0, 0.03, uv.x) * smoothstep(0.0, 0.03, uv.y)
+    * smoothstep(1.0, 0.97, uv.x) * smoothstep(1.0, 0.97, uv.y);
+  return tuftMask(uv, phase, 7.0, 0.49) * edge;
+}
+float photoFleck(vec2 uv, float phase) {
+  float n1 = fract(sin(dot(uv * 19.0 + phase, vec2(127.1, 311.7))) * 43758.5453);
+  float n2 = fract(sin(dot(uv * 6.4 + phase * 3.1, vec2(91.2, 47.3))) * 23421.163);
+  return mix(0.68, 1.14, n1 * 0.65 + n2 * 0.35);
 }
 `;
 
@@ -151,7 +64,6 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, speci
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader =
       `attribute vec3 _anchor; attribute float _phase; attribute float _cluster;
-      attribute vec2 uv;
       uniform float growth; varying float vSeasonPhase; varying float vCluster;
       varying vec2 vCanopyUv;
       varying vec3 vWorldNormal; varying vec3 vWorldPosition;\n` +
@@ -201,19 +113,17 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, speci
         float autumn = smoothstep(vSeasonPhase * .35, .65 + vSeasonPhase * .35, fall);
         vec3 autumnColor = mix(fallColor, fallColor * vec3(1.18, .88, .58), vSeasonPhase);
         vec3 foliage = mix(summerColor, autumnColor, autumn);
-        float fleck = 0.74 + 0.32 * fract(sin(dot(vCanopyUv * 17.0 + vSeasonPhase, vec2(127.1, 311.7))) * 43758.5453);
-        float cool = 0.9 + 0.16 * fract(sin(vSeasonPhase * 59.2 + vWorldPosition.x * 8.4) * 43758.5453);
-        float canopy = mix(0.68, 1.04, clamp(vWorldPosition.y * 0.4, 0.0, 1.0));
-        float tuftAo = mix(0.7, 1.0, smoothstep(0.08, 0.42, length(vCanopyUv - 0.5)));
+        float fleck = photoFleck(vCanopyUv, vSeasonPhase);
+        float cool = 0.88 + 0.18 * fract(sin(vSeasonPhase * 59.2 + vWorldPosition.x * 8.4) * 43758.5453);
+        float canopy = mix(0.78, 1.06, clamp(vWorldPosition.y * 0.4, 0.0, 1.0));
+        float tuftAo = mix(0.82, 1.0, smoothstep(0.06, 0.38, length(vCanopyUv - 0.5)));
         diffuseColor.rgb *= foliage * fleck * canopy * tuftAo;
-        diffuseColor.rgb *= vec3(mix(0.92, 1.05, cool), 1.0, mix(0.86, 0.98, fleck));
+        diffuseColor.rgb *= vec3(mix(0.9, 1.06, cool), 1.0, mix(0.84, 0.98, fleck));
         if (!gl_FrontFacing) {
-          diffuseColor.rgb *= vec3(1.12, 1.04, 0.78);
+          diffuseColor.rgb *= vec3(1.1, 1.03, 0.8);
         }
         float mask = foliageMask(vCanopyUv, species, vSeasonPhase);
-        float dither = canopyHash(gl_FragCoord.xy);
-        diffuseColor.a = mask;
-        if (mask < mix(0.16, 0.78, dither)) discard;
+        if (mask < 0.14) discard;
       `,
       );
     } else if (name === "branches") {
@@ -225,12 +135,11 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, speci
         float mottling = (0.88 + 0.14 * vSeasonPhase) * grain;
         vec3 winterRed = vec3(0.74, 0.2, 0.16);
         diffuseColor.rgb = mix(diffuseColor.rgb * mottling, winterRed * (0.7 + 0.3 * grain), stemBoost);
-        if (vCluster > 0.5) {
+        if (vSeasonPhase > 1.02) {
           float mask = sprayMask(vCanopyUv, vSeasonPhase);
-          float dither = canopyHash(gl_FragCoord.xy);
-          diffuseColor.a = mask;
-          if (mask < mix(0.2, 0.84, dither)) discard;
-          diffuseColor.rgb *= 0.78 + 0.28 * grain;
+          if (mask < 0.16) discard;
+          float fleck = photoFleck(vCanopyUv, vSeasonPhase);
+          diffuseColor.rgb *= (0.72 + 0.34 * grain) * fleck;
         }
       `,
       );
@@ -252,12 +161,9 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, speci
         if (!gl_FrontFacing) {
           diffuseColor.rgb *= vec3(1.04, 1.01, 0.94);
         }
-        if (vCluster > 0.5) {
-          float mask = bloomMask(vCanopyUv, species, vSeasonPhase);
-          float dither = canopyHash(gl_FragCoord.xy);
-          diffuseColor.a = mask;
-          if (mask < mix(0.14, 0.76, dither)) discard;
-        }
+        float mask = bloomMask(vCanopyUv, species, vSeasonPhase);
+        if (mask < 0.14) discard;
+        diffuseColor.rgb *= photoFleck(vCanopyUv, vSeasonPhase);
       `,
       );
     }
@@ -286,7 +192,7 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, speci
     `,
     );
   };
-  material.customProgramCacheKey = () => `seasonal-gltf-v4-${name}-${species}`;
+  material.customProgramCacheKey = () => `seasonal-gltf-v6-${name}-${species}`;
   if (name === "leaves") material.color.set("#ffffff");
   return { material, uniforms };
 }

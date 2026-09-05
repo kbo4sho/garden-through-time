@@ -50,13 +50,13 @@ Photographic and editorial defaults remain unchanged. Winterberry stays a billbo
 
 | Asset | PR #7 | Attempt 1 | Attempt 2 | vs #7 |
 | --- | ---: | ---: | ---: | ---: |
-| fothergilla.glb | 1,298,716 | 1,331,700 | 632,228 | −666,488 |
-| hydrangea.glb | 913,820 | 946,884 | 516,004 | −397,816 |
-| dogwood.glb | 1,067,600 | 1,205,656 | 894,724 | −172,876 |
-| boxwood.glb | 1,354,328 | 1,143,672 | 933,032 | −421,296 |
-| **Four-model total** | **4,634,464** | **4,627,912** | **2,975,988** | **−1,658,476 (−36%)** |
+| fothergilla.glb | 1,298,716 | 1,331,700 | 720,400 | −578,316 |
+| hydrangea.glb | 913,820 | 946,884 | 595,540 | −318,280 |
+| dogwood.glb | 1,067,600 | 1,205,656 | 984,884 | −82,716 |
+| boxwood.glb | 1,354,328 | 1,143,672 | 1,027,052 | −327,276 |
+| **Four-model total** | **4,634,464** | **4,627,912** | **3,327,876** | **−1,306,588 (−28%)** |
 
-Download stays under the 5 MB check. Decoded attributes: 6,297,676 bytes (budget 24 MB). Cheaper cards fund more overlapping canopy at a smaller download.
+Download stays under the 5 MB check. Decoded attributes: 7,062,076 bytes (budget 24 MB). Cheaper cards fund more overlapping canopy at a smaller download.
 
 ## Gauntlet craft pass (attempt 1)
 
