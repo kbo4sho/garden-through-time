@@ -62,6 +62,12 @@ supports comparison without implying a fully modeled yard. Each view must add a
 different planting judgment; extra angles that only repeat the hero image do not
 earn space.
 
+A recipient may drag inside a photographic or glTF living-bed view for a few
+degrees of yaw and pitch. That peek is damped, clamped, and springs back to the
+authored frame on release so a parked share and the contact sheet still read as
+the living bed. Editorial / orthographic paper views stay fixed. This is not a
+yard editor, orbit chrome, or free camera.
+
 ## Naming and message
 
 - User-facing name: **Year-Round Interest**.

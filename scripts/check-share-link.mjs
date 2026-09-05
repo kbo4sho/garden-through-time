@@ -243,6 +243,68 @@ const sanitized = parseShareSearch(
 );
 equal(sanitized.from, "Greenleaf Nursery, Inc.", "From names are sanitized");
 
+const peekSource = await compile("../src/lib/perspectivePeek.ts");
+const {
+  PEEK_PITCH_LIMIT,
+  PEEK_YAW_LIMIT,
+  clampPeekAngles,
+  createPeekGesture,
+  isPeekDrag,
+  peekedPosition,
+  peekFromPointerDelta,
+  stepPeekGesture,
+} = await import(toDataUrl(peekSource));
+
+const nearly = (actual, expected, label, epsilon = 1e-6) => {
+  if (Math.abs(actual - expected) > epsilon) {
+    errors.push(`${label}: expected ${expected}, got ${actual}`);
+  }
+};
+
+const clamped = clampPeekAngles(PEEK_YAW_LIMIT * 4, -PEEK_PITCH_LIMIT * 4);
+nearly(clamped.yaw, PEEK_YAW_LIMIT, "Yaw cannot exceed ±13°");
+nearly(clamped.pitch, -PEEK_PITCH_LIMIT, "Pitch cannot exceed ±7°");
+
+const dragged = peekFromPointerDelta({ yaw: 0, pitch: 0 }, 400, -200, 200);
+nearly(dragged.yaw, -PEEK_YAW_LIMIT, "A wide drag hits the yaw stop");
+nearly(dragged.pitch, PEEK_PITCH_LIMIT, "A tall drag hits the pitch stop");
+assert(!isPeekDrag(3), "A tap under 7px is not a peek drag");
+assert(isPeekDrag(7), "Seven pixels counts as a real drag");
+
+const rest = [5.8, 3.1, 7.35];
+const look = [-0.82, 1.14, 0.05];
+const home = peekedPosition(rest, look, 0, 0);
+nearly(home[0], rest[0], "Zero peek keeps authored X");
+nearly(home[1], rest[1], "Zero peek keeps authored Y");
+nearly(home[2], rest[2], "Zero peek keeps authored Z");
+
+const yawed = peekedPosition(rest, look, PEEK_YAW_LIMIT, 0);
+assert(Math.abs(yawed[0] - rest[0]) > 0.15, "Yaw actually moves the camera");
+nearly(
+  Math.hypot(yawed[0] - look[0], yawed[1] - look[1], yawed[2] - look[2]),
+  Math.hypot(rest[0] - look[0], rest[1] - look[1], rest[2] - look[2]),
+  "Peek keeps the authored camera distance",
+  1e-5,
+);
+
+const spring = createPeekGesture();
+spring.yaw = PEEK_YAW_LIMIT;
+spring.pitch = PEEK_PITCH_LIMIT;
+for (let step = 0; step < 180 && (Math.abs(spring.yaw) > 1e-6 || Math.abs(spring.pitch) > 1e-6); step += 1) {
+  stepPeekGesture(spring, 1 / 60);
+}
+nearly(spring.yaw, 0, "Released peek springs yaw home", 1e-6);
+nearly(spring.pitch, 0, "Released peek springs pitch home", 1e-6);
+assert(
+  Math.abs(spring.yaw) < 1e-6 && Math.abs(spring.pitch) < 1e-6,
+  "A released peek settles on the authored frame within 3s",
+);
+
+const reduced = createPeekGesture();
+reduced.yaw = PEEK_YAW_LIMIT;
+stepPeekGesture(reduced, 1 / 60, { reducedMotion: true });
+nearly(reduced.yaw, 0, "Reduced motion snaps back to the authored frame");
+
 const gardenScene = await readFile(
   new URL("../src/components/GardenScene.tsx", import.meta.url),
   "utf8",
@@ -265,6 +327,11 @@ assert(
   gardenScene.includes("webglcontextlost"),
   "Context-loss recovery stays mounted",
 );
+assert(!gardenScene.includes("OrbitControls"), "No free-orbit control chrome");
+assert(
+  gardenScene.includes("LimitedPeek"),
+  "Living-bed views mount the limited perspective peek",
+);
 assert(
   gardenScene.includes("AmbientLife"),
   "Primary living-bed views mount ambient birds and butterflies",
@@ -285,6 +352,7 @@ assert(
   ambientLife.includes("LIFE_FRAME_MS = 90"),
   "Ambient motion stays on a demand-frame cadence, not 60 fps",
 );
+assert(styles.includes(".garden-canvas"), "Garden canvas selector remains");
 assert(
   /\.garden-canvas\s*\{[^}]*filter:\s*none/.test(styles),
   "WebGL canvas keeps an explicit filter: none",
@@ -301,6 +369,6 @@ if (errors.length) {
   process.exitCode = 1;
 } else {
   console.log(
-    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, playback does not write history on every tick, phone Play mounts one canvas, unfurl tags point at a Pages OG card, and ambient life / soft contact keep the Play safeguards.",
+    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, playback does not write history on every tick, phone Play mounts one canvas, unfurl tags point at a Pages OG card, living-bed peek stays limited and springs back, and ambient life / soft contact keep the Play safeguards.",
   );
 }

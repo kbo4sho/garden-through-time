@@ -84,6 +84,7 @@ input:focus-visible {
 
 .scene-layer {
   z-index: 0;
+  touch-action: none;
 }
 
 .atmosphere {
@@ -1987,6 +1988,8 @@ input:focus-visible {
      and can lose the context on a phone. */
   filter: none;
   background: #dedbd2;
+  /* Keep a living-bed drag as a perspective peek, not a page pan. */
+  touch-action: none;
 }
 
 .experience-shell.is-editorial .scene-frame {
