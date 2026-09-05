@@ -41,6 +41,21 @@ all nine recommendations, checking their ordered plantings, exercising
 customize/restore and keyboard timeline behavior, inspecting every supplied
 seasonal capture, and tracing the content/access boundary.
 
+## Ambient life and soft ground contact
+
+- Two instanced birds and three instanced butterflies sit on the primary
+  photographic or glTF portrait only. Secondary contact-sheet canvases and
+  editorial paper views stay still. Shared geometries and `MeshBasicMaterial`s;
+  no extra textures, lights, or shadows.
+- Motion is demand-frame: `frameloop="demand"` is unchanged. A 90ms ticker
+  invalidates the primary canvas while the tab is visible and reduced motion is
+  off. Play still drives frames from the 42ms day tick. Butterflies fade out
+  outside the warm months; birds stay quieter in winter.
+- Plant–ground contact: authored layout Y lifts are flattened, photographic
+  billboards sit slightly lower, glTF trunks sink 4.5cm, and each plant shares
+  one broader grounding shadow plus a tighter soil-line disk. The photo foot
+  feather is a longer, softer fade with a slight soil darken — not a hard cut.
+
 ## Runtime
 
 - Production build: `npm run build`

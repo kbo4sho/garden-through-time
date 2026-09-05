@@ -243,11 +243,64 @@ const sanitized = parseShareSearch(
 );
 equal(sanitized.from, "Greenleaf Nursery, Inc.", "From names are sanitized");
 
+const gardenScene = await readFile(
+  new URL("../src/components/GardenScene.tsx", import.meta.url),
+  "utf8",
+);
+const ambientLife = await readFile(
+  new URL("../src/components/AmbientLife.tsx", import.meta.url),
+  "utf8",
+);
+const styles = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
+assert(gardenScene.includes('frameloop="demand"'), "Canvas stays on demand frames");
+assert(
+  !gardenScene.includes('frameloop="always"'),
+  "Ambient life must not switch the Canvas to always-on frames",
+);
+assert(
+  gardenScene.includes('powerPreference: "default"'),
+  "Phone Play keeps the default GPU preference",
+);
+assert(
+  gardenScene.includes("webglcontextlost"),
+  "Context-loss recovery stays mounted",
+);
+assert(
+  gardenScene.includes("AmbientLife"),
+  "Primary living-bed views mount ambient birds and butterflies",
+);
+assert(
+  gardenScene.includes("getContactTextures"),
+  "Plant–ground contact uses shared shadow and disk textures",
+);
+assert(
+  gardenScene.includes("MODEL_CONTACT_SINK"),
+  "glTF plants sink slightly into the soil",
+);
+assert(
+  (ambientLife.match(/<instancedMesh/g) ?? []).length >= 2,
+  "Birds and butterflies share instanced meshes",
+);
+assert(
+  ambientLife.includes("LIFE_FRAME_MS = 90"),
+  "Ambient motion stays on a demand-frame cadence, not 60 fps",
+);
+assert(
+  /\.garden-canvas\s*\{[^}]*filter:\s*none/.test(styles),
+  "WebGL canvas keeps an explicit filter: none",
+);
+assert(
+  !/\.garden-canvas[\s\S]{0,240}filter:\s*(contrast|saturate|blur|brightness)/.test(
+    styles,
+  ),
+  "WebGL canvas still has no CSS filter",
+);
+
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exitCode = 1;
 } else {
   console.log(
-    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, playback does not write history on every tick, phone Play mounts one canvas, and unfurl tags point at a Pages OG card.",
+    "Share link check passed: January pitches round-trip, phone midpoint jumps are ignored, playback does not write history on every tick, phone Play mounts one canvas, unfurl tags point at a Pages OG card, and ambient life / soft contact keep the Play safeguards.",
   );
 }
