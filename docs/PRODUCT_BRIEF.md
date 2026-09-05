@@ -151,3 +151,15 @@ caveats, or seasonal uncertainty behind access.
 
 Do not treat a five-person unbriefed homeowner study as the next required build.
 The current sellable slice is the designer-pitch shareable living-bed link.
+
+
+### Optional model renderer proof — September 2026
+
+An opt-in `renderer=gltf` proof tests one persistent 3D plant through the year,
+using four species and the existing 3/5/7 layouts. The photographic experience
+remains the default. The four-species set is fothergilla, oakleaf hydrangea,
+redtwig dogwood, and boxwood; other species retain photographic fallback. A
+renderer-only Living Framework recommendation makes a seven-plant bed through
+repetition. This does not expand the catalog or revive splats. See
+[the renderer contract](MODEL_RENDERER.md) for assets, provenance, lifecycle
+interpolation, safeguards, and review URLs.

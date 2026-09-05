@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   Billboard,
@@ -18,6 +18,16 @@ import type {
 import { mulberry32, plantState, smoothstep } from "../lib/season";
 import { viewsForViewport as sliceViews } from "../lib/viewport";
 
+import { hasPlantModel, modelBounds } from '../data/modelPlants';
+
+const ModelPlant = lazy(() => import('./ModelPlant'));
+
+class ModelBoundary extends Component<{ children: React.ReactNode; fallback: React.ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+}
+
 const assetPath = (path: string) =>
   `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
 
@@ -33,7 +43,7 @@ type GardenSceneProps = {
   onReady?: () => void;
 };
 
-export type VisualStyle = "photographic" | "editorial";
+export type VisualStyle = "photographic" | "editorial" | "model3d";
 
 export const gardenViews = [
   { id: "portrait", number: "01", label: "Garden portrait", note: "The whole composition" },
@@ -1084,12 +1094,15 @@ function Shrub({
     >
       <GroundingShadow profile={instance.profile} visualStyle={visualStyle} />
       {selected && visualStyle !== "editorial" && <SelectionWash profile={instance.profile} />}
-      <SeasonalBillboardCanopy
-        profile={instance.profile}
-        day={day}
-        visualStyle={visualStyle}
-        viewId={viewId}
-      />
+      {visualStyle === "model3d" && hasPlantModel(instance.profile.id) ? (
+        <ModelBoundary key={instance.profile.id} fallback={
+          <SeasonalBillboardCanopy profile={instance.profile} day={day} visualStyle="photographic" viewId={viewId} />
+        }>
+          <ModelPlant profile={instance.profile} day={day} variation={Number(instance.instanceId.slice(6))} />
+        </ModelBoundary>
+      ) : (
+        <SeasonalBillboardCanopy profile={instance.profile} day={day} visualStyle={visualStyle} viewId={viewId} />
+      )}
     </group>
   );
 }
@@ -1152,6 +1165,33 @@ function SnapshotCamera({
       };
     }
     const base = cameraPresets[viewId];
+    if (visualStyle === "model3d" && instances.length) {
+      const bounds = new THREE.Box3();
+      const fitPoints: THREE.Vector3[] = [];
+      instances.forEach((instance) => {
+        const authored = modelBounds(instance, Number(instance.instanceId.slice(6)));
+        if (authored) { bounds.union(authored.box); fitPoints.push(...authored.points); return; }
+        const h = instance.profile.photoHeight * instance.scale;
+        const radius = h * .56;
+        for (const x of [-radius, radius]) for (const y of [0, h * 1.08]) for (const z of [-radius, radius]) {
+          const point = new THREE.Vector3(instance.position[0] + x, y, instance.position[2] + z);
+          bounds.expandByPoint(point); fitPoints.push(point);
+        }
+      });
+      const center = bounds.getCenter(new THREE.Vector3());
+      const direction = new THREE.Vector3(...base.position).sub(new THREE.Vector3(...base.target)).normalize();
+      const right = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), direction).normalize();
+      const up = new THREE.Vector3().crossVectors(direction, right).normalize();
+      const aspect = size.width / Math.max(1, size.height);
+      const tan = Math.tan(THREE.MathUtils.degToRad(base.fov / 2));
+      let distance = 0;
+      for (const point of fitPoints) {
+        const corner = point.clone().sub(center);
+        distance = Math.max(distance, corner.dot(direction) + Math.max(Math.abs(corner.dot(up)) / tan, Math.abs(corner.dot(right)) / (tan * aspect)));
+      }
+      // Fit the same authored bed in narrow phone and wide contact-sheet frames.
+      return { position: center.clone().addScaledVector(direction, distance * 1.06).toArray() as [number, number, number], target: center.toArray() as [number, number, number], fov: base.fov, halfH: 0 };
+    }
     if (viewId !== "seasonal-detail" || !focus) {
       return { ...base, halfH: 0 };
     }
@@ -1163,7 +1203,7 @@ function SnapshotCamera({
       fov: base.fov,
       halfH: 0,
     };
-  }, [editorial, focus, planBounds, viewId]);
+  }, [editorial, focus, planBounds, viewId, visualStyle, instances, size.width, size.height]);
   const target = useMemo(() => new THREE.Vector3(...preset.target), [preset]);
   const orthoCamera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 40), []);
   const aspect = size.width / Math.max(size.height, 1);
@@ -1400,14 +1440,16 @@ function Scene({
   const focus = instances.find((instance) => instance.profile.id === selectedId) ?? instances[0];
 
   const visibleInstances =
-    editorial && viewId === "seasonal-detail"
-      ? instances.filter((instance) => instance.profile.id === selectedId)
-      : instances;
+    visualStyle === "model3d" && viewId === "seasonal-detail"
+      ? [focus]
+      : editorial && viewId === "seasonal-detail"
+        ? instances.filter((instance) => instance.profile.id === selectedId)
+        : instances;
 
   return (
     <>
       {!editorial && <color attach="background" args={[sky]} />}
-      {!editorial && <fog attach="fog" args={[haze, 13.5, 27]} />}
+      {!editorial && visualStyle !== "model3d" && <fog attach="fog" args={[haze, 13.5, 27]} />}
       <SnapshotCamera
         viewId={viewId}
         focus={focus}
@@ -1417,7 +1459,7 @@ function Scene({
       {editorial ? null : (
         <>
           <hemisphereLight
-            args={["#fffaf0", "#9d9b8d", 1.3 + seasonalWarmth * 0.12]}
+            args={["#fffaf0", "#9d9b8d", (visualStyle === "model3d" ? 1.9 : 1.3) + seasonalWarmth * 0.12]}
           />
           <directionalLight
             position={[-4.5, 7.8, 5.2]}
