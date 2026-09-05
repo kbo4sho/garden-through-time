@@ -51,13 +51,13 @@ No image textures and no third-party meshes. Photographic and editorial defaults
 
 | Asset | PR #7 (bytes) | This pass (bytes) | Delta |
 | --- | ---: | ---: | ---: |
-| fothergilla.glb | 1,298,716 | 1,210,688 | −88,028 |
-| hydrangea.glb | 913,820 | 940,800 | +26,980 |
+| fothergilla.glb | 1,298,716 | 1,212,164 | −86,552 |
+| hydrangea.glb | 913,820 | 942,788 | +28,968 |
 | dogwood.glb | 1,067,600 | 1,152,044 | +84,444 |
-| boxwood.glb | 1,354,328 | 1,582,488 | +228,160 |
-| **Four-model total** | **4,634,464** | **4,886,020** | **+251,556 (+5.4%)** |
+| boxwood.glb | 1,354,328 | 1,583,660 | +229,332 |
+| **Four-model total** | **4,634,464** | **4,890,656** | **+256,192 (+5.5%)** |
 
-Download stays under the 5 MB check (`4,886,020 < 5,000,000`). Decoded attributes: 10,213,517 bytes, well under the 24 MB shared-geometry budget.
+Download stays under the 5 MB check (`4,890,656 < 5,000,000`). Decoded attributes: 10,213,517 bytes, well under the 24 MB shared-geometry budget.
 
 ## Safeguards and checks
 

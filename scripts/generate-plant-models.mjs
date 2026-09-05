@@ -120,16 +120,16 @@ function leafRibbon(length, rows, widthAt, cup = 0.055, midrib = 0.16) {
 }
 
 function oakWidth(t, length) {
-  const body = Math.pow(Math.sin(Math.PI * Math.pow(t, 0.92)), 0.62);
-  const peaks = [0.16, 0.36, 0.56, 0.76, 0.94];
-  const amps = [0.52, 0.88, 1, 0.7, 0.26];
-  const spans = [0.11, 0.12, 0.13, 0.11, 0.08];
-  let lobe = 0.12;
+  const body = Math.pow(Math.sin(Math.PI * Math.pow(t, 0.92)), 0.7);
+  const peaks = [0.18, 0.38, 0.58, 0.76, 0.93];
+  const amps = [0.48, 0.82, 1, 0.68, 0.3];
+  const spans = [0.13, 0.14, 0.15, 0.13, 0.1];
+  let lobe = 0.22;
   for (let i = 0; i < peaks.length; i++) {
     const d = (t - peaks[i]) / spans[i];
-    lobe = Math.max(lobe, amps[i] * Math.max(0, 1 - d * d));
+    lobe = Math.max(lobe, amps[i] * Math.exp(-d * d * 1.6));
   }
-  return length * 0.46 * body * lobe;
+  return length * 0.48 * body * lobe;
 }
 
 function fothergillaWidth(t, length) {
@@ -144,9 +144,8 @@ function dogwoodWidth(t, length) {
 }
 
 function boxwoodWidth(t, length) {
-  const body = Math.pow(Math.sin(Math.PI * t), 0.52);
-  const notch = t > 0.9 ? 0.72 + 0.28 * (1 - t) / 0.1 : 1;
-  return length * 0.4 * body * notch;
+  const body = Math.pow(Math.sin(Math.PI * t), 0.42);
+  return length * 0.44 * body;
 }
 
 function petalGeom(length, width) {
@@ -431,11 +430,11 @@ for (const [id, c] of Object.entries(configs)) {
           .add(v(Math.cos(a) * rad, t * 0.46, Math.sin(a) * rad));
         floret(
           p,
-          0.062 + r() * 0.022,
+          0.082 + r() * 0.028,
           at,
           new T.Color("#fff8ee").multiplyScalar(0.86 + r() * 0.14),
           phase,
-          1.02 + r() * 0.12,
+          0.92 + r() * 0.14,
         );
       }
     } else if (id === "fothergilla") {
@@ -447,7 +446,7 @@ for (const [id, c] of Object.entries(configs)) {
         const root = at.clone().add(v(0, t * 0.24, 0));
         const end = root
           .clone()
-          .add(v(Math.cos(a) * 0.07, 0.03, Math.sin(a) * 0.07));
+          .add(v(Math.cos(a) * 0.085, 0.04, Math.sin(a) * 0.085));
         twig(root, end, 0.0022, "blooms", at, "#eee9cd");
         const anther = new T.BufferGeometry();
         anther.setAttribute(

@@ -67,10 +67,11 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial) {
         float autumn = smoothstep(vSeasonPhase * .35, .65 + vSeasonPhase * .35, fall);
         vec3 autumnColor = mix(fallColor, fallColor * vec3(1.16, .86, .6), vSeasonPhase);
         vec3 foliage = mix(summerColor, autumnColor, autumn);
-        float vein = 0.88 + 0.12 * diffuseColor.g;
-        diffuseColor.rgb *= foliage * vein;
+        float vein = 0.86 + 0.16 * diffuseColor.g;
+        float mottling = 0.86 + 0.2 * fract(sin(vSeasonPhase * 127.1) * 43758.5453);
+        diffuseColor.rgb *= foliage * vein * mottling;
         if (!gl_FrontFacing) {
-          diffuseColor.rgb *= vec3(1.08, 1.02, 0.86);
+          diffuseColor.rgb *= vec3(1.12, 1.04, 0.82);
         }
       `,
       );
@@ -117,8 +118,8 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial) {
       float trans = pow(clamp(dot(viewDir, -lightDir), 0.0, 1.0), 1.8) * backLit;
       ${
         name === "leaves"
-          ? `outgoingLight += diffuseColor.rgb * (0.1 + wrapDiffuse * 0.16 + trans * 0.28);
-      outgoingLight += diffuseColor.rgb * vec3(1.05, 0.92, 0.55) * trans * 0.22;`
+          ? `outgoingLight += diffuseColor.rgb * (0.12 + wrapDiffuse * 0.22 + trans * 0.34);
+      outgoingLight += diffuseColor.rgb * vec3(1.12, 0.96, 0.52) * trans * 0.32;`
           : name === "blooms"
             ? `outgoingLight += diffuseColor.rgb * (0.08 + wrapDiffuse * 0.12 + trans * 0.18);`
             : name === "branches"
