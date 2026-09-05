@@ -1456,10 +1456,31 @@ function Scene({
         visualStyle={visualStyle}
         instances={visibleInstances}
       />
-      {editorial ? null : (
+      {editorial ? null : visualStyle === "model3d" ? (
         <>
           <hemisphereLight
-            args={["#fffaf0", "#9d9b8d", (visualStyle === "model3d" ? 1.9 : 1.3) + seasonalWarmth * 0.12]}
+            args={["#f3efe4", "#7d786c", 2.12 + seasonalWarmth * 0.08]}
+          />
+          <directionalLight
+            position={[-3.6, 6.2, 4.4]}
+            color={seasonalWarmth > 0.4 ? "#ffe6c2" : "#e6e9e4"}
+            intensity={1.04}
+          />
+          <directionalLight
+            position={[3.4, 2.6, -2.6]}
+            color="#c4d0d6"
+            intensity={0.4}
+          />
+          <directionalLight
+            position={[0.2, 5.4, -5.0]}
+            color="#fff3e4"
+            intensity={0.2}
+          />
+        </>
+      ) : (
+        <>
+          <hemisphereLight
+            args={["#fffaf0", "#9d9b8d", 1.3 + seasonalWarmth * 0.12]}
           />
           <directionalLight
             position={[-4.5, 7.8, 5.2]}
@@ -1576,7 +1597,11 @@ export default function GardenScene(props: GardenSceneProps) {
           toneMapping: editorial
             ? THREE.NoToneMapping
             : THREE.ACESFilmicToneMapping,
-          toneMappingExposure: editorial ? 1 : 1.02,
+          toneMappingExposure: editorial
+            ? 1
+            : props.visualStyle === "model3d"
+              ? 1.08
+              : 1.02,
           powerPreference: "default",
         }}
         onCreated={({ gl, scene }) => {

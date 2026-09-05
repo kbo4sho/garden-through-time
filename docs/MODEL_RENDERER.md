@@ -16,6 +16,8 @@ Living Framework is offered only in model mode. Selecting seven plants in this m
 
 Four original, procedurally authored binary glTF assets: fothergilla, Ruby Slippers oakleaf hydrangea, Arctic Fire redtwig dogwood, and Green Velvet boxwood. These are interpretive botanical models, not scanned specimens. No seasonal plant images or splats are used for these four in model mode. No third-party mesh or texture content is included.
 
+The optional renderer aims at photographic *fidelity level* (richness, soft mass, seasonal readability at phone distance) as a **studio-botanical** look: folded 3D organs, wrap lighting, and a winter branching armature. It is not a photo-clone, albedo bake, or card-density hill-climb toward the billboard frames. Winterberry stays photographic.
+
 `npm run models:generate` regenerates the GLBs and `public/models/manifest.json` deterministically. Geometry is authored offline with Three.js and compressed with `EXT_meshopt_compression`; drei supplies the decoder locally in the optional model chunk. No Draco CDN or runtime model-generation service is involved. The generation dependencies are development-only.
 
 Each GLB contains merged `branches`, `leaves`, `blooms`, and (dogwood only) `fruit` meshes. `_ANCHOR` is the organ's attachment point and `_PHASE` is its stable emergence/abscission order. Positions and anchors remain in the same coordinate system during compression. Vertex shaders grow or contract organs around their anchors. No branch topology or geometry is rebuilt on a day tick; no large translucent seasonal meshes are sorted over one another.

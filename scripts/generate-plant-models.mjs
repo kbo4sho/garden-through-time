@@ -1,4 +1,5 @@
 // Original, deterministic glTF geometry. No downloaded meshes or image textures.
+// Studio-botanical: folded 3D organs and a winter armature, not photo cards.
 import * as T from "three";
 import {
   mergeGeometries,
@@ -30,36 +31,48 @@ const configs = {
     seed: 71,
     h: 2.55,
     w: 1.25,
-    stems: 15,
-    leaf: 0.19,
+    stems: 17,
+    steps: 6,
+    leaf: 0.22,
     leaves: 8,
+    cluster: 2,
+    sprays: 4,
     color: "#66834b",
   },
   hydrangea: {
     seed: 182,
     h: 2.72,
-    w: 1.38,
-    stems: 13,
-    leaf: 0.28,
-    leaves: 6,
+    w: 1.42,
+    stems: 14,
+    steps: 6,
+    leaf: 0.34,
+    leaves: 4,
+    cluster: 2,
+    sprays: 3,
     color: "#547449",
   },
   dogwood: {
     seed: 431,
     h: 3.05,
-    w: 1.18,
+    w: 1.12,
     stems: 22,
-    leaf: 0.18,
-    leaves: 7,
+    steps: 6,
+    leaf: 0.2,
+    leaves: 6,
+    cluster: 2,
+    sprays: 3,
     color: "#5a804e",
   },
   boxwood: {
     seed: 992,
     h: 2.32,
     w: 1.14,
-    stems: 20,
-    leaf: 0.095,
-    leaves: 10,
+    stems: 16,
+    steps: 5,
+    leaf: 0.105,
+    leaves: 7,
+    cluster: 2,
+    sprays: 0,
     color: "#3f653f",
   },
 };
@@ -87,25 +100,35 @@ for (const [id, c] of Object.entries(configs)) {
     const a = [],
       p = [],
       colors = [];
-    const col = new T.Color(tint);
+    const col =
+      tint instanceof T.Color ? tint : new T.Color(tint);
     for (let i = 0; i < n; i++) {
       a.push(...anchor);
       p.push(phase);
-      const vein = 1;
-      colors.push(col.r * vein, col.g * vein, col.b * vein);
+      colors.push(col.r, col.g, col.b);
     }
     g.setAttribute("anchor", new T.Float32BufferAttribute(a, 3));
     g.setAttribute("phase", new T.Float32BufferAttribute(p, 1));
     g.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
     layers[layer].push(g);
   }
+  function barkTint(t = 0.5) {
+    if (id === "dogwood") {
+      return new T.Color("#6a4c40").lerp(new T.Color("#b13c34"), 0.28 + t * 0.72);
+    }
+    if (id === "hydrangea") return new T.Color("#7a5a42");
+    if (id === "boxwood") return new T.Color("#5a4a38");
+    return new T.Color("#655444");
+  }
   function twig(a, b, radius, layer = "branches", anchor = a, tint) {
     const d = b.clone().sub(a);
+    const length = Math.max(0.004, d.length());
+    const sides = layer === "branches" && radius < 0.006 ? 4 : 5;
     const g = new T.CylinderGeometry(
-      radius * 0.58,
+      radius * 0.56,
       radius,
-      d.length(),
-      5,
+      length,
+      sides,
       1,
       true,
     );
@@ -113,41 +136,34 @@ for (const [id, c] of Object.entries(configs)) {
       new T.Quaternion().setFromUnitVectors(v(0, 1, 0), d.normalize()),
     );
     g.translate(...a.clone().add(b).multiplyScalar(0.5));
-    add(
-      layer,
-      g,
-      anchor,
-      tint ??
-        (id === "dogwood"
-          ? "#a63831"
-          : id === "hydrangea"
-            ? "#795740"
-            : "#655444"),
-    );
+    add(layer, g, anchor, tint ?? barkTint(b.y / c.h), r());
   }
-  // A folded, pointed blade with a raised midrib. Lobes are geometry, not alpha cards.
-  function leafShape(length, oak = false, round = false) {
-    const rows = oak ? 12 : id === "boxwood" ? 4 : 6,
-      points = [],
-      indices = [];
+  // Folded botanical blades. Lobes and teeth are geometry, not alpha cards.
+  function leafShape(length) {
+    const oak = id === "hydrangea";
+    const round = id === "boxwood" || id === "fothergilla";
+    const rows = oak ? 9 : id === "boxwood" ? 3 : 4;
+    const points = [];
+    const indices = [];
     for (let i = 0; i <= rows; i++) {
       const t = i / rows;
       let width =
-        Math.pow(Math.sin(Math.PI * t), round ? 0.48 : 0.78) *
+        Math.pow(Math.sin(Math.PI * t), round ? 0.5 : 0.78) *
         length *
-        (oak ? 0.43 : round ? 0.37 : 0.31);
-      if (oak) width *= 0.66 + 0.34 * Math.cos(t * Math.PI * 8);
-      else if (id === "fothergilla") width *= i % 2 ? 0.91 : 1;
+        (oak ? 0.44 : round ? 0.38 : 0.3);
+      if (oak) width *= 0.64 + 0.36 * Math.cos(t * Math.PI * 8);
+      else if (id === "fothergilla") width *= i % 2 ? 0.88 : 1;
+      const cup = Math.sin(t * Math.PI);
       points.push(
         -width,
         t * length,
-        Math.sin(t * Math.PI) * length * 0.055,
+        cup * length * 0.05,
         0,
         t * length,
-        Math.sin(t * Math.PI) * length * 0.16,
+        cup * length * 0.15,
         width,
         t * length,
-        Math.sin(t * Math.PI) * length * 0.055,
+        cup * length * 0.05,
       );
       if (i < rows) {
         const k = i * 3;
@@ -173,102 +189,133 @@ for (const [id, c] of Object.entries(configs)) {
     g.computeVertexNormals();
     return g;
   }
+  function leafTint() {
+    // Interpretive studio variation, not sampled photo albedo.
+    const hue =
+      id === "boxwood"
+        ? 0.28 + (r() - 0.5) * 0.03
+        : id === "fothergilla"
+          ? 0.22 + (r() - 0.5) * 0.05
+          : id === "hydrangea"
+            ? 0.3 + (r() - 0.5) * 0.04
+            : 0.26 + (r() - 0.5) * 0.04;
+    return new T.Color().setHSL(hue, 0.12 + r() * 0.08, 0.68 + r() * 0.24);
+  }
   function leaf(at, angle, size, phase) {
-    const g = leafShape(
-      size,
-      id === "hydrangea",
-      id === "boxwood" || id === "fothergilla",
-    );
-    g.rotateX(0.65 + r() * 1.85);
-    g.rotateY(angle);
-    g.rotateZ((r() - 0.5) * 0.55);
+    const g = leafShape(size);
+    // Mostly face-on to the canopy, so 390px reads as a soft mass, not edge-on cards.
+    g.rotateX(0.85 + r() * 0.7);
+    g.rotateY(angle + (r() - 0.5) * 0.35);
+    g.rotateZ((r() - 0.5) * 0.38);
     g.translate(...at);
-    const color = new T.Color("#ffffff").multiplyScalar(0.7 + r() * 0.3);
-    add("leaves", g, at, color, phase);
+    add("leaves", g, at, leafTint(), phase);
+  }
+  function leafCluster(at, angle, size, phase) {
+    const n = c.cluster;
+    for (let i = 0; i < n; i++) {
+      const offset = v(
+        Math.cos(angle + i) * 0.018 * i,
+        0.01 * i,
+        Math.sin(angle + i) * 0.018 * i,
+      );
+      leaf(at.clone().add(offset), angle + (i - (n - 1) / 2) * 0.28, size * (0.86 + r() * 0.28), phase);
+    }
+  }
+  function spray(origin, count) {
+    for (let i = 0; i < count; i++) {
+      const a = r() * Math.PI * 2;
+      const len = 0.07 + r() * (id === "dogwood" ? 0.2 : 0.15);
+      const end = origin.clone().add(
+        v(Math.cos(a) * len, 0.03 + r() * 0.14, Math.sin(a) * len),
+      );
+      twig(origin, end, 0.0026 + r() * 0.0014);
+    }
   }
   function floret(at, size, anchor, tint, phase) {
-    // Four separate cupped sepals, each a small low-poly petal.
     for (let p = 0; p < 4; p++) {
-      const g = new T.CircleGeometry(size * 0.48, 5);
-      g.translate(0, size * 0.45, 0);
-      g.scale(0.85, 1, 0.6);
-      g.rotateX(1.05);
-      g.rotateY((p * Math.PI) / 2);
+      const g = new T.CircleGeometry(size * 0.46, 4);
+      g.translate(0, size * 0.42, 0);
+      g.scale(0.82, 1, 0.58);
+      g.rotateX(1.02);
+      g.rotateY((p * Math.PI) / 2 + (r() - 0.5) * 0.12);
       g.translate(...at);
       add("blooms", g, anchor, tint, phase);
     }
   }
+  const clampBoxwood = (end) => {
+    if (id !== "boxwood") return end;
+    const radial = Math.sqrt(end.x ** 2 + end.z ** 2);
+    const limit =
+      c.h *
+      (0.7 +
+        0.24 * Math.sqrt(Math.max(0, 1 - radial / (c.w * 1.35))));
+    end.y = Math.min(end.y, limit);
+    return end;
+  };
   const terminals = [];
   for (let stem = 0; stem < c.stems; stem++) {
-    const angle = stem * 2.39996 + r() * 0.35;
-    const reach = c.w * (0.28 + r() * 0.7),
-      height = c.h * (0.38 + r() * 0.5);
+    const angle = stem * 2.39996 + r() * 0.32;
+    const upright = id === "dogwood" ? 0.62 : 1;
+    const reach = c.w * (0.22 + r() * 0.74) * upright;
+    const height = c.h * (0.42 + r() * 0.52);
     let prev = v(
-      Math.cos(angle) * (0.08 + r() * 0.18),
+      Math.cos(angle) * (0.06 + r() * 0.16),
       0,
-      Math.sin(angle) * (0.08 + r() * 0.18),
+      Math.sin(angle) * (0.06 + r() * 0.16),
     );
-    for (let step = 1; step <= 5; step++) {
-      const t = step / 5;
+    for (let step = 1; step <= c.steps; step++) {
+      const t = step / c.steps;
       const next = v(
-        Math.cos(angle) * reach * Math.pow(t, 1.15),
+        Math.cos(angle) * reach * Math.pow(t, id === "dogwood" ? 1.35 : 1.12),
         height * t,
-        Math.sin(angle) * reach * Math.pow(t, 1.15),
+        Math.sin(angle) * reach * Math.pow(t, id === "dogwood" ? 1.35 : 1.12),
       );
-      next.x += (r() - 0.5) * 0.09;
-      next.z += (r() - 0.5) * 0.09;
+      next.x += (r() - 0.5) * 0.08;
+      next.z += (r() - 0.5) * 0.08;
+      clampBoxwood(next);
       twig(
         prev,
         next,
-        (id === "dogwood" ? 0.018 : 0.026) * (1 - t * 0.65),
+        (id === "dogwood" ? 0.016 : 0.024) * (1 - t * 0.62),
         "branches",
         prev,
-        id === "dogwood"
-          ? new T.Color("#6e5445").lerp(new T.Color("#a63831"), 0.2 + t * 0.8)
-          : undefined,
       );
       if (step >= 1) {
-        for (let side = 0; side < 2; side++) {
-          const a = angle + (side ? 1 : -1) * (0.7 + r() * 0.8);
-          const end = next
-            .clone()
-            .add(
-              v(
-                Math.cos(a) * (0.19 + r() * 0.32),
-                0.16 + r() * 0.23,
-                Math.sin(a) * (0.19 + r() * 0.32),
-              ),
-            );
-          if (id === "boxwood") {
-            const limit =
-              c.h *
-              (0.72 +
-                0.22 *
-                  Math.sqrt(
-                    Math.max(
-                      0,
-                      1 - (end.x ** 2 + end.z ** 2) / (c.w * 1.4) ** 2,
-                    ),
-                  ));
-            end.y = Math.min(end.y, limit);
-          }
-          twig(next, end, 0.008);
+        const sideCount = id === "boxwood" ? 2 : 2;
+        for (let side = 0; side < sideCount; side++) {
+          const a = angle + (side ? 1 : -1) * (0.62 + r() * 0.85);
+          const end = next.clone().add(
+            v(
+              Math.cos(a) * (0.16 + r() * 0.3) * upright,
+              0.12 + r() * 0.22,
+              Math.sin(a) * (0.16 + r() * 0.3) * upright,
+            ),
+          );
+          clampBoxwood(end);
+          twig(next, end, 0.0072);
+          if (c.sprays && step >= 2) spray(end, c.sprays);
           for (let j = 0; j < c.leaves; j++) {
-            const t = (id === "dogwood" || id === "hydrangea")
-              ? (Math.floor(j / 2) + 1) / (Math.ceil(c.leaves / 2) + 1)
-              : (j + 1) / (c.leaves + 1);
-            const
-              at = next.clone().lerp(end, t);
-            const la = a + (j % 2 ? 1 : -1) * 1.25;
+            const along =
+              id === "dogwood" || id === "hydrangea"
+                ? (Math.floor(j / 2) + 1) / (Math.ceil(c.leaves / 2) + 1)
+                : (j + 1) / (c.leaves + 1);
+            const at = next.clone().lerp(end, along);
+            const la = a + (j % 2 ? 1 : -1) * 1.22;
             const petiole = at
               .clone()
-              .add(v(Math.cos(la) * 0.055, 0.022, Math.sin(la) * 0.055));
-            twig(at, petiole, 0.0025);
-            leaf(petiole, la, c.leaf * (1.1 + r() * 0.85), r());
-            if (id === "boxwood")
-              leaf(petiole, la + Math.PI, c.leaf * (1 + r() * 0.6), r());
+              .add(v(Math.cos(la) * 0.05, 0.018, Math.sin(la) * 0.05));
+            twig(at, petiole, 0.0022);
+            leafCluster(petiole, la, c.leaf * (1.05 + r() * 0.7), r());
+            if (id === "boxwood") {
+              leafCluster(
+                petiole,
+                la + Math.PI,
+                c.leaf * (0.95 + r() * 0.45),
+                r(),
+              );
+            }
           }
-          if (step >= 4 && side === 0) terminals.push(end);
+          if (step >= c.steps - 1 && side === 0) terminals.push(end);
         }
       }
       prev = next;
@@ -278,53 +325,53 @@ for (const [id, c] of Object.entries(configs)) {
   terminals.forEach((at, i) => {
     const phase = r();
     if (id === "hydrangea" && i % 2 === 0) {
-      const top = at.clone().add(v(0.04, 0.42, 0));
-      twig(at, top, 0.008, "blooms", at, "#b9ab83");
-      for (let j = 0; j < 54; j++) {
-        const t = j / 54,
+      const top = at.clone().add(v(0.03, 0.4, 0));
+      twig(at, top, 0.0075, "blooms", at, "#b9ab83");
+      for (let j = 0; j < 40; j++) {
+        const t = j / 40,
           a = j * 2.4,
-          rad = 0.18 * (1 - t) + 0.008;
+          rad = 0.17 * (1 - t) + 0.01;
         const p = at
           .clone()
-          .add(v(Math.cos(a) * rad, t * 0.42, Math.sin(a) * rad));
+          .add(v(Math.cos(a) * rad, t * 0.4, Math.sin(a) * rad));
         floret(
           p,
-          0.055 + r() * 0.025,
+          0.052 + r() * 0.022,
           at,
-          new T.Color("#ffffff").multiplyScalar(0.82 + r() * 0.18),
+          new T.Color("#ffffff").multiplyScalar(0.84 + r() * 0.16),
           phase,
         );
       }
     } else if (id === "fothergilla") {
-      twig(at, at.clone().add(v(0, 0.22, 0)), 0.006, "blooms", at, "#d4ce9e");
-      for (let j = 0; j < 36; j++) {
-        const a = j * 2.4,
-          t = j / 36,
-          root = at.clone().add(v(0, t * 0.22, 0));
-        const end = root
-          .clone()
-          .add(v(Math.cos(a) * 0.065, 0.025, Math.sin(a) * 0.065));
-        twig(root, end, 0.0035, "blooms", at, "#eee9cd");
-        const g = new T.OctahedronGeometry(0.014);
-        g.translate(...end);
-        add("blooms", g, at, "#fffbed", phase);
-      }
-    } else if (id === "dogwood" && i % 3 === 0) {
+      twig(at, at.clone().add(v(0, 0.24, 0)), 0.0055, "blooms", at, "#d4ce9e");
       for (let j = 0; j < 22; j++) {
         const a = j * 2.4,
-          rad = Math.sqrt(j / 22) * 0.13;
+          t = j / 22,
+          root = at.clone().add(v(0, t * 0.24, 0));
+        const end = root
+          .clone()
+          .add(v(Math.cos(a) * (0.055 + t * 0.02), 0.02, Math.sin(a) * (0.055 + t * 0.02)));
+        twig(root, end, 0.0026, "blooms", at, "#eee9cd");
+        const tip = new T.ConeGeometry(0.01, 0.018, 3);
+        tip.translate(...end);
+        add("blooms", tip, at, "#fffbed", phase);
+      }
+    } else if (id === "dogwood" && i % 3 === 0) {
+      for (let j = 0; j < 16; j++) {
+        const a = j * 2.4,
+          rad = Math.sqrt(j / 16) * 0.12;
         const p = at
           .clone()
-          .add(v(Math.cos(a) * rad, 0.025 + r() * 0.045, Math.sin(a) * rad));
-        floret(p, 0.024, at, "#f2eedc", phase);
-        if (j < 9) {
-          const g = new T.IcosahedronGeometry(0.028, 1);
+          .add(v(Math.cos(a) * rad, 0.02 + r() * 0.04, Math.sin(a) * rad));
+        floret(p, 0.022, at, "#f2eedc", phase);
+        if (j < 7) {
+          const g = new T.IcosahedronGeometry(0.026, 0);
           g.translate(...p);
           add("fruit", g, at, "#d8ddd1", phase);
         }
       }
-    } else if (id === "boxwood" && i % 5 === 0) {
-      const g = new T.IcosahedronGeometry(0.017, 0);
+    } else if (id === "boxwood" && i % 6 === 0) {
+      const g = new T.IcosahedronGeometry(0.015, 0);
       g.translate(...at);
       add("blooms", g, at, "#d9d4a7", phase);
     }
@@ -335,8 +382,8 @@ for (const [id, c] of Object.entries(configs)) {
   for (const [name, parts] of Object.entries(layers)) {
     if (!parts.length) continue;
     const geometry = mergeVertices(mergeGeometries(parts));
-    for (const name of ["position", "anchor", "phase"]) {
-      const values = geometry.attributes[name].array;
+    for (const attr of ["position", "anchor", "phase"]) {
+      const values = geometry.attributes[attr].array;
       for (let i = 0; i < values.length; i++)
         values[i] = Math.round(values[i] * 4096) / 4096;
     }
@@ -347,7 +394,7 @@ for (const [id, c] of Object.entries(configs)) {
       color: name === "leaves" ? c.color : "#ffffff",
       vertexColors: true,
       side: T.DoubleSide,
-      roughness: 0.88,
+      roughness: 0.9,
     });
     const mesh = new T.Mesh(geometry, material);
     mesh.name = name;
@@ -373,15 +420,20 @@ for (const [id, c] of Object.entries(configs)) {
   await writeFile(new URL(`${id}.glb`, out), Buffer.from(buffer));
   const bounds = new T.Box3().setFromObject(scene);
   const points = [];
-  scene.children.forEach(mesh => {
+  scene.children.forEach((mesh) => {
     const positions = mesh.geometry.attributes.position;
-    for (let i = 0; i < positions.count; i++) points.push(new T.Vector3().fromBufferAttribute(positions, i));
+    for (let i = 0; i < positions.count; i++)
+      points.push(new T.Vector3().fromBufferAttribute(positions, i));
   });
   const hull = new ConvexHull().setFromPoints(points);
   const silhouette = new Map();
   for (const face of hull.faces) {
     let edge = face.edge;
-    do { const point = edge.head().point.toArray(); silhouette.set(point.join(','), point); edge = edge.next; } while (edge !== face.edge);
+    do {
+      const point = edge.head().point.toArray();
+      silhouette.set(point.join(","), point);
+      edge = edge.next;
+    } while (edge !== face.edge);
   }
   manifest.models[id] = {
     height: c.h,
