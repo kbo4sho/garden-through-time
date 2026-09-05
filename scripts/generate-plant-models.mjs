@@ -35,11 +35,13 @@ const configs = {
     w: 1.22,
     stems: 19,
     steps: 6,
-    leaf: 0.36,
-    leaves: 8,
-    cluster: 3,
+    leaf: 0.22,
+    leaves: 6,
+    cluster: 2,
     sprays: 3,
-    fills: 305,
+    fills: 220,
+    cores: 280,
+    puffs: 310,
     color: "#66834b",
   },
   hydrangea: {
@@ -48,11 +50,13 @@ const configs = {
     w: 1.38,
     stems: 15,
     steps: 6,
-    leaf: 0.5,
-    leaves: 5,
-    cluster: 3,
+    leaf: 0.3,
+    leaves: 4,
+    cluster: 2,
     sprays: 2,
-    fills: 200,
+    fills: 150,
+    cores: 170,
+    puffs: 160,
     color: "#547449",
   },
   dogwood: {
@@ -61,11 +65,13 @@ const configs = {
     w: 1.08,
     stems: 25,
     steps: 6,
-    leaf: 0.32,
-    leaves: 6,
-    cluster: 3,
+    leaf: 0.18,
+    leaves: 5,
+    cluster: 2,
     sprays: 3,
-    fills: 315,
+    fills: 230,
+    cores: 260,
+    puffs: 290,
     color: "#5a804e",
   },
   boxwood: {
@@ -74,11 +80,13 @@ const configs = {
     w: 1.18,
     stems: 18,
     steps: 5,
-    leaf: 0.152,
+    leaf: 0.118,
     leaves: 6,
     cluster: 2,
     sprays: 0,
-    fills: 85,
+    fills: 60,
+    cores: 36,
+    puffs: 130,
     color: "#3f653f",
   },
 };
@@ -270,6 +278,23 @@ for (const [id, c] of Object.entries(configs)) {
     );
     twig(at, tip, radius);
   }
+  // Rounded 3D masses — occupy pixels at 390px. Not cards, not photo albedo.
+  function woodMass(at, radius) {
+    const g = new T.IcosahedronGeometry(radius, 0);
+    g.scale(1.18 + r() * 0.16, 0.72 + r() * 0.18, 1.08 + r() * 0.14);
+    g.rotateY(r() * Math.PI * 2);
+    g.rotateZ((r() - 0.5) * 0.45);
+    g.translate(...at);
+    add("branches", g, at, barkTint(at.y / c.h), r());
+  }
+  function canopyPuff(at, radius, phase) {
+    const g = new T.IcosahedronGeometry(radius, 0);
+    g.scale(1.28 + r() * 0.18, 0.62 + r() * 0.16, 1.16 + r() * 0.16);
+    g.rotateX((r() - 0.5) * 0.7);
+    g.rotateY(r() * Math.PI * 2);
+    g.translate(...at);
+    add("leaves", g, at, leafTint(), phase);
+  }
   function spray(origin, count) {
     for (let i = 0; i < count; i++) {
       const a = r() * Math.PI * 2;
@@ -349,12 +374,12 @@ for (const [id, c] of Object.entries(configs)) {
               at.clone().add(v(Math.cos(la) * 0.045, 0.016, Math.sin(la) * 0.045)),
             );
             twig(at, petiole, 0.0036);
-            leafCluster(petiole, la, c.leaf * (1.12 + r() * 0.48), r());
+            leafCluster(petiole, la, c.leaf * (0.95 + r() * 0.28), r());
             if (id === "boxwood") {
               leafCluster(
                 petiole,
                 la + Math.PI,
-                c.leaf * (1.02 + r() * 0.36),
+                c.leaf * (0.9 + r() * 0.24),
                 r(),
               );
             }
@@ -380,9 +405,33 @@ for (const [id, c] of Object.entries(configs)) {
     );
     twig(origin, end, 0.0092 + r() * 0.005);
     knob(origin, 0.012 + r() * 0.007);
-    if (i % 2 === 0) {
-      leafCluster(end, a2, c.leaf * (1.02 + r() * 0.32), r());
+    if (i % 3 === 0) {
+      leafCluster(end, a2, c.leaf * (0.92 + r() * 0.28), r());
     }
+  }
+  // Winter cores: overlapping woody volumes inside the hull so January reads
+  // nearly opaque at 390px while outer twigs stay a readable armature.
+  for (let i = 0; i < c.cores; i++) {
+    const y = c.h * (0.14 + r() * 0.72);
+    const a = r() * Math.PI * 2;
+    const rad = envelopeRadius(y) * (0.04 + r() * 0.52);
+    woodMass(
+      clampHabit(v(Math.cos(a) * rad, y, Math.sin(a) * rad)),
+      0.11 + r() * 0.08,
+    );
+  }
+  // Soft canopy puffs: rounded leaf-colored masses that fill the habit so
+  // July/October silhouettes are volume, not jagged folded-card stacks.
+  // Folded leaves stay as botanical detail; puffs carry the 390px outline.
+  for (let i = 0; i < c.puffs; i++) {
+    const y = c.h * (0.18 + r() * 0.7);
+    const a = r() * Math.PI * 2;
+    const rad = envelopeRadius(y) * (0.16 + r() * 0.58);
+    canopyPuff(
+      clampHabit(v(Math.cos(a) * rad, y, Math.sin(a) * rad)),
+      0.12 + r() * 0.08,
+      r(),
+    );
   }
   terminals.forEach((at, i) => {
     const phase = r();

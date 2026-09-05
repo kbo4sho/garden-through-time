@@ -93,7 +93,7 @@ function makeMaterial(
       float core = 1.0 - smoothstep(0.06, 0.92, radial * 0.58 + vStudioWorld.y * 0.06);
       float rim = pow(clamp(1.0 - ndv, 0.0, 1.0), 1.7);
       outgoingLight *= 0.84 + 0.16 * interior;
-      outgoingLight *= mix(1.0, ${name === "branches" ? "0.56" : "0.74"}, core * ${name === "branches" ? "max(bare, 0.35)" : "0.42"});
+      outgoingLight *= mix(1.0, ${name === "branches" ? "0.48" : "0.78"}, core * ${name === "branches" ? "max(bare, 0.45)" : "0.28"});
       outgoingLight += diffuseColor.rgb * wrap * ${name === "leaves" ? "0.26" : name === "branches" ? "0.04" : "0.14"};
       ${
         name === "leaves"
@@ -110,7 +110,7 @@ function makeMaterial(
     );
   };
   material.customProgramCacheKey = () =>
-    `studio-botanical-v3-${name}-${profileId}`;
+    `studio-botanical-v3b-${name}-${profileId}`;
   if (name === "leaves") material.color.set("#ffffff");
   return { material, uniforms };
 }

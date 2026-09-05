@@ -544,6 +544,10 @@ function SeasonalBillboardCanopy({
         value:
           profile.id === "winterberry" && visualStyle === "model3d" ? 0.62 : 0,
       },
+      uFillMass: {
+        value:
+          profile.id === "winterberry" && visualStyle === "model3d" ? 1 : 0,
+      },
       uBrightness: {
         value:
           profile.id === "dogwood" && visualStyle === "photographic" ? 0.8 : 1,
@@ -657,6 +661,7 @@ function SeasonalBillboardCanopy({
           uniform float uOpacity;
           uniform float uSaturation;
           uniform float uHueEase;
+          uniform float uFillMass;
           uniform float uBrightness;
           uniform float uEditorial;
           varying vec2 vUv;
@@ -668,11 +673,13 @@ function SeasonalBillboardCanopy({
             vec4 summer = texture2D(uSummer, vUv);
             vec4 fall = texture2D(uFall, vUv);
             float sourceAlpha = winter.a * uWeights.x + leafout.a * uWeights.y + bloom.a * uWeights.z + summer.a * uWeights.w + fall.a * uExtraWeights.x;
-            if (sourceAlpha < 0.072) discard;
-            float alpha = smoothstep(0.072, 0.19, sourceAlpha) * uOpacity;
-            float groundFeather = smoothstep(0.18, 0.32, vUv.y);
-            alpha *= groundFeather * groundFeather;
-            if (alpha < 0.035) discard;
+            float gate = mix(0.072, 0.032, uFillMass);
+            if (sourceAlpha < gate) discard;
+            float alpha = smoothstep(gate, mix(0.19, 0.1, uFillMass), sourceAlpha) * uOpacity;
+            float groundFeather = smoothstep(mix(0.18, 0.09, uFillMass), mix(0.32, 0.2, uFillMass), vUv.y);
+            alpha *= mix(groundFeather * groundFeather, pow(groundFeather, 1.12), uFillMass);
+            alpha = mix(alpha, min(1.0, sourceAlpha * 1.7 + 0.1), uFillMass * 0.7);
+            if (alpha < mix(0.035, 0.02, uFillMass)) discard;
             vec3 premultiplied =
               winter.rgb * winter.a * uWeights.x +
               leafout.rgb * leafout.a * uWeights.y +
@@ -686,7 +693,7 @@ function SeasonalBillboardCanopy({
             color = mix(vec3(luminance), color, seasonalSaturation);
             color = mix(color, vec3(min(color.r * 1.2 + 0.05, 1.0), color.g * 0.68, color.b * 0.36), uHueEase);
             color = clamp((color - 0.5) * 1.045 + 0.5, 0.0, 1.0);
-            color *= mix(1.0, 0.86, dormant) * uBrightness;
+            color *= mix(1.0, mix(0.86, 0.74, uFillMass), dormant) * uBrightness;
             float diffuse = 0.95 + 0.07 * max(dot(normalize(vNormal), normalize(vec3(-0.35, 0.72, 0.6))), 0.0);
             gl_FragColor = vec4(color * diffuse, alpha);
             #include <tonemapping_fragment>
