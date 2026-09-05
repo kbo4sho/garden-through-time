@@ -39,13 +39,25 @@ Photographic frames in the compare strips are a **level** reference for richness
 
 | Asset | Main (PR #7) | This PR | Delta |
 | --- | ---: | ---: | ---: |
-| fothergilla.glb | 1,298,716 | 1,206,152 | −92,564 |
-| hydrangea.glb | 913,820 | 1,005,036 | +91,216 |
-| dogwood.glb | 1,067,600 | 1,323,892 | +256,292 |
+| fothergilla.glb | 1,298,716 | 1,515,920 | +217,204 |
+| hydrangea.glb | 913,820 | 1,007,820 | +94,000 |
+| dogwood.glb | 1,067,600 | 1,327,604 | +260,004 |
 | boxwood.glb | 1,354,328 | 1,097,756 | −256,572 |
-| **Total** | **4,634,464** | **4,632,836** | **−1,628 (−0.04%)** |
+| **Total** | **4,634,464** | **4,949,100** | **+314,636 (+6.8%)** |
 
-Under the 5 MB download check. Decoded attributes: 10,852,914 bytes (budget 24 MB). Not a 2× jump from ~4.5 MB.
+Under the 5 MB download check. Decoded attributes: 11,594,468 bytes (budget 24 MB). Not a 2× jump from ~4.5 MB.
+
+## Evidence files
+
+390px after frames (layered-seasons-5 share, winterberry stays photographic):
+
+- `after-d15-phone.png` / `after-d135-phone.png` / `after-d200-phone.png` / `after-d290-phone.png`
+- `photo-level-d15-phone.png` … `photo-level-d290-phone.png` — photographic **level** reference, not a clone target
+- `compare-d15-phone.png` … `compare-d290-phone.png` — labeled studio botanical | photo level
+
+390px hydrangea shortlist (balanced-year-3): `after-3-d15-phone.png` / `after-3-d135-phone.png` / `after-3-d200-phone.png` / `after-3-d290-phone.png`
+
+Desktop January: `after-gltf-balanced-year-3-jan-desktop.png`, `after-gltf-layered-seasons-5-jan-desktop.png`, `after-gltf-living-framework-7-jan-desktop.png`
 
 ## Safeguards held
 

@@ -33,8 +33,8 @@ const configs = {
     w: 1.25,
     stems: 17,
     steps: 6,
-    leaf: 0.2,
-    leaves: 7,
+    leaf: 0.22,
+    leaves: 8,
     cluster: 2,
     sprays: 4,
     color: "#66834b",
@@ -45,7 +45,7 @@ const configs = {
     w: 1.42,
     stems: 14,
     steps: 6,
-    leaf: 0.31,
+    leaf: 0.34,
     leaves: 4,
     cluster: 2,
     sprays: 3,
@@ -57,7 +57,7 @@ const configs = {
     w: 1.12,
     stems: 22,
     steps: 6,
-    leaf: 0.18,
+    leaf: 0.2,
     leaves: 6,
     cluster: 2,
     sprays: 3,
@@ -342,17 +342,17 @@ for (const [id, c] of Object.entries(configs)) {
           phase,
         );
       }
-    } else if (id === "fothergilla" && i % 2 === 0) {
-      twig(at, at.clone().add(v(0, 0.2, 0)), 0.0055, "blooms", at, "#d4ce9e");
-      for (let j = 0; j < 20; j++) {
+    } else if (id === "fothergilla") {
+      twig(at, at.clone().add(v(0, 0.24, 0)), 0.0055, "blooms", at, "#d4ce9e");
+      for (let j = 0; j < 22; j++) {
         const a = j * 2.4,
-          t = j / 20,
-          root = at.clone().add(v(0, t * 0.2, 0));
+          t = j / 22,
+          root = at.clone().add(v(0, t * 0.24, 0));
         const end = root
           .clone()
-          .add(v(Math.cos(a) * 0.06, 0.022, Math.sin(a) * 0.06));
-        twig(root, end, 0.0028, "blooms", at, "#eee9cd");
-        const tip = new T.ConeGeometry(0.009, 0.016, 3);
+          .add(v(Math.cos(a) * (0.055 + t * 0.02), 0.02, Math.sin(a) * (0.055 + t * 0.02)));
+        twig(root, end, 0.0026, "blooms", at, "#eee9cd");
+        const tip = new T.ConeGeometry(0.01, 0.018, 3);
         tip.translate(...end);
         add("blooms", tip, at, "#fffbed", phase);
       }
