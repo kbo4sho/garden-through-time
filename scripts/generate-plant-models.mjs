@@ -40,8 +40,8 @@ const configs = {
     cluster: 2,
     sprays: 3,
     fills: 220,
-    cores: 280,
-    puffs: 310,
+    cores: 380,
+    puffs: 400,
     color: "#66834b",
   },
   hydrangea: {
@@ -55,8 +55,8 @@ const configs = {
     cluster: 2,
     sprays: 2,
     fills: 150,
-    cores: 170,
-    puffs: 160,
+    cores: 220,
+    puffs: 210,
     color: "#547449",
   },
   dogwood: {
@@ -70,8 +70,8 @@ const configs = {
     cluster: 2,
     sprays: 3,
     fills: 230,
-    cores: 260,
-    puffs: 290,
+    cores: 350,
+    puffs: 370,
     color: "#5a804e",
   },
   boxwood: {
@@ -85,8 +85,8 @@ const configs = {
     cluster: 2,
     sprays: 0,
     fills: 60,
-    cores: 36,
-    puffs: 130,
+    cores: 40,
+    puffs: 180,
     color: "#3f653f",
   },
 };
@@ -246,7 +246,7 @@ for (const [id, c] of Object.entries(configs)) {
           : id === "hydrangea"
             ? 0.3 + (r() - 0.5) * 0.04
             : 0.26 + (r() - 0.5) * 0.04;
-    return new T.Color().setHSL(hue, 0.12 + r() * 0.08, 0.68 + r() * 0.24);
+    return new T.Color().setHSL(hue, 0.16 + r() * 0.08, 0.58 + r() * 0.18);
   }
   function leaf(at, angle, size, phase) {
     const g = leafShape(size);
@@ -280,17 +280,17 @@ for (const [id, c] of Object.entries(configs)) {
   }
   // Rounded 3D masses — occupy pixels at 390px. Not cards, not photo albedo.
   function woodMass(at, radius) {
-    const g = new T.IcosahedronGeometry(radius, 0);
-    g.scale(1.18 + r() * 0.16, 0.72 + r() * 0.18, 1.08 + r() * 0.14);
+    const g = new T.SphereGeometry(radius, 6, 4);
+    g.scale(1.2 + r() * 0.14, 0.74 + r() * 0.14, 1.1 + r() * 0.12);
     g.rotateY(r() * Math.PI * 2);
-    g.rotateZ((r() - 0.5) * 0.45);
+    g.rotateZ((r() - 0.5) * 0.4);
     g.translate(...at);
     add("branches", g, at, barkTint(at.y / c.h), r());
   }
   function canopyPuff(at, radius, phase) {
-    const g = new T.IcosahedronGeometry(radius, 0);
-    g.scale(1.28 + r() * 0.18, 0.62 + r() * 0.16, 1.16 + r() * 0.16);
-    g.rotateX((r() - 0.5) * 0.7);
+    const g = new T.SphereGeometry(radius, 6, 4);
+    g.scale(1.1 + r() * 0.12, 0.88 + r() * 0.12, 1.06 + r() * 0.1);
+    g.rotateX((r() - 0.5) * 0.55);
     g.rotateY(r() * Math.PI * 2);
     g.translate(...at);
     add("leaves", g, at, leafTint(), phase);
@@ -414,10 +414,10 @@ for (const [id, c] of Object.entries(configs)) {
   for (let i = 0; i < c.cores; i++) {
     const y = c.h * (0.14 + r() * 0.72);
     const a = r() * Math.PI * 2;
-    const rad = envelopeRadius(y) * (0.04 + r() * 0.52);
+    const rad = envelopeRadius(y) * (0.06 + r() * 0.74);
     woodMass(
       clampHabit(v(Math.cos(a) * rad, y, Math.sin(a) * rad)),
-      0.11 + r() * 0.08,
+      0.12 + r() * 0.08,
     );
   }
   // Soft canopy puffs: rounded leaf-colored masses that fill the habit so
@@ -426,10 +426,10 @@ for (const [id, c] of Object.entries(configs)) {
   for (let i = 0; i < c.puffs; i++) {
     const y = c.h * (0.18 + r() * 0.7);
     const a = r() * Math.PI * 2;
-    const rad = envelopeRadius(y) * (0.16 + r() * 0.58);
+    const rad = envelopeRadius(y) * (0.12 + r() * 0.72);
     canopyPuff(
       clampHabit(v(Math.cos(a) * rad, y, Math.sin(a) * rad)),
-      0.12 + r() * 0.08,
+      0.14 + r() * 0.09,
       r(),
     );
   }

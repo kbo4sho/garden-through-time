@@ -1107,6 +1107,16 @@ function Shrub({
     >
       <GroundingShadow profile={instance.profile} visualStyle={visualStyle} />
       {selected && visualStyle !== "editorial" && <SelectionWash profile={instance.profile} />}
+      {visualStyle === "model3d" && instance.profile.id === "winterberry" ? (
+        <mesh
+          position={[0, instance.profile.photoHeight * 0.42, 0]}
+          scale={[0.72, 1.18, 0.7]}
+          renderOrder={-2}
+        >
+          <sphereGeometry args={[instance.profile.photoHeight * 0.24, 14, 10]} />
+          <meshStandardMaterial color="#4a1c22" roughness={0.97} metalness={0} />
+        </mesh>
+      ) : null}
       {visualStyle === "model3d" && hasPlantModel(instance.profile.id) ? (
         <ModelBoundary key={instance.profile.id} fallback={
           <SeasonalBillboardCanopy profile={instance.profile} day={day} visualStyle="photographic" viewId={viewId} />
