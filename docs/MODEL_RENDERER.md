@@ -41,6 +41,7 @@ Exact days remain the existing Chicago representative-year interpolation, not a 
 - Demand rendering, capped DPR, default power preference, no CSS canvas filter.
 - No history writes during Play; paused writes are debounced and quota failures remain caught.
 - The existing context-lost fallback and context-restored invalidation remain mounted outside asset Suspense.
+- Photographic and glTF living-bed views share a limited perspective peek (±13° yaw, ±7° pitch) that springs back to the authored framing. Editorial ortho cameras stay fixed. Plant tap-to-select ignores a real drag.
 - `npm run check` retains the upstream share/mobile regression checks.
 - `npm run check:models` checks every day, independent phenology, continuity, 3/5/7 share round trips, compressed GLB decoding and attributes, and download/geometry budgets.
 - Model download budget: 5 MB total for the four unique assets. Decoded attribute budget: 24 MB, shared across repeats within one renderer. First encounters with previously hidden seasonal layers may upload their buffers once; subsequent cycles must not allocate more GPU buffers/textures.

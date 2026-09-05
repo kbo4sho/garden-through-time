@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   Billboard,
@@ -17,6 +17,14 @@ import type {
 } from "../data/plants";
 import { mulberry32, plantState, smoothstep } from "../lib/season";
 import { viewsForViewport as sliceViews } from "../lib/viewport";
+import {
+  createPeekGesture,
+  isPeekDrag,
+  peekedPosition,
+  peekFromPointerDelta,
+  stepPeekGesture,
+  type PeekGesture,
+} from "../lib/perspectivePeek";
 
 import { hasPlantModel, modelBounds } from '../data/modelPlants';
 
@@ -1051,6 +1059,7 @@ function Shrub({
   reducedMotion,
   visualStyle,
   viewId,
+  peekGesture,
 }: {
   instance: PlantInstance;
   instances: PlantInstance[];
@@ -1061,6 +1070,7 @@ function Shrub({
   reducedMotion: boolean;
   visualStyle: VisualStyle;
   viewId: GardenViewId;
+  peekGesture: MutableRefObject<PeekGesture>;
 }) {
   const group = useRef<Group>(null);
   const paperPlan = visualStyle === "editorial" && viewId === "planting-plan";
@@ -1083,6 +1093,7 @@ function Shrub({
       scale={groupScale}
       onClick={(event) => {
         event.stopPropagation();
+        if (peekGesture.current.dragged) return;
         onSelect();
       }}
       onPointerEnter={() => {
@@ -1107,16 +1118,141 @@ function Shrub({
   );
 }
 
+function applyPeekedFraming(
+  camera: THREE.PerspectiveCamera,
+  rest: readonly [number, number, number],
+  target: THREE.Vector3,
+  targetTuple: readonly [number, number, number],
+  gesture: PeekGesture,
+) {
+  const peeked = peekedPosition(rest, targetTuple, gesture.yaw, gesture.pitch);
+  camera.position.set(peeked[0], peeked[1], peeked[2]);
+  camera.lookAt(target);
+}
+
+function LimitedPeek({
+  enabled,
+  reducedMotion,
+  gesture,
+}: {
+  enabled: boolean;
+  reducedMotion: boolean;
+  gesture: MutableRefObject<PeekGesture>;
+}) {
+  const gl = useThree((state) => state.gl);
+  const invalidate = useThree((state) => state.invalidate);
+  const size = useThree((state) => state.size);
+  const viewSpan = useRef(size.height);
+
+  useEffect(() => {
+    viewSpan.current = size.height;
+  }, [size.height]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const canvas = gl.domElement;
+    canvas.style.touchAction = "none";
+    canvas.style.cursor = "grab";
+    const state = gesture.current;
+
+    const onDown = (event: PointerEvent) => {
+      if (state.pointerId !== null) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      state.pointerId = event.pointerId;
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      state.moved = 0;
+      state.dragged = false;
+      state.holding = true;
+      state.targetYaw = state.yaw;
+      state.targetPitch = state.pitch;
+      try {
+        canvas.setPointerCapture(event.pointerId);
+      } catch {
+        // Capture is best-effort; move/up still land on the canvas.
+      }
+      canvas.style.cursor = "grabbing";
+      invalidate();
+    };
+
+    const onMove = (event: PointerEvent) => {
+      if (state.pointerId !== event.pointerId) return;
+      const dx = event.clientX - state.lastX;
+      const dy = event.clientY - state.lastY;
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      state.moved += Math.hypot(dx, dy);
+      if (isPeekDrag(state.moved)) state.dragged = true;
+      const next = peekFromPointerDelta(
+        { yaw: state.targetYaw, pitch: state.targetPitch },
+        dx,
+        dy,
+        viewSpan.current,
+      );
+      state.targetYaw = next.yaw;
+      state.targetPitch = next.pitch;
+      invalidate();
+    };
+
+    const release = (event: PointerEvent) => {
+      if (state.pointerId !== event.pointerId) return;
+      state.pointerId = null;
+      state.holding = false;
+      state.targetYaw = 0;
+      state.targetPitch = 0;
+      if (canvas.hasPointerCapture?.(event.pointerId)) {
+        try {
+          canvas.releasePointerCapture(event.pointerId);
+        } catch {
+          // Already released.
+        }
+      }
+      canvas.style.cursor = "grab";
+      invalidate();
+    };
+
+    canvas.addEventListener("pointerdown", onDown);
+    canvas.addEventListener("pointermove", onMove);
+    canvas.addEventListener("pointerup", release);
+    canvas.addEventListener("pointercancel", release);
+    return () => {
+      canvas.removeEventListener("pointerdown", onDown);
+      canvas.removeEventListener("pointermove", onMove);
+      canvas.removeEventListener("pointerup", release);
+      canvas.removeEventListener("pointercancel", release);
+      canvas.style.touchAction = "";
+      canvas.style.cursor = "";
+    };
+  }, [enabled, gesture, gl, invalidate]);
+
+  useFrame((_, dt) => {
+    if (!enabled) return;
+    const before = gesture.current;
+    const wasLive =
+      before.holding ||
+      before.yaw !== 0 ||
+      before.pitch !== 0 ||
+      before.yawVel !== 0 ||
+      before.pitchVel !== 0;
+    stepPeekGesture(before, dt, { reducedMotion });
+    if (wasLive) invalidate();
+  });
+
+  return null;
+}
+
 function SnapshotCamera({
   viewId,
   focus,
   visualStyle,
   instances,
+  peekGesture,
 }: {
   viewId: GardenViewId;
   focus?: PlantInstance;
   visualStyle: VisualStyle;
   instances: PlantInstance[];
+  peekGesture: MutableRefObject<PeekGesture>;
 }) {
   const size = useThree((state) => state.size);
   const set = useThree((state) => state.set);
@@ -1230,6 +1366,21 @@ function SnapshotCamera({
     set({ camera: orthoCamera });
   }, [editorial, halfH, halfW, orthoCamera, preset.position, set, target]);
 
+  const restPosition = preset.position;
+  const restTarget = preset.target;
+
+  useFrame(() => {
+    const camera = photoCamera.current;
+    if (!camera || editorial) return;
+    applyPeekedFraming(
+      camera,
+      restPosition,
+      target,
+      restTarget,
+      peekGesture.current,
+    );
+  });
+
   if (editorial) {
     return <primitive object={orthoCamera} />;
   }
@@ -1240,7 +1391,15 @@ function SnapshotCamera({
       makeDefault
       position={preset.position}
       fov={"fov" in preset ? (preset.fov as number) : cameraPresets[viewId].fov}
-      onUpdate={(activeCamera) => activeCamera.lookAt(target)}
+      onUpdate={(activeCamera) => {
+        applyPeekedFraming(
+          activeCamera,
+          restPosition,
+          target,
+          restTarget,
+          peekGesture.current,
+        );
+      }}
     />
   );
 }
@@ -1438,6 +1597,7 @@ function Scene({
   const sky = new THREE.Color(winter ? "#d8d4ca" : "#d1d4c6");
   const haze = sky.clone();
   const focus = instances.find((instance) => instance.profile.id === selectedId) ?? instances[0];
+  const peekGesture = useRef(createPeekGesture());
 
   const visibleInstances =
     visualStyle === "model3d" && viewId === "seasonal-detail"
@@ -1450,11 +1610,17 @@ function Scene({
     <>
       {!editorial && <color attach="background" args={[sky]} />}
       {!editorial && visualStyle !== "model3d" && <fog attach="fog" args={[haze, 13.5, 27]} />}
+      <LimitedPeek
+        enabled={!editorial}
+        reducedMotion={reducedMotion}
+        gesture={peekGesture}
+      />
       <SnapshotCamera
         viewId={viewId}
         focus={focus}
         visualStyle={visualStyle}
         instances={visibleInstances}
+        peekGesture={peekGesture}
       />
       {editorial ? null : (
         <>
@@ -1482,6 +1648,7 @@ function Scene({
           reducedMotion={reducedMotion}
           visualStyle={visualStyle}
           viewId={viewId}
+          peekGesture={peekGesture}
         />
       ))}
       <SceneReady onReady={onReady} />

@@ -38,7 +38,9 @@ An interactive proof is now implemented in React and WebGL. It includes:
   swaps, parked day, and designer or nursery name — no accounts;
 - desktop, tablet, and simplified phone layouts. A client opening a parked share
   URL on a phone sees one garden and an unmistakable Play / year scrub; they can
-  tap a plant for its record. Designer tools stay tucked.
+  tap a plant for its record. Designer tools stay tucked. Photographic and glTF
+  living-bed views allow a few degrees of drag-to-peek and spring back to the
+  authored frame; editorial paper views stay fixed.
 
 The current sellable slice is the designer-pitch living-bed link. Do not treat a
 five-person unbriefed homeowner study as the next required build. It is an
