@@ -49,11 +49,11 @@ function birdPose(index: number, time: number, reducedMotion: boolean) {
   const angle = reducedMotion
     ? seed + index
     : (time / period) * Math.PI * 2 * direction + seed;
-  const cx = -0.35 + index * 0.85;
-  const cy = 2.78 + index * 0.34;
-  const cz = -1.85 - index * 0.42;
-  const rx = 3.15 + index * 0.65;
-  const rz = 1.28 + index * 0.32;
+  const cx = -0.2 + index * 0.55;
+  const cy = 2.52 + index * 0.18;
+  const cz = 1.45 + index * 0.2;
+  const rx = 1.55 + index * 0.2;
+  const rz = 0.55 + index * 0.12;
   const x = cx + Math.cos(angle) * rx;
   const z = cz + Math.sin(angle) * rz;
   const y = cy + Math.sin(angle * 2 + seed) * 0.16;
@@ -64,7 +64,7 @@ function birdPose(index: number, time: number, reducedMotion: boolean) {
   return {
     position: [x, y, z] as const,
     rotation: [bank * 0.35, yaw, bank] as const,
-    scale: 0.17 + index * 0.02,
+    scale: 0.3 + index * 0.04,
   };
 }
 
@@ -78,11 +78,11 @@ function butterflyPose(
   const seed = index * 9.27;
   const flap = reducedMotion ? 0.78 : 0.58 + 0.42 * Math.sin(time * (6.4 + index * 0.7) + seed);
   const orbit = reducedMotion ? seed : time * (0.2 + index * 0.045) + seed;
-  const radius = 0.26 + (index % 3) * 0.07;
-  const x = anchor[0] + Math.cos(orbit) * radius;
-  const z = anchor[2] + Math.sin(orbit * 1.32) * radius * 0.68;
-  const y = anchor[1] + 0.32 + Math.sin(orbit * 2.05 + seed) * 0.14;
-  const size = 0.07;
+  const radius = 0.22 + (index % 3) * 0.06;
+  const x = anchor[0] * 0.45 + Math.cos(orbit) * radius;
+  const z = 1.88 + Math.sin(orbit * 1.32) * radius * 0.55;
+  const y = 1.58 + index * 0.08 + Math.sin(orbit * 2.05 + seed) * 0.1;
+  const size = 0.2;
   return {
     position: [x, y, z] as const,
     rotation: [0.32, orbit + Math.PI / 2, Math.sin(orbit * 2.8) * 0.16] as const,
@@ -126,7 +126,7 @@ export default function AmbientLife({
         side: THREE.DoubleSide,
         toneMapped: true,
         transparent: true,
-        opacity: 0.68,
+        opacity: 0.82,
         depthWrite: false,
       }),
     [],
@@ -134,7 +134,7 @@ export default function AmbientLife({
   const mothMaterial = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        color: "#c4ae78",
+        color: "#b08948",
         side: THREE.DoubleSide,
         toneMapped: true,
         transparent: true,
@@ -156,7 +156,7 @@ export default function AmbientLife({
 
   const mothOpacity =
     day < 100 || day > 305 ? 0 : day < 128 || day > 268 ? 0.34 : 0.7;
-  const birdOpacity = day < 85 || day > 335 ? 0.48 : 0.68;
+  const birdOpacity = day < 85 || day > 335 ? 0.58 : 0.82;
 
   const writePoses = (time: number) => {
     const hold = reducedMotion;
@@ -175,7 +175,8 @@ export default function AmbientLife({
       for (let index = 0; index < BUTTERFLY_COUNT; index += 1) {
         const pose = butterflyPose(index, time, hold, anchorsRef.current);
         dummy.position.set(...pose.position);
-        dummy.rotation.set(...pose.rotation);
+        dummy.lookAt(5.6, 2.8, 7.2);
+        dummy.rotateZ(pose.rotation[2]);
         dummy.scale.set(...pose.scale);
         dummy.updateMatrix();
         mothMesh.current.setMatrixAt(index, dummy.matrix);
@@ -212,6 +213,7 @@ export default function AmbientLife({
         ref={birdMesh}
         args={[birdGeometry, birdMaterial, BIRD_COUNT]}
         frustumCulled={false}
+        renderOrder={3}
         raycast={skipRaycast}
       />
       <instancedMesh
@@ -219,6 +221,7 @@ export default function AmbientLife({
         args={[mothGeometry, mothMaterial, BUTTERFLY_COUNT]}
         frustumCulled={false}
         visible={mothOpacity > 0.02}
+        renderOrder={3}
         raycast={skipRaycast}
       />
     </group>

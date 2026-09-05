@@ -577,7 +577,7 @@ function SeasonalBillboardCanopy({
 
   uniforms.uPlanMode.value = editorial && viewId === "planting-plan" ? 1 : 0;
   // Lowered from 0.31 so the feathered foot sits in the soil instead of floating.
-  const billboardY = height * 0.275;
+  const billboardY = height * 0.255;
   const editorialFragment = `
           uniform sampler2D uWinter;
           uniform sampler2D uLeafout;
@@ -670,8 +670,8 @@ function SeasonalBillboardCanopy({
             float sourceAlpha = winter.a * uWeights.x + leafout.a * uWeights.y + bloom.a * uWeights.z + summer.a * uWeights.w + fall.a * uExtraWeights.x;
             if (sourceAlpha < 0.072) discard;
             float alpha = smoothstep(0.072, 0.19, sourceAlpha) * uOpacity;
-            float groundFeather = smoothstep(0.14, 0.34, vUv.y);
-            alpha *= groundFeather * mix(groundFeather, 1.0, 0.28);
+            float groundFeather = smoothstep(0.1, 0.36, vUv.y);
+            alpha *= groundFeather * groundFeather;
             if (alpha < 0.035) discard;
             vec3 premultiplied =
               winter.rgb * winter.a * uWeights.x +
@@ -686,8 +686,8 @@ function SeasonalBillboardCanopy({
             color = mix(vec3(luminance), color, seasonalSaturation);
             color = clamp((color - 0.5) * 1.045 + 0.5, 0.0, 1.0);
             color *= mix(1.0, 0.86, dormant) * uBrightness;
-            float soil = 1.0 - smoothstep(0.16, 0.4, vUv.y);
-            color *= 1.0 - soil * 0.14;
+            float soil = 1.0 - smoothstep(0.12, 0.42, vUv.y);
+            color *= 1.0 - soil * 0.2;
             float diffuse = 0.95 + 0.07 * max(dot(normalize(vNormal), normalize(vec3(-0.35, 0.72, 0.6))), 0.0);
             gl_FragColor = vec4(color * diffuse, alpha);
             #include <tonemapping_fragment>
@@ -798,14 +798,14 @@ function GroundingShadow({
       <mesh
         position={[0, 0.014, 0]}
         rotation={[-Math.PI / 2, 0, 0.72]}
-        scale={[width * 1.14, depth * 1.2, 1]}
+        scale={[width * 1.22, depth * 1.28, 1]}
         renderOrder={-2}
       >
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
           map={textures.shadow}
           transparent
-          opacity={0.5}
+          opacity={0.56}
           depthWrite={false}
           toneMapped={false}
         />
@@ -813,14 +813,29 @@ function GroundingShadow({
       <mesh
         position={[0, 0.02, 0]}
         rotation={[-Math.PI / 2, 0, 0.18]}
-        scale={[width * 0.42, depth * 0.56, 1]}
+        scale={[width * 0.5, depth * 0.64, 1]}
         renderOrder={-1}
       >
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
           map={textures.disk}
           transparent
-          opacity={0.56}
+          opacity={0.68}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      <mesh
+        position={[0.06, 0.07, 0.1]}
+        rotation={[0.08, 0.55, 0]}
+        scale={[width * 0.36, height * 0.09, 1]}
+        renderOrder={-1}
+      >
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          map={textures.disk}
+          transparent
+          opacity={0.32}
           depthWrite={false}
           toneMapped={false}
         />
@@ -1536,13 +1551,6 @@ function Scene({
       )}
       <Ground day={day} visualStyle={visualStyle} />
       {editorial ? <SharedPageGround instances={visibleInstances} viewId={viewId} /> : null}
-      {primary && !editorial ? (
-        <AmbientLife
-          day={day}
-          reducedMotion={reducedMotion}
-          instances={visibleInstances}
-        />
-      ) : null}
       {visibleInstances.map((instance, index) => (
         <Shrub
           key={instance.instanceId}
@@ -1557,6 +1565,13 @@ function Scene({
           viewId={viewId}
         />
       ))}
+      {primary && !editorial ? (
+        <AmbientLife
+          day={day}
+          reducedMotion={reducedMotion}
+          instances={visibleInstances}
+        />
+      ) : null}
       <SceneReady onReady={onReady} />
     </>
   );

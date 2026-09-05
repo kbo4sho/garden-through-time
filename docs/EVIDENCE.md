@@ -53,8 +53,9 @@ seasonal capture, and tracing the content/access boundary.
   outside the warm months; birds stay quieter in winter.
 - Plant–ground contact: authored layout Y lifts are flattened, photographic
   billboards sit slightly lower, glTF trunks sink 4.5cm, and each plant shares
-  one broader grounding shadow plus a tighter soil-line disk. The photo foot
-  feather is a longer, softer fade with a slight soil darken — not a hard cut.
+  one broader grounding shadow, a tighter soil-line disk, and a short vertical
+  skirt that hides the billboard foot. The photo foot feather is a longer,
+  nonlinear fade with a slight soil darken — not a hard cut.
 
 ## Runtime
 
