@@ -42,7 +42,7 @@ The second script also expects unchanged `main` served at `http://127.0.0.1:4177
 for pixel comparison. Override `PREVIEW_URL` and `BASELINE_URL` as needed.
 [Browser results](browser-checks.json) record phone Play, history writes, buffer
 uploads on repeated seasons, keyboard, peek, context restoration, mixed
-winterberry fallback and photo-default pixel comparison.
+winterberry fallback, photo-default pixel comparison, and caption clearance at 768/834/1080/1127/1440px across the four dates.
 
 ## Scope of the evidence
 
@@ -53,7 +53,7 @@ The browser capture manifest verifies that the shortlist templates request no
 photographic plant assets. Winterberry is intentionally a photographic fallback.
 
 Local browser frame pacing is diagnostic; it is not a throttled-network or
-physical-tablet benchmark. A 4.89 MB cold asset payload alone takes about 3.9
+physical-tablet benchmark. A 4.99 MB cold asset payload alone takes about 4.0
 seconds over 10 Mbps before protocol overhead. The historical three-second
 cold-load Gauntlet target therefore remains unproven and is not claimed here.
 
@@ -62,20 +62,29 @@ cold-load Gauntlet target therefore remains unproven and is not claimed here.
 
 | GLB | Bytes |
 | --- | ---: |
-| Fothergilla | 1,130,764 |
-| Oakleaf hydrangea | 1,345,816 |
-| Redtwig dogwood | 1,344,040 |
-| Boxwood | 1,070,508 |
-| **Total** | **4,891,128** |
+| Fothergilla | 1,005,608 |
+| Oakleaf hydrangea | 1,791,708 |
+| Redtwig dogwood | 1,192,720 |
+| Boxwood | 1,002,368 |
+| **Total** | **4,992,404** |
 
-Decoded vertex attributes total **12,259,284 bytes**, shared across repeated
+Decoded vertex attributes total **12,819,380 bytes**, shared across repeated
 instances. No external model decoder, texture atlas, or runtime generation
 service is required. [Provenance and rights](../../../public/models/LICENSE.md).
 
 ## Independent visual verdict
 
-**LOSE — visual acceptance remains open.** The final fresh critic scores shared
-lighting 4/5, botanical seasons 3/5, beauty/coherence 2/5, responsive composition
-4/5, and evidenced safeguards 4/5. The remaining gap is rigid, faceted broadleaf
-geometry, especially oakleaf hydrangea. See the [full review](INDEPENDENT_REVIEW.md).
-The PR remains a draft rather than claiming editorial-quality acceptance.
+**LOSE — editorial visual acceptance remains open.** The fresh critic scores
+shared light/material coherence **3/5**, plant-true seasons **3/5**,
+beauty/coherence **2/5**, phone/desktop seasonal selling **3/5**, and evidenced
+safeguards/budget **4/5**. The largest remaining gap is the oakleaf hydrangea's
+coarse, manufactured leaf-surface appearance at normal hero and detail scale.
+See the [full independent review](INDEPENDENT_REVIEW.md).
+
+The geometry, flower-scale, aging and caption repairs are retained as an
+inspectable draft. Repeated changes to this procedural leaf construction have
+not cleared the same realism failure. Under the Gauntlet's diminishing-improvement
+stop condition, this pass ends without claiming acceptance; the next material
+slice needs a different approach to botanical surface detail and organ authoring,
+validated in this same bed and asset budget. No asset purchase, merge or deployment
+is implied by that next-step assessment.

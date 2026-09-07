@@ -21,7 +21,10 @@ export function modelSeason(profile: PlantProfile, day: number) {
       day,
     );
     bloom = Math.max(oldHeads, retained);
-    aged = day < bloomStart ? 1 : smoothstep(bloomEnd - 20, bloomEnd + 48, day);
+    aged = Math.max(
+      1 - smoothstep(previousHeadsEnd, bloomStart, day),
+      smoothstep(bloomEnd - 20, bloomEnd + 48, day),
+    );
   }
   // Evergreen winter bronzing crosses New Year and recedes with spring growth.
   const fall = profile.evergreen
@@ -50,5 +53,6 @@ export function modelSeason(profile: PlantProfile, day: number) {
     leafColor,
     fallColor,
     flowerColor,
+    aged,
   };
 }

@@ -81,7 +81,7 @@ const get = (id, day) =>
 for (const id of Object.keys(manifest.models))
   for (let day = 1; day <= 365; day++) {
     const state = get(id, day);
-    for (const key of ["leaves", "fall", "bloom", "fruit"])
+    for (const key of ["leaves", "fall", "bloom", "fruit", "aged"])
       assert(
         Number.isFinite(state[key]) && state[key] >= 0 && state[key] <= 1,
         `${id} ${day} ${key}`,
@@ -89,7 +89,7 @@ for (const id of Object.keys(manifest.models))
     if (id === "boxwood") assert.equal(state.leaves, 1);
     else if (day === 1 || day === 365) assert.equal(state.leaves, 0);
     if (day < 365)
-      for (const key of ["leaves", "fall", "bloom", "fruit"])
+      for (const key of ["leaves", "fall", "bloom", "fruit", "aged"])
         assert(
           Math.abs(state[key] - get(id, day + 1)[key]) < 0.2,
           `${id} abrupt ${key} at ${day}`,
@@ -108,6 +108,9 @@ for (const day of [245, 270, 300, 315, 350, 1, 50])
     "No missing or respawning aged heads",
   );
 assert(get("hydrangea", 105).bloom === 0);
+assert.equal(get("hydrangea", 15).aged, 1);
+assert(get("hydrangea", 200).aged < .25);
+assert.equal(get("hydrangea", 365).aged, get("hydrangea", 1).aged);
 assert(get("boxwood", 365).fall === get("boxwood", 1).fall);
 await MeshoptDecoder.ready;
 const io = new NodeIO()
@@ -129,6 +132,16 @@ for (const [id, info] of Object.entries(manifest.models)) {
     .map((n) => n.getName());
   for (const layer of ["branches", "leaves", "blooms"])
     assert(names.includes(layer));
+  for (const node of doc.getRoot().listNodes().filter((node) => node.getName() === "leaves")) {
+    for (const primitive of node.getMesh().listPrimitives()) {
+      const uv = primitive.getAttribute("TEXCOORD_0");
+      assert(uv, `${id} missing blade coordinates for the shared leaf material`);
+      assert.equal(uv.getCount(), primitive.getAttribute("POSITION").getCount());
+    }
+  }
+  for (const node of doc.getRoot().listNodes().filter((node) => node.getName() === "blooms"))
+    for (const primitive of node.getMesh().listPrimitives())
+      assert(primitive.getAttribute("_PETAL"), `${id} missing petal aging mask`);
   for (const mesh of doc.getRoot().listMeshes())
     for (const prim of mesh.listPrimitives()) {
       const position = prim.getAttribute("POSITION"),
@@ -137,6 +150,11 @@ for (const [id, info] of Object.entries(manifest.models)) {
       assert(position && anchor && phase);
       assert.equal(position.getCount(), anchor.getCount());
       assert.equal(position.getCount(), phase.getCount());
+      // Growth phases are normalized bytes; omitting normalization would keep
+      // almost every organ hidden even at full summer growth.
+      assert(phase.getNormalized(), `${id} growth phases must decode to [0,1]`);
+      for (let i = 0; i < phase.getCount(); i++)
+        assert(phase.getScalar(i) >= 0 && phase.getScalar(i) <= 1);
       for (const semantic of prim.listSemantics()) {
         const a = prim.getAttribute(semantic).getArray();
         decoded += a.byteLength;

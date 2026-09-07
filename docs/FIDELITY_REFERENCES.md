@@ -89,6 +89,19 @@ from standalone asset redistribution. A “royalty-free” label alone does not 
 this project's asset-hosting and source-repository requirements.
 [Fab license summary and agreement](https://www.fab.com/eula?lang=en).
 
-This reconnaissance does not change the existing independent LOSE verdict. The
-next material implementation must improve the actual integrated broadleaf surface
-and geometry; documenting references or finding store listings is not that repair.
+Asset listings are reconnaissance, not evidence of visual acceptance or distribution
+rights. The implemented shortlist remains original project geometry and materials.
+Its current acceptance status is recorded in the [independent review](evidence/editorial-gltf/INDEPENDENT_REVIEW.md).
+
+## Implemented studio treatment
+
+The glTF route uses curved leaf surfaces, rounded oakleaf lobes, blade-local vein
+pigmentation and shared directional thin-organ light response. Hydrangea florets
+are modeled individually at a smaller scale; retained heads curl, shrink at each
+floret and become rougher as they dry through the existing sourced seasonal
+windows. Per-organ growth and drying also affect cast shadows. The four meshes
+share one studio rig; these changes do not retarget the photographic renderer.
+
+Desktop and tablet glTF portraits reserve a separate caption band above the
+canvas so animated life and plants cannot cross the seasonal story. Phone share
+links retain the existing one-canvas recipient layout and Play controls.

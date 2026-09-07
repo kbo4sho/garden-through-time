@@ -3098,3 +3098,35 @@ input:focus-visible {
 .experience-shell[data-renderer="model3d"] .scene-frame .atmosphere {
   background: none;
 }
+
+/* Give the studio portrait its own caption band. Its canvas, including ambient
+   life and peek, stays below the text at every desktop/tablet aspect ratio. */
+@media (min-width: 761px) {
+  .experience-shell[data-renderer="model3d"] .scene-frame.is-primary .scene-layer {
+    top: 174px;
+    height: calc(100% - 174px);
+  }
+
+  .experience-shell[data-renderer="model3d"] .story-panel {
+    width: min(610px, calc((100vw - var(--page-margin) * 2) * .60 - 44px));
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    column-gap: 24px;
+  }
+
+  .experience-shell[data-renderer="model3d"] .story-panel h1 {
+    grid-column: 1;
+    font-size: clamp(28px, 2.8vw, 40px);
+  }
+
+  .experience-shell[data-renderer="model3d"] .story-copy {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    align-self: center;
+    max-width: none;
+  }
+
+  .experience-shell[data-renderer="model3d"] .story-rule { display: none; }
+  .experience-shell[data-renderer="model3d"] .sent-byline,
+  .experience-shell[data-renderer="model3d"] .story-eyebrow { grid-column: 1; }
+}

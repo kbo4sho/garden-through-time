@@ -5,6 +5,8 @@ The four `.glb` files are original procedural geometry authored for
 `scripts/generate-plant-models.mjs`. They are interpretive botanical models,
 not scans or reconstructions of photographs. There are no downloaded meshes,
 image textures, image-derived lighting, or third-party asset-service outputs.
+Leaf coordinates support original procedural vein pigmentation in the shared
+runtime material; the glTFs contain no third-party surface maps.
 
 The assets belong to this project. This note does not grant a separate
 redistribution license or dedicate the assets to the public domain; permission

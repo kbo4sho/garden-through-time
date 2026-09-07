@@ -39,7 +39,7 @@ const configs = {
     h: 2.72,
     w: 1.38,
     stems: 11,
-    leaf: 0.27,
+    leaf: 0.24,
     color: "#547449",
   },
   dogwood: {
@@ -79,7 +79,7 @@ for (const [id, c] of Object.entries(configs)) {
   const v = (x = 0, y = 0, z = 0) => new T.Vector3(x, y, z);
   function add(layer, geometry, anchor, tint = "#ffffff", phase = r()) {
     let g = geometry.index ? geometry.toNonIndexed() : geometry;
-    g.deleteAttribute("uv");
+    if (layer !== "leaves") g.deleteAttribute("uv");
     const n = g.attributes.position.count;
     const a = [],
       p = [],
@@ -96,6 +96,8 @@ for (const [id, c] of Object.entries(configs)) {
     g.setAttribute("anchor", new T.Float32BufferAttribute(a, 3));
     g.setAttribute("phase", new T.Float32BufferAttribute(p, 1));
     g.setAttribute("color", new T.Float32BufferAttribute(colors, 3));
+    if (layer === "blooms" && !g.getAttribute("petal"))
+      g.setAttribute("petal", new T.Uint8BufferAttribute(new Uint8Array(n), 1));
     layers[layer].push(g);
   }
   function twig(a, b, radius, layer = "branches", anchor = a, tint) {
@@ -124,58 +126,70 @@ for (const [id, c] of Object.entries(configs)) {
             : "#655444"),
     );
   }
-  // Actual lobed/toothed silhouettes with a curved midrib and secondary veins.
+  // Rounded oakleaf lobes, a curved midrib and a gently relaxed blade surface.
   // All colour is organ pigmentation; studio direction is exclusively runtime light.
   function leafShape(length) {
     const oak = id === "hydrangea", box = id === "boxwood";
-    const rows = oak ? 12 : box ? 4 : 8;
-    const points = [], indices = [], tones = [];
-    const bend = .07 + r() * .11, skew = (r() - .5) * .16;
+    const rows = oak ? 24 : box ? 4 : 8;
+    const points = [], indices = [], tones = [], uvs = [];
+    const bend = .085 + r() * .085, skew = (r() - .5) * .16;
+    const lobes = [0, .36, .69, .49, .96, .66, .84, .45, .46, .24, 0];
+    const lobeWidth = (t) => {
+      const u = t * (lobes.length - 1), k = Math.min(lobes.length - 2, Math.floor(u)), f = u - k;
+      // Smooth interpolation gives rounded lobe shoulders rather than a sawtooth edge.
+      return T.MathUtils.lerp(lobes[k], lobes[k + 1], f * f * (3 - 2 * f));
+    };
     const cols = box ? 3 : 5;
     for (let i = 0; i <= rows; i++) {
       const t = i / rows;
       let width = Math.pow(Math.sin(Math.PI * t), box ? .55 : .8) * length;
       width *= oak ? .47 : id === "fothergilla" ? .38 : box ? .30 : .28;
-      if (oak) width *= .59 + .41 * Math.cos((t - .12) * Math.PI * 6);
+      if (oak) width = length * .48 * lobeWidth(t);
       if (id === "fothergilla" && t > .35) width *= i % 2 ? .94 : 1.02;
       for (let col = 0; col < cols; col++) {
         const x = col / (cols - 1) * 2 - 1;
         points.push(width * x + skew * length * t * t, t * length,
-          length * (Math.sin(t * Math.PI) * bend - x*x * .065 * Math.sin(t * Math.PI) + x * .024 * Math.sin(t * Math.PI * 3)));
+          length * (Math.sin(t * Math.PI) * bend - t*t*t * .14 - x*x * .075 * Math.sin(t * Math.PI) + x * .045 * Math.sin(t * Math.PI * 2)));
         // Subtle vein pigmentation, not a bright stripe on every blade.
         tones.push(Math.abs(x)<.01 ? 1.025 : .97 + .025 * Math.sin(t * Math.PI));
+        uvs.push((x + 1) * .5, t);
       }
       if (i < rows) for (let col = 0; col < cols-1; col++) {
         const k = i * cols + col;
-        indices.push(k,k+cols,k+1,k+1,k+cols,k+cols+1);
+        indices.push(k,k+1,k+cols,k+1,k+cols+1,k+cols);
       }
     }
     const g = new T.BufferGeometry();
     g.setAttribute("position", new T.Float32BufferAttribute(points, 3));
     g.setAttribute("bladeTone", new T.Float32BufferAttribute(tones, 1));
+    g.setAttribute("uv", new T.Float32BufferAttribute(uvs, 2));
     g.setIndex(indices); g.computeVertexNormals();
     return g;
   }
   function leaf(at, angle, size, phase, vigor = 1) {
     const g = leafShape(size);
-    // Leaves reach out from the shoot with a broad distribution of inclinations.
-    g.rotateX(.35 + r() * 2.40);
-    g.rotateY(angle);
-    g.rotateZ((r() - .5) * 1.50);
+    // Petioles present the broad upper surface toward the sky. Independent
+    // droop and twist keep opposite pairs from becoming rigid horizontal tiers.
+    const inclination = id === "hydrangea" ? -1.0 + r() * 1.65 : -.65 + r() * 1.35;
+    const across = v(-Math.sin(angle), 0, Math.cos(angle));
+    const along = v(Math.cos(angle)*Math.cos(inclination), Math.sin(inclination), Math.sin(angle)*Math.cos(inclination));
+    g.rotateY((r() - .5) * (id === "hydrangea" ? 1.7 : .95));
+    g.applyMatrix4(new T.Matrix4().makeBasis(across, along, across.clone().cross(along)));
     g.translate(...at);
-    const color = new T.Color().setRGB(.65 + vigor * .24, .69 + vigor * .23, .58 + vigor * .27);
+    const color = new T.Color().setRGB(.74 + vigor * .18, .78 + vigor * .18, .67 + vigor * .22);
     color.multiplyScalar(.84 + r() * .16);
     add("leaves", g, at, color, phase);
   }
   function floret(at, size, anchor, tint, phase, face = v(0,1,0)) {
     const orientation = new T.Quaternion().setFromUnitVectors(v(0,0,1), face.clone().normalize());
     for (let p = 0; p < 4; p++) {
-      const points = [0, size*.35, size*.14], indices=[];
-      const uneven = .86+r()*.28;
-      const segments = id === "hydrangea" ? 8 : 5;
-      for (let ring=1;ring<=2;ring++) for (let k=0;k<segments;k++) {
-        const a=k/segments*Math.PI*2, f=ring*.5;
-        points.push(Math.cos(a)*size*.36*uneven*f, size*.35+Math.sin(a)*size*.43*f, size*(.14-.16*f*f));
+      const points = [0, size*.35, size*.045], indices=[];
+      const uneven = .9+r()*.2;
+      const segments = id === "hydrangea" ? 6 : 5;
+      const rings = id === "hydrangea" ? 1 : 2;
+      for (let ring=1;ring<=rings;ring++) for (let k=0;k<segments;k++) {
+        const a=k/segments*Math.PI*2, f=ring/rings;
+        points.push(Math.cos(a)*size*.48*uneven*f, size*.35+Math.sin(a)*size*.48*f, size*(.045-.09*f*f+Math.sin(a)*.035*f));
         if (ring===1) indices.push(0,k+1,(k+1)%segments+1);
         else {
           const inside=k+1, next=(k+1)%segments+1;
@@ -183,11 +197,13 @@ for (const [id, c] of Object.entries(configs)) {
         }
       }
       const g = new T.BufferGeometry().setAttribute("position",new T.Float32BufferAttribute(points,3)).setIndex(indices);
+      g.setAttribute("petal", new T.Uint8BufferAttribute(new Uint8Array(points.length / 3).fill(1), 1));
       g.computeVertexNormals();
       g.rotateZ(p*Math.PI/2+(r()-.5)*.2);
+      g.rotateX((r()-.5)*.4);
       g.applyQuaternion(orientation);
       g.translate(...at);
-      add("blooms",g,anchor,tint,phase);
+      add("blooms",g,id === "hydrangea" ? at : anchor,tint,phase);
     }
   }
   const terminals = [];
@@ -199,9 +215,10 @@ for (const [id, c] of Object.entries(configs)) {
     twig(start, mid, radius);
     twig(mid, end, radius * .64);
     const angle = Math.atan2(end.z - start.z, end.x - start.x);
+    const nodeOffset = isOak ? (r() - .5) * .44 : 0;
     for (let j = 0; j < count; j++) {
       const paired = isDog || isOak || isBox;
-      const t = paired ? (Math.floor(j / 2) + 1) / (Math.ceil(count / 2) + 1) : (j + 1) / (count + 1);
+      const t = paired ? (Math.floor(j / 2) + 1) / (Math.ceil(count / 2) + 1) + nodeOffset : (j + 1) / (count + 1);
       const at = t < .5 ? start.clone().lerp(mid, t * 2) : mid.clone().lerp(end, (t-.5)*2);
       const la = angle + (j % 2 ? 1 : -1) * (1.0 + r()*.38);
       const petiole = at.clone().add(v(Math.cos(la) * .035, .01, Math.sin(la) * .035));
@@ -237,11 +254,14 @@ for (const [id, c] of Object.entries(configs)) {
     const reach = c.w * radial * (isDog ? .82 : 1.04);
     const height = c.h * (.87+r()*.23) * (isBox ? .80 - radial*radial*.23 : isOak ? .85 - radial*.40 : isDog ? .96 - radial*.39 + (r()-.5)*.15 : .91 - radial*radial*.40);
     const rootSpread = isDog ? reach*.48 : .24;
+    const sweep = (r() - .5) * (isDog ? .9 : .35);
+    const bow = (r() - .5) * (isDog ? .45 : .12);
     let prev = v(Math.cos(angle)*rootSpread, 0, Math.sin(angle)*rootSpread);
     for (let step = 1; step <= 6; step++) {
       const t = step === 6 ? 1 : (step + (r()-.5)*.8) / 6;
       const next = v(Math.cos(angle)*reach*(isDog ? .48 + .52*Math.pow(t, .85) : Math.sin(t*Math.PI*.5)), height*t, Math.sin(angle)*reach*(isDog ? .48 + .52*Math.pow(t, .85) : Math.sin(t*Math.PI*.5)));
-      next.add(v((r()-.5)*.075, 0, (r()-.5)*.075));
+      next.applyAxisAngle(v(0,1,0), sweep*t*t);
+      next.add(v(Math.sin(angle)*bow*Math.sin(Math.PI*t), 0, -Math.cos(angle)*bow*Math.sin(Math.PI*t)));
       twig(prev, next, (isDog ? .022 : isOak ? .038 : .028)*(1-t*.83), "branches", prev,
         isDog ? new T.Color("#685043").lerp(new T.Color("#b72e38"), .15+t*.85) : undefined);
       if (step >= (isBox ? 1 : 2)) {
@@ -249,7 +269,8 @@ for (const [id, c] of Object.entries(configs)) {
         for (let side = 0; side < sides; side++) {
           const a = angle + (side % 2 ? 1 : -1)*(.58+r()*1.05) + (side === 2 ? Math.PI : 0);
           const span = (isBox ? .32 : isOak ? .40 : .30) * (.7 + r()*.7) * (1-t*.3);
-          const end = next.clone().add(v(Math.cos(a)*span, .10+r()*.17, Math.sin(a)*span));
+          const rise = isOak ? (.025+r()*.3) * (t>.65 ? 1 : -.3+r()*.8) : .10+r()*.17;
+          const end = next.clone().add(v(Math.cos(a)*span, rise, Math.sin(a)*span));
           shoot(next, end, .008*(1-t*.4), isBox ? 6 : 2, !isBox && step > 3 && side === 0);
           // Ramified side shoots make a canopy volume, not a ladder of flat sprays.
           const forks = 2;
@@ -257,7 +278,7 @@ for (const [id, c] of Object.entries(configs)) {
             const attach = next.clone().lerp(end, .28 + k / forks * .65);
             const fa = a + (k % 2 ? 1 : -1) * (1.0+r()*.8);
             const length = (isBox ? .22 : isOak ? .28 : .23)*(.65+r()*.7);
-            const tip = attach.clone().add(v(Math.cos(fa)*length, .045+r()*.14, Math.sin(fa)*length));
+            const tip = attach.clone().add(v(Math.cos(fa)*length, isOak ? -.06+r()*.28 : .045+r()*.14, Math.sin(fa)*length));
             shoot(attach, tip, .0038, isBox ? 6 : 2, !isBox && step >= 4 && k === 1 && stem % 2 === 0);
           }
         }
@@ -269,23 +290,27 @@ for (const [id, c] of Object.entries(configs)) {
   terminals.forEach((at, i) => {
     const firstPart = layers.blooms.length;
     const phase = r();
-    if (id === "hydrangea" && i % 3 === 0) {
+    if (id === "hydrangea" && i % 4 === 0) {
       const top = at.clone().add(v(0.04, 0.37, 0));
       twig(at, top, 0.008, "blooms", at, "#b9ab83");
-      for (let j = 0; j < 24; j++) {
-        const t = Math.pow(r(), .82),
+      for (let j = 0; j < 88; j++) {
+        // A panicle is a loose branched inflorescence, not successive rings.
+        // Stratified but jittered florets leave small gaps and varied depths.
+        const t = Math.pow((j + r()*2) / 90, 1.3),
           a = r()*Math.PI*2,
-          rad = .18*Math.pow(1-t,.72)*(.75+r()*.25)+.008;
+          rad = .145*Math.pow(1-t,.65)*(.68+r()*.5)+.008;
         const p = at
           .clone()
           .add(v(Math.cos(a) * rad, t * 0.37, Math.sin(a) * rad));
+        if (j % 2 === 0) twig(at.clone().add(v(t*.04, Math.max(0,t*.37-.025), 0)), p,
+          .0014, "blooms", at, "#b3aa87");
         floret(
           p,
-          0.075 + r() * 0.024,
+          (0.028 + r() * 0.017) * (1 - t*.45),
           at,
           new T.Color("#ffffff").multiplyScalar(0.82 + r() * 0.18),
           phase,
-          v(Math.cos(a)*.65, .5+r()*.7, Math.sin(a)*.65),
+          v(Math.cos(a)*(.4+r()*.8), .3+r()*.9, Math.sin(a)*(.4+r()*.8)),
         );
       }
     } else if (id === "fothergilla" && i % 2 === 0) {
@@ -325,9 +350,15 @@ for (const [id, c] of Object.entries(configs)) {
       const tilt = new T.Euler((r()-.5)*.70, r()*Math.PI*2, (r()-.5)*.60);
       const scale = .76+r()*.48;
       for (const part of layers.blooms.slice(firstPart)) {
+        const anchors = part.getAttribute("anchor");
+        const rotation = new T.Quaternion().setFromEuler(tilt);
+        for (let j = 0; j < anchors.count; j++) {
+          const transformed = new T.Vector3().fromBufferAttribute(anchors, j).sub(at).multiplyScalar(scale).applyQuaternion(rotation).add(at);
+          anchors.setXYZ(j, transformed.x, transformed.y, transformed.z);
+        }
         part.translate(-at.x,-at.y,-at.z);
         part.scale(scale,scale,scale);
-        part.applyQuaternion(new T.Quaternion().setFromEuler(tilt));
+        part.applyQuaternion(rotation);
         part.translate(...at);
       }
     }
@@ -340,11 +371,17 @@ for (const [id, c] of Object.entries(configs)) {
     const geometry = mergeVertices(mergeGeometries(parts));
     for (const name of ["position", "anchor", "phase"]) {
       const values = geometry.attributes[name].array;
+      const precision = name === "phase" ? 255 : 1024;
       for (let i = 0; i < values.length; i++)
-        values[i] = Math.round(values[i] * 4096) / 4096;
+        values[i] = Math.round(values[i] * precision) / precision;
     }
-    geometry.computeVertexNormals();
+    // Preserve the smooth organ normals computed before rounding coordinates.
+    // Recomputing after rounding creates facets on very small sepals and leaf tips.
     geometry.normalizeNormals();
+    // Per-organ growth timing needs 256 steps, not a float for every vertex.
+    // glTF normalizes these bytes back to [0,1] before the seasonal shader.
+    geometry.setAttribute("phase", new T.Uint8BufferAttribute(
+      Array.from(geometry.attributes.phase.array, value => Math.round(value * 255)), 1, true));
     geometry.computeBoundingSphere();
     const material = new T.MeshStandardMaterial({
       color: name === "leaves" ? c.color : "#ffffff",
@@ -369,7 +406,7 @@ for (const [id, c] of Object.entries(configs)) {
   // Keep POSITION and _ANCHOR in exactly the same model coordinate system.
   await doc.transform(
     reorder({ encoder: MeshoptEncoder, target: "size" }),
-    quantize({ pattern: /^(NORMAL|COLOR_0)$/ }),
+    quantize({ pattern: /^(NORMAL|COLOR_0|TEXCOORD_0)$/, quantizeNormal: 8, quantizeTexcoord: 10 }),
   );
   doc.createExtension(EXTMeshoptCompression).setRequired(true);
   const buffer = await io.writeBinary(doc);

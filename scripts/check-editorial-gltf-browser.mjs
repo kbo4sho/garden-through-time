@@ -66,4 +66,15 @@ await page.evaluate(()=>window.__loss.restoreContext());await page.waitForTimeou
 const req=[];page.on('request',r=>req.push(r.url()));
 await open(baseURL+'/?renderer=gltf&template=balanced-year-3&plants=winterberry,hydrangea,dogwood&day=15&from=Kevin');
 results.mixed={renderer:await page.locator('main').getAttribute('data-renderer'),winterberryTextures:req.filter(u=>u.includes('winterberry')&&u.includes('webp')).length};assert(results.mixed.winterberryTextures>0);
+// The model portrait reserves a caption band outside the animated canvas.
+results.caption=[];
+for (const width of [768,834,1080,1127,1440]) for (const d of [15,135,200,290]) {
+ await page.setViewportSize({width,height:900});
+ await open(`${baseURL}/?renderer=gltf&template=layered-seasons-5&day=${d}&from=Kevin`);
+ const caption=await page.locator('.story-panel').boundingBox();
+ const portrait=await page.locator('.is-primary canvas').boundingBox();
+ const clear=caption.y+caption.height<=portrait.y;
+ results.caption.push({width,day:d,clear});
+ assert(clear,`Studio caption overlaps canvas at ${width}px, day ${d}`);
+}
 results.errors=errors;console.log(JSON.stringify(results,null,2));await writeFile('docs/evidence/editorial-gltf/browser-checks.json',JSON.stringify(results,null,2)+'\n');await browser.close();assert.equal(errors.length,0);

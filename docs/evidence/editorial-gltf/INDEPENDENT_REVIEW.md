@@ -1,55 +1,33 @@
-# Independent review — editorial glTF attempt 1
+VERDICT: LOSE
 
-**Final verdict: LOSE. Editorial visual acceptance remains unmet.**
+EVIDENCE:
 
-Three fresh critic contexts inspected integrated captures and the running
-artifact under `docs/GAUNTLET.md`. No critic received builder reasoning or
-self-assessment. The final reviewer inspected all 24 desktop/phone captures and
-the tablet capture, then exercised the seven-plant phone link.
+This is an independent review of the running production artifact at http://127.0.0.1:4178/?renderer=gltf&template=layered-seasons-5&day=200&from=Kevin. Brief context was limited to PRODUCT_BRIEF.md and GAUNTLET.md plus the supplied constraints. No builder explanation, previous review, implementation source, or git history informed this verdict. The historical outcomes embedded in GAUNTLET.md were not used as evidence for this artifact.
 
-## Final critic's observations
+Direct visual inspection covered these original supplied images at their normal display scale: desktop-5-200, phone-5-200, desktop-7-15, desktop-3-135, desktop-3-290, desktop-5-15, phone-7-135, phone-3-290, tablet-5-135, desktop-7-200, desktop-5-135, phone-3-15, and phone-5-290. Thus all requested dates and template sizes are represented, but this review does not claim individual inspection of every one of the 25 supplied captures. Hero, front elevation, planting plan, and selected hydrangea detail were examined together on desktop and tablet. No magnification was needed to find the decisive defect.
 
-> The composition, warm studio ground, directional shadows, and seasonal framing
-> are coherent. Winter exposes distinct branching; spring fothergilla bloom,
-> summer hydrangea flowers, autumn foliage, and evergreen boxwood clearly
-> differentiate seasonal roles.
+The live in-app browser showed the same five-plant July composition at approximately 1280×720, with rendered plant geometry, shared ground, shadows, a visible Kevin byline and July 19 date. A keyboard Home action changed the timeline to January 1 and visibly removed deciduous foliage while preserving evergreen boxwood, red dogwood stems, and aged hydrangea flower heads. Play changed to Pause and advanced the year; pausing returned the Play control. The accessibility tree exposed fallback text inside canvases even while the screenshot showed rendered plants, so I did not treat that text alone as evidence of WebGL failure. I did not independently time playback or conduct a physical touch-device test.
 
-> In desktop-3-135.png, desktop-3-200.png, and the selected hydrangea detail
-> throughout the matrix, foliage reads as repeated sharply folded polygon pieces.
-> Angular contours, abrupt dark faces, and rigid blade shapes remain conspicuous
-> at ordinary viewing size. The arrangement is attractive, but plant surfaces do
-> not meet the requested editorial botanical finish.
+The overall scene has a coherent warm studio background and a consistent directional shadow field. Plants stand on the same ground, their height hierarchy remains readable, and the camera views add useful elevation and spacing judgments. Winter is a substantial structural change, not merely recoloring. Fothergilla is sparse and flowering in the May captures while hydrangea is leafy; hydrangea carries pale flower heads in July. October has different colors among the deciduous species and persistent green boxwood. The phone retains one legible portrait, species names, date, and a prominent Play button. These are meaningful strengths for the living-bed promise.
 
-The reviewer independently observed one phone canvas, no page errors, and Play
-advancing day 200 to 252. They also inspected the raw browser regression results
-and measured the four GLBs at 4,891,128 bytes. Physical device performance and
-the historical cold-load requirement remain unproven.
+The decisive failure is visible on the central oakleaf hydrangea in desktop-3-135, desktop-5-135, desktop-5-200, and desktop-3-290 and their seasonal-detail panels. Its canopy reads as overlapping folded polygon pieces with broad, nearly blank surfaces and abrupt dark/light facets. Repeated pointed lobes and coarse creases are more prominent than fine leaf texture or organic surface variation. The July flowers are small pale fragments above that coarse canopy. In the 390px phone portraits, those same broad leaf pieces still dominate the center as a crumpled manufactured mass. This does not reach the brief's fine-detail plant bar, and the central placement makes it a defect of the complete composition rather than an optional close-up concern. The issue is not a request to reproduce photographic-billboard lighting.
 
-| User criterion | Final critic score / 5 |
-| --- | ---: |
-| Shared lighting/material coherence | 4 |
-| Botanical seasons | 3 |
-| Beauty/coherence | 2 |
-| Phone/desktop 3/5/7 | 4 |
-| Safeguards supported by evidence | 4 |
+For the reference comparison, Epic's primary documentation identifies leaf translucency and canopy ambient-occlusion depth as contributors to lifelike foliage, in addition to lifecycle variation: [Twinmotion foliage materials](https://dev.epicgames.com/documentation/en-us/twinmotion/foliage-materials). This review uses those as visual dimensions, not a demand for a particular implementation. Morton describes oakleaf hydrangea's large lobed leaves, summer cone-shaped flowers, fall red/burgundy foliage, and persistent dried winter heads: [The Morton Arboretum, oak-leaved hydrangea](https://mortonarb.org/plant-and-protect/trees-and-plants/oak-leaved-hydrangea/). The supplied rendering communicates that broad sequence; this review does not certify exact date windows or all four species' source-to-state mappings.
 
-**LARGEST GAP:** The broadleaf geometry and shading—most visibly oakleaf
-hydrangea—still read as rigid folded craft material instead of convincing
-botanical foliage.
+Reported raw checks, not independently reproduced: captures.json reports one phone canvas, four desktop/tablet canvases, model requests and no photo requests for the supplied matrix, plus no errors. Its approximately one-second elapsed capture values explicitly include network-idle and screenshot time and are not cold-load/device-performance measurements. browser-checks.json reports unchanged photo samples at days 15 and 200, phone Play advancement with zero history writes, p50 33.3ms/p95 50ms render intervals, zero repeated-cycle buffer uploads, keyboard success, peek movement and exact return to rest, context-loss recovery, five winterberry textures in a mixed renderer scene, caption checks at five widths, and no errors. These support safeguard retention but do not prove physical-tablet FPS, 10Mbps cold load, or a full accessibility audit.
 
-**FIXED WHEN:** Fresh inspection of May/July desktop three-plant portraits and
-hydrangea seasonal details at native size shows supple, irregular lobed leaves
-with gradual curvature and natural light variation, without conspicuous repeated
-angular folds or near-black polygon faces; the finish remains convincing in the
-5/7 beds.
+I independently measured the four on-disk GLBs: fothergilla 1,005,608 bytes; hydrangea 1,791,708; dogwood 1,192,720; boxwood 1,002,368. Total 4,992,404 bytes, within the approximately 5MB four-asset constraint. This measures GLBs, not total page transfer.
 
-## Review boundary
+Five requested Year-Round Interest scores (1–5; critic judgment, not a user study):
 
-Earlier independent passes identified regular crowns, bundled stems, shelf-like
-leaf placement and rigid inflorescences. Repairs changed branching, leaf
-inclinations, crown topology, flower placement and sepal curvature. The final
-critique still identifies the same underlying broadleaf finish problem, and the
-beauty score did not improve. This draft retains the integrated attempt for
-review; it does not equate passing technical checks or completing iteration
-rounds with reaching the visual bar. Further acceptance work needs a materially
-better broadleaf asset treatment inside the retained budget and seasonal contract.
+| Dimension | Score | Basis |
+| --- | --- | --- |
+| Shared light/material coherence | 3 | Shared ground and directional light read together; the hydrangea's coarse opaque-looking leaf surfaces limit material credibility. |
+| Plant-true seasons | 3 | Distinct seasonal structures and species timing are visible; full regional source-to-state and monthly review was outside this inspection. |
+| Beauty/coherence | 2 | Calm layout and consistent staging, but the central hydrangea remains visibly manufactured at hero and detail scale. |
+| Phone/desktop selling the year | 3 | Date, identity, winter structure, and readable phone Play support the pitch; the central canopy prevents the requested visual finish. |
+| Safeguards/budget | 4 | Four GLBs total 4.99MB; supplied raw checks support photo default, phone Play, peek and recovery. Physical-device runtime limits remain unverified. |
+
+LARGEST GAP: The hero oakleaf hydrangea still reads as a coarse folded-polygon canopy rather than fine-detail living foliage. Large repeated faceted leaf pieces are conspicuous at normal desktop hero/detail scale and remain visible at 390px, making the center of the bed look like a game asset despite the coherent studio scene.
+
+FIXED WHEN: A fresh critic can inspect the unchanged 3/5/7 planting frames on days 135, 200 and 290 at 1440×900 and 390px, including the normal-size hydrangea seasonal detail, and see organically varied lobed leaves with convincing curvature, surface detail, and light transmission/depth; broad repeated polygon folds must no longer be the dominant canopy texture. Preserve the shared scene, recognizable summer/winter hydrangea form, and the approximately 5MB four-asset limit. The check is visual at normal scale, not merely the presence of new texture/material code.

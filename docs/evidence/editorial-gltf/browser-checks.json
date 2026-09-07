@@ -13,10 +13,10 @@
   ],
   "play": {
     "start": 15,
-    "advanced": 119,
+    "advanced": 120,
     "historyWritesDuringPlay": 0,
     "canvases": 1,
-    "renderIntervalP50Ms": 33.29999999999973,
+    "renderIntervalP50Ms": 33.29999999999927,
     "renderIntervalP95Ms": 50
   },
   "repeatCycleBufferUploads": 0,
@@ -31,5 +31,107 @@
     "renderer": "model3d",
     "winterberryTextures": 5
   },
+  "caption": [
+    {
+      "width": 768,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 768,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 768,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 768,
+      "day": 290,
+      "clear": true
+    },
+    {
+      "width": 834,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 834,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 834,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 834,
+      "day": 290,
+      "clear": true
+    },
+    {
+      "width": 1080,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 1080,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 1080,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 1080,
+      "day": 290,
+      "clear": true
+    },
+    {
+      "width": 1127,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 1127,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 1127,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 1127,
+      "day": 290,
+      "clear": true
+    },
+    {
+      "width": 1440,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 1440,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 1440,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 1440,
+      "day": 290,
+      "clear": true
+    }
+  ],
   "errors": []
 }
