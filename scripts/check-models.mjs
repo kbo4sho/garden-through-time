@@ -125,7 +125,16 @@ for (const [id, info] of Object.entries(manifest.models)) {
   bytes += binary.length;
   assert.equal(binary.length, info.bytes);
   const doc = await io.readBinary(binary);
-  assert.equal(doc.getRoot().listTextures().length, 0);
+  assert.equal(doc.getRoot().listTextures().length, id === 'hydrangea' ? 3 : 0);
+  if (id === 'hydrangea') {
+    const material = doc.getRoot().listNodes().find(node=>node.getName()==='leaves').getMesh().listPrimitives()[0].getMaterial();
+    for (const texture of [material.getBaseColorTexture(), material.getNormalTexture(), material.getMetallicRoughnessTexture()]) {
+      assert(texture, 'Blender leaf must retain all three baked PBR channels');
+      assert.equal(texture.getMimeType(), 'image/png');
+      assert(texture.getSize().every(dimension => dimension <= 512));
+    }
+    assert.equal(material.getMetallicFactor(), 0);
+  }
   const names = doc
     .getRoot()
     .listNodes()
@@ -150,6 +159,17 @@ for (const [id, info] of Object.entries(manifest.models)) {
       assert(position && anchor && phase);
       assert.equal(position.getCount(), anchor.getCount());
       assert.equal(position.getCount(), phase.getCount());
+      // The visible surface and its attachment point must decode through the
+      // same node transform, otherwise seasonal growth detaches from the stems.
+      assert(position.getArray() instanceof Int16Array);
+      assert(anchor.getArray() instanceof Int16Array);
+      assert(!position.getNormalized() && !anchor.getNormalized());
+      const node = doc.getRoot().listNodes().find(node => node.getMesh() === mesh);
+      assert.deepEqual(node.getScale(), [1 / 1024, 1 / 1024, 1 / 1024]);
+      for (let axis = 0; axis < 3; axis++) {
+        const values = position.getArray().filter((_, i) => i % 3 === axis);
+        assert(values.every(value => value / 1024 >= info.bounds.min[axis] - .002 && value / 1024 <= info.bounds.max[axis] + .002));
+      }
       // Growth phases are normalized bytes; omitting normalization would keep
       // almost every organ hidden even at full summer growth.
       assert(phase.getNormalized(), `${id} growth phases must decode to [0,1]`);

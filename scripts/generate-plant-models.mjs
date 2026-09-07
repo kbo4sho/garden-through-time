@@ -1,4 +1,4 @@
-// Original, deterministic glTF geometry. No downloaded meshes or image textures.
+// Seeded original plant assembly, including an original Blender oakleaf and PBR bakes.
 import * as T from "three";
 import {
   mergeGeometries,
@@ -13,7 +13,7 @@ import {
 } from "@gltf-transform/extensions";
 import { reorder, quantize } from "@gltf-transform/functions";
 import { MeshoptEncoder } from "meshoptimizer";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 class FileReader {
   readAsArrayBuffer(blob) {
     blob.arrayBuffer().then((v) => {
@@ -25,6 +25,15 @@ class FileReader {
 globalThis.FileReader = FileReader;
 const out = new URL("../public/models/", import.meta.url);
 await mkdir(out, { recursive: true });
+const authored = new URL('../authoring/hydrangea/', import.meta.url);
+const leafDocument = await new NodeIO().readBinary(new Uint8Array(await readFile(new URL('hydrangea-leaf.glb', authored))));
+const leafPrimitive = leafDocument.getRoot().listMeshes()[0].listPrimitives()[0];
+const oakleaf = {
+  positions: leafPrimitive.getAttribute('POSITION').getArray(),
+  normals: leafPrimitive.getAttribute('NORMAL').getArray(),
+  uvs: leafPrimitive.getAttribute('TEXCOORD_0').getArray(),
+  indices: leafPrimitive.getIndices().getArray(),
+};
 const configs = {
   fothergilla: {
     seed: 71,
@@ -64,6 +73,7 @@ const manifest = {
   license: "Project-owned; see LICENSE.md",
   provenance: "Original project assets; no third-party mesh or texture content",
   generator: "scripts/generate-plant-models.mjs",
+  organSource: "authoring/hydrangea/provenance.json",
   models: {},
 };
 for (const [id, c] of Object.entries(configs)) {
@@ -129,22 +139,27 @@ for (const [id, c] of Object.entries(configs)) {
   // Rounded oakleaf lobes, a curved midrib and a gently relaxed blade surface.
   // All colour is organ pigmentation; studio direction is exclusively runtime light.
   function leafShape(length) {
-    const oak = id === "hydrangea", box = id === "boxwood";
-    const rows = oak ? 24 : box ? 4 : 8;
+    if (id === 'hydrangea') {
+      const g = mergeVertices(new T.BufferGeometry()
+        .setAttribute('position', new T.Float32BufferAttribute(oakleaf.positions, 3))
+        .setAttribute('normal', new T.Float32BufferAttribute(oakleaf.normals, 3))
+        .setAttribute('uv', new T.Float32BufferAttribute(oakleaf.uvs, 2))
+        .setIndex(Array.from(oakleaf.indices)));
+      const spread = .85 + r()*.30, bend = (r()-.5)*.14;
+      const p = g.getAttribute('position');
+      for (let i=0;i<p.count;i++) p.setXYZ(i,p.getX(i)*spread,p.getY(i),p.getZ(i)+bend*(p.getY(i)**2+2*p.getX(i)*p.getY(i)));
+      g.computeVertexNormals(); g.scale(length,length,length);
+      return g;
+    }
+    const box = id === "boxwood";
+    const rows = box ? 4 : 8;
     const points = [], indices = [], tones = [], uvs = [];
     const bend = .085 + r() * .085, skew = (r() - .5) * .16;
-    const lobes = [0, .36, .69, .49, .96, .66, .84, .45, .46, .24, 0];
-    const lobeWidth = (t) => {
-      const u = t * (lobes.length - 1), k = Math.min(lobes.length - 2, Math.floor(u)), f = u - k;
-      // Smooth interpolation gives rounded lobe shoulders rather than a sawtooth edge.
-      return T.MathUtils.lerp(lobes[k], lobes[k + 1], f * f * (3 - 2 * f));
-    };
     const cols = box ? 3 : 5;
     for (let i = 0; i <= rows; i++) {
       const t = i / rows;
       let width = Math.pow(Math.sin(Math.PI * t), box ? .55 : .8) * length;
-      width *= oak ? .47 : id === "fothergilla" ? .38 : box ? .30 : .28;
-      if (oak) width = length * .48 * lobeWidth(t);
+      width *= id === "fothergilla" ? .38 : box ? .30 : .28;
       if (id === "fothergilla" && t > .35) width *= i % 2 ? .94 : 1.02;
       for (let col = 0; col < cols; col++) {
         const x = col / (cols - 1) * 2 - 1;
@@ -170,10 +185,10 @@ for (const [id, c] of Object.entries(configs)) {
     const g = leafShape(size);
     // Petioles present the broad upper surface toward the sky. Independent
     // droop and twist keep opposite pairs from becoming rigid horizontal tiers.
-    const inclination = id === "hydrangea" ? -1.0 + r() * 1.65 : -.65 + r() * 1.35;
+    const inclination = id === "hydrangea" ? -.65 + r() * 1.30 : -.65 + r() * 1.35;
     const across = v(-Math.sin(angle), 0, Math.cos(angle));
     const along = v(Math.cos(angle)*Math.cos(inclination), Math.sin(inclination), Math.sin(angle)*Math.cos(inclination));
-    g.rotateY((r() - .5) * (id === "hydrangea" ? 1.7 : .95));
+    g.rotateY((r() - .5) * (id === "hydrangea" ? 1.2 : .95));
     g.applyMatrix4(new T.Matrix4().makeBasis(across, along, across.clone().cross(along)));
     g.translate(...at);
     const color = new T.Color().setRGB(.74 + vigor * .18, .78 + vigor * .18, .67 + vigor * .22);
@@ -378,6 +393,13 @@ for (const [id, c] of Object.entries(configs)) {
     // Preserve the smooth organ normals computed before rounding coordinates.
     // Recomputing after rounding creates facets on very small sepals and leaf tips.
     geometry.normalizeNormals();
+    // Store positions and seasonal attachment points on the exact same 1/1024
+    // grid. The glTF node supplies a uniform decode scale for both attributes.
+    for (const semantic of ['position', 'anchor']) {
+      const values = Array.from(geometry.getAttribute(semantic).array, value => Math.round(value * 1024));
+      if (values.some(value => Math.abs(value) > 32767)) throw Error('Coordinate packing overflow');
+      geometry.setAttribute(semantic, new T.Int16BufferAttribute(values, 3));
+    }
     // Per-organ growth timing needs 256 steps, not a float for every vertex.
     // glTF normalizes these bytes back to [0,1] before the seasonal shader.
     geometry.setAttribute("phase", new T.Uint8BufferAttribute(
@@ -390,6 +412,7 @@ for (const [id, c] of Object.entries(configs)) {
       roughness: name === "leaves" ? .72 : .92,
     });
     const mesh = new T.Mesh(geometry, material);
+    mesh.scale.setScalar(1 / 1024);
     mesh.name = name;
     scene.add(mesh);
     stats[name] = {
@@ -403,6 +426,16 @@ for (const [id, c] of Object.entries(configs)) {
     .registerExtensions([EXTMeshoptCompression, KHRMeshQuantization])
     .registerDependencies({ "meshopt.encoder": MeshoptEncoder });
   const doc = await io.readBinary(new Uint8Array(raw));
+  if (id === 'hydrangea') {
+    const material = doc.getRoot().listNodes().find(node=>node.getName()==='leaves').getMesh().listPrimitives()[0].getMaterial();
+    for (const [name,slot] of [['albedo','setBaseColorTexture'],['normal','setNormalTexture'],['roughness','setMetallicRoughnessTexture']]) {
+      const texture = doc.createTexture(`Blender oakleaf ${name}`)
+        .setImage(new Uint8Array(await readFile(new URL(`${name}.png`, authored))))
+        .setMimeType('image/png');
+      material[slot](texture);
+    }
+    material.setRoughnessFactor(1).setMetallicFactor(0).setNormalScale(.9);
+  }
   // Keep POSITION and _ANCHOR in exactly the same model coordinate system.
   await doc.transform(
     reorder({ encoder: MeshoptEncoder, target: "size" }),
@@ -415,7 +448,7 @@ for (const [id, c] of Object.entries(configs)) {
   const points = [];
   scene.children.forEach(mesh => {
     const positions = mesh.geometry.attributes.position;
-    for (let i = 0; i < positions.count; i++) points.push(new T.Vector3().fromBufferAttribute(positions, i));
+    for (let i = 0; i < positions.count; i++) points.push(new T.Vector3().fromBufferAttribute(positions, i).applyMatrix4(mesh.matrixWorld));
   });
   const hull = new ConvexHull().setFromPoints(points);
   const silhouette = new Map();

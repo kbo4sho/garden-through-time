@@ -46,14 +46,13 @@ winterberry fallback, photo-default pixel comparison, and caption clearance at 7
 
 ## Scope of the evidence
 
-The four GLBs remain below the 5,000,000-byte combined budget, with no embedded
-image textures. `npm run check` decodes them and validates 365 days, phase
+The four GLBs remain below the 5,000,000-byte combined budget, including the hydrangea’s three original Blender-baked surface maps. `npm run check` decodes them and validates 365 days, phase
 continuity, geometry, 3/5/7 share round-trips and the existing #5/#10/#11 checks.
 The browser capture manifest verifies that the shortlist templates request no
 photographic plant assets. Winterberry is intentionally a photographic fallback.
 
 Local browser frame pacing is diagnostic; it is not a throttled-network or
-physical-tablet benchmark. A 4.99 MB cold asset payload alone takes about 4.0
+physical-tablet benchmark. A 4.91 MB cold asset payload alone takes about 3.9
 seconds over 10 Mbps before protocol overhead. The historical three-second
 cold-load Gauntlet target therefore remains unproven and is not claimed here.
 
@@ -62,29 +61,28 @@ cold-load Gauntlet target therefore remains unproven and is not claimed here.
 
 | GLB | Bytes |
 | --- | ---: |
-| Fothergilla | 1,005,608 |
-| Oakleaf hydrangea | 1,791,708 |
-| Redtwig dogwood | 1,192,720 |
-| Boxwood | 1,002,368 |
-| **Total** | **4,992,404** |
+| Fothergilla | 869,704 |
+| Oakleaf hydrangea | 2,118,004 |
+| Redtwig dogwood | 1,038,440 |
+| Boxwood | 881,048 |
+| **Total** | **4,907,196** |
 
-Decoded vertex attributes total **12,819,380 bytes**, shared across repeated
-instances. No external model decoder, texture atlas, or runtime generation
-service is required. [Provenance and rights](../../../public/models/LICENSE.md).
+Decoded vertex attributes total **9,153,644 bytes**, shared across repeated
+instances. The hydrangea maps add roughly 1.84 MB of RGBA8 texture storage including
+mipmaps per WebGL context; this is separate from the geometry count. No remote
+model decoder or runtime generation service is required. [Provenance and rights](../../../public/models/LICENSE.md).
 
 ## Independent visual verdict
 
-**LOSE — editorial visual acceptance remains open.** The fresh critic scores
-shared light/material coherence **3/5**, plant-true seasons **3/5**,
-beauty/coherence **2/5**, phone/desktop seasonal selling **3/5**, and evidenced
-safeguards/budget **4/5**. The largest remaining gap is the oakleaf hydrangea's
-coarse, manufactured leaf-surface appearance at normal hero and detail scale.
-See the [full independent review](INDEPENDENT_REVIEW.md).
+**LOSE — editorial visual acceptance remains open.** The fresh critic sees
+repeated smooth leaf plates and fan-like arrangements in hydrangea and dogwood,
+with abrupt dark faces at ordinary desktop portrait and detail size. The
+observable closure is supple, irregular, species-specific foliage and organic
+canopy depth across spring, summer and autumn in all three layouts, while
+retaining the phone budget and safeguards. See the [full review](INDEPENDENT_REVIEW.md).
 
-The geometry, flower-scale, aging and caption repairs are retained as an
-inspectable draft. Repeated changes to this procedural leaf construction have
-not cleared the same realism failure. Under the Gauntlet's diminishing-improvement
-stop condition, this pass ends without claiming acceptance; the next material
-slice needs a different approach to botanical surface detail and organ authoring,
-validated in this same bed and asset budget. No asset purchase, merge or deployment
-is implied by that next-step assessment.
+This pass retains the original Blender leaf, its editable source and surface
+bakes, alongside the four integrated seasonal plant assets. The model coordinate
+packing was checked against all four dated desktop frames before changing the
+organ; those comparisons were pixel-identical. Browser safeguards were then
+rerun on the complete geometry and studio-lighting change.

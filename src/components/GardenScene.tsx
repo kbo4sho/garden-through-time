@@ -1778,7 +1778,7 @@ function Scene({
             shadow-camera-left={-7} shadow-camera-right={7}
             shadow-camera-top={7} shadow-camera-bottom={-7}
             shadow-camera-near={.5} shadow-camera-far={24}
-            shadow-bias={-.0004} shadow-normalBias={.025} shadow-radius={3} />
+            shadow-bias={-.0004} shadow-normalBias={.025} shadow-radius={3} shadow-intensity={.82} />
           <directionalLight position={[5, 3, 2]} color="#dce7ed" intensity={.6} />
           <directionalLight position={[1.5, 5, -5]} color="#fff7e9" intensity={1.4} />
         </>
@@ -1899,7 +1899,8 @@ export default function GardenScene(props: GardenSceneProps) {
     <>
       <Canvas
         className="garden-canvas"
-        shadows={!editorial}
+        // PCF uses the studio key's radius; PCFSoft ignores that penumbra setting.
+        shadows={props.visualStyle === "model3d" ? "percentage" : !editorial}
         orthographic={editorial}
         frameloop="demand"
         dpr={editorial ? 2 : props.primary ? [1, 1.5] : [0.8, 1.15]}

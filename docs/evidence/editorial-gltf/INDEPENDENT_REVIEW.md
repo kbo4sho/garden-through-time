@@ -1,33 +1,73 @@
-VERDICT: LOSE
+# Independent editorial glTF review
 
-EVIDENCE:
+Review date: September 7, 2026. Fresh critic context. Current production artifact: `http://127.0.0.1:4178/?renderer=gltf&template=layered-seasons-5&day=200&from=Kevin`.
 
-This is an independent review of the running production artifact at http://127.0.0.1:4178/?renderer=gltf&template=layered-seasons-5&day=200&from=Kevin. Brief context was limited to PRODUCT_BRIEF.md and GAUNTLET.md plus the supplied constraints. No builder explanation, previous review, implementation source, or git history informed this verdict. The historical outcomes embedded in GAUNTLET.md were not used as evidence for this artifact.
+**VERDICT: LOSE**
 
-Direct visual inspection covered these original supplied images at their normal display scale: desktop-5-200, phone-5-200, desktop-7-15, desktop-3-135, desktop-3-290, desktop-5-15, phone-7-135, phone-3-290, tablet-5-135, desktop-7-200, desktop-5-135, phone-3-15, and phone-5-290. Thus all requested dates and template sizes are represented, but this review does not claim individual inspection of every one of the 25 supplied captures. Hero, front elevation, planting plan, and selected hydrangea detail were examined together on desktop and tablet. No magnification was needed to find the decisive defect.
+The composition and seasonal interface are inspectable and useful, but the visible foliage still reads as an assembled computer model at ordinary desktop size. It does not meet the specified Lumion fine-detail nature / Twinmotion-Quixel / SpeedTree botanical-fidelity bar. This is a visible plant-realism failure, not a failure of asset ownership, renderer isolation, or the evidence path.
 
-The live in-app browser showed the same five-plant July composition at approximately 1280×720, with rendered plant geometry, shared ground, shadows, a visible Kevin byline and July 19 date. A keyboard Home action changed the timeline to January 1 and visibly removed deciduous foliage while preserving evergreen boxwood, red dogwood stems, and aged hydrangea flower heads. Play changed to Pause and advanced the year; pausing returned the Play control. The accessibility tree exposed fallback text inside canvases even while the screenshot showed rendered plants, so I did not treat that text alone as evidence of WebGL failure. I did not independently time playback or conduct a physical touch-device test.
+## Scores
 
-The overall scene has a coherent warm studio background and a consistent directional shadow field. Plants stand on the same ground, their height hierarchy remains readable, and the camera views add useful elevation and spacing judgments. Winter is a substantial structural change, not merely recoloring. Fothergilla is sparse and flowering in the May captures while hydrangea is leafy; hydrangea carries pale flower heads in July. October has different colors among the deciduous species and persistent green boxwood. The phone retains one legible portrait, species names, date, and a prominent Play button. These are meaningful strengths for the living-bed promise.
+Scale: 1 = fails substantially, 3 = credible partial result, 5 = meets the stated bar convincingly.
 
-The decisive failure is visible on the central oakleaf hydrangea in desktop-3-135, desktop-5-135, desktop-5-200, and desktop-3-290 and their seasonal-detail panels. Its canopy reads as overlapping folded polygon pieces with broad, nearly blank surfaces and abrupt dark/light facets. Repeated pointed lobes and coarse creases are more prominent than fine leaf texture or organic surface variation. The July flowers are small pale fragments above that coarse canopy. In the 390px phone portraits, those same broad leaf pieces still dominate the center as a crumpled manufactured mass. This does not reach the brief's fine-detail plant bar, and the central placement makes it a defect of the complete composition rather than an optional close-up concern. The issue is not a request to reproduce photographic-billboard lighting.
-
-For the reference comparison, Epic's primary documentation identifies leaf translucency and canopy ambient-occlusion depth as contributors to lifelike foliage, in addition to lifecycle variation: [Twinmotion foliage materials](https://dev.epicgames.com/documentation/en-us/twinmotion/foliage-materials). This review uses those as visual dimensions, not a demand for a particular implementation. Morton describes oakleaf hydrangea's large lobed leaves, summer cone-shaped flowers, fall red/burgundy foliage, and persistent dried winter heads: [The Morton Arboretum, oak-leaved hydrangea](https://mortonarb.org/plant-and-protect/trees-and-plants/oak-leaved-hydrangea/). The supplied rendering communicates that broad sequence; this review does not certify exact date windows or all four species' source-to-state mappings.
-
-Reported raw checks, not independently reproduced: captures.json reports one phone canvas, four desktop/tablet canvases, model requests and no photo requests for the supplied matrix, plus no errors. Its approximately one-second elapsed capture values explicitly include network-idle and screenshot time and are not cold-load/device-performance measurements. browser-checks.json reports unchanged photo samples at days 15 and 200, phone Play advancement with zero history writes, p50 33.3ms/p95 50ms render intervals, zero repeated-cycle buffer uploads, keyboard success, peek movement and exact return to rest, context-loss recovery, five winterberry textures in a mixed renderer scene, caption checks at five widths, and no errors. These support safeguard retention but do not prove physical-tablet FPS, 10Mbps cold load, or a full accessibility audit.
-
-I independently measured the four on-disk GLBs: fothergilla 1,005,608 bytes; hydrangea 1,791,708; dogwood 1,192,720; boxwood 1,002,368. Total 4,992,404 bytes, within the approximately 5MB four-asset constraint. This measures GLBs, not total page transfer.
-
-Five requested Year-Round Interest scores (1–5; critic judgment, not a user study):
-
-| Dimension | Score | Basis |
+| Criterion | Score | Direct basis |
 | --- | --- | --- |
-| Shared light/material coherence | 3 | Shared ground and directional light read together; the hydrangea's coarse opaque-looking leaf surfaces limit material credibility. |
-| Plant-true seasons | 3 | Distinct seasonal structures and species timing are visible; full regional source-to-state and monthly review was outside this inspection. |
-| Beauty/coherence | 2 | Calm layout and consistent staging, but the central hydrangea remains visibly manufactured at hero and detail scale. |
-| Phone/desktop selling the year | 3 | Date, identity, winter structure, and readable phone Play support the pitch; the central canopy prevents the requested visual finish. |
-| Safeguards/budget | 4 | Four GLBs total 4.99MB; supplied raw checks support photo default, phone Play, peek and recovery. Physical-device runtime limits remain unverified. |
+| Common lighting and material coherence | 3/5 | Ground and shadows connect the four species to one neutral studio scene. Leaf surfaces remain broad, smooth color patches, with conspicuous dark faces and light/dark discontinuities on hydrangea and dogwood. Surface differences between living foliage, stems and weathered heads do not carry the fine-detail reference quality. |
+| Botanical seasons | 3/5 | Winter exposes persistent branching, May favors fothergilla flowers, July adds hydrangea bloom, and October differentiates orange fothergilla, red dogwood and evergreen boxwood. Species are distinguishable. Leaf and stem construction is visibly formulaic; hydrangea's late-season mahogany promise is weak in the October image. The four-date evidence does not establish all twelve months or every regional transition. |
+| Beauty and composition coherence | 2/5 | The typography and calm palette provide a consistent presentation, and the ground is soft. The hero remains visibly synthetic: large hydrangea blades form flattened overlapping shelves; dogwood exposes regularly arranged red sticks with repeated leaf fans. In seven-plant views, repeated specimens make the assembly pattern more conspicuous. |
+| Phone and desktop 3/5/7 seasonal selling | 3/5 | All 24 requested frames are legible; phone has a useful single portrait, visible sender, date, labels and Play. Winter-vs-summer roles are understandable. Desktop exposes the realism defects; phone scale compresses but does not repair them. Tablet has substantial empty portrait area above the bed, weakening the garden's dominance. |
+| Safeguards and budget evidence | 4/5 | Four original GLBs total 4,907,196 bytes. Raw requests show the requested models and no photo loads in pure-model beds. Browser evidence covers unchanged photo-default pixels, phone Play, keyboard, peek return, context restoration and winterberry fallback. Real-device and throttled-network performance remain unproven by CSS viewport emulation. |
 
-LARGEST GAP: The hero oakleaf hydrangea still reads as a coarse folded-polygon canopy rather than fine-detail living foliage. Large repeated faceted leaf pieces are conspicuous at normal desktop hero/detail scale and remain visible at 390px, making the center of the bed look like a game asset despite the coherent studio scene.
+## EVIDENCE
 
-FIXED WHEN: A fresh critic can inspect the unchanged 3/5/7 planting frames on days 135, 200 and 290 at 1440×900 and 390px, including the normal-size hydrangea seasonal detail, and see organically varied lobed leaves with convincing curvature, surface detail, and light transmission/depth; broad repeated polygon folds must no longer be the dominant canopy texture. Preserve the shared scene, recognizable summer/winter hydrangea form, and the approximately 5MB four-asset limit. The check is visual at normal scale, not merely the presence of new texture/material code.
+### Inspection scope and independence
+
+Read the supplied Gauntlet, product brief and fidelity-reference documents as the governing brief. Did not open the prior independent report, evidence README, git history, or builder notes. Inspected every current `desktop-{3,5,7}-{15,135,200,290}.png`, every corresponding `phone-*` capture, and `tablet-5-135.png` in this directory. Read `captures.json` and `browser-checks.json` as raw evidence, and read asset provenance and measured file sizes. The captures were not edited.
+
+Also opened the current running production artifact independently through headless Chrome with Playwright. Waited for `.is-primary.is-ready` before judging. Observed the integrated desktop bed and selected each of fothergilla, dogwood and boxwood to inspect their actual seasonal-detail panel while the full bed remained present. Hydrangea was the initially selected detail. Temporary inspection screenshots were written outside the evidence directory under `/tmp/garden-critic-*.png` and `/tmp/garden-fresh-critic-desktop.png`.
+
+### Normal-size plants and common scene
+
+- `desktop-3-135.png` and `desktop-3-200.png` expose the oakleaf hydrangea most clearly. Its silhouette is recognizably lobed, but the broad front blades read as smooth, angular, overlapping plates. The top and right leaves reveal unusually dark, abrupt faces. The seasonal-detail panel repeats this appearance; the issue is visible without magnification.
+- `desktop-5-200.png` places the four species under compatible overall illumination, with coherent ground contact and soft cast shadows. This is successful scene integration. It does not make the organ surfaces tactile or natural enough: hydrangea remains a coarse central stack, while dogwood's leaf fans and long clean red basal rods emphasize procedural assembly.
+- `desktop-7-135.png`, `desktop-7-200.png` and `desktop-7-290.png` make repeated dogwood architecture and repeated rounded boxwood masses easy to spot. Repetition is legitimate compositionally, but the specimens lack enough visible organic irregularity to avoid a cloned-model reading.
+- `desktop-3-15.png` and `desktop-5-15.png` communicate real leaf loss and differentiate red dogwood structure from brown hydrangea/fothergilla. The basal stems nevertheless look like unusually straight, smooth rods, especially in the foreground dogwood. The winter rendering helps a planting decision but is not a fine-detail nature rendering.
+- The fresh live detail views distinguish the finer fothergilla leaves, dogwood's upright habit and small-leaved rounded boxwood. Boxwood has better visual density at normal size; its detail still reads as many repeated blades distributed over a rounded shell.
+- The shared warm ground is continuous and soft. No obvious photographic base wedges or floating photographic slabs occur in the pure-model matrix. Decorative birds and butterflies are visible; their flat symbolic treatment remains conspicuous against the intended realistic scene, but this is not the largest gap.
+
+### Seasons and decision support
+
+The four dates establish genuine changes in structure and independent contributions. May's fothergilla is sparse and flowering while hydrangea is leafy; summer fills out the fothergilla and adds hydrangea panicles; October separates the species by color; January retains boxwood while exposing deciduous structure and aged heads. These are useful design judgments.
+
+The normal July panicles are recognizable but visually airy and fragmented; their fine texture does not compensate for the broad simplified foliage beneath. October's hydrangea reads mostly green/olive and brown even while its description promises dark mahogany-red fall color. That is a visual communication weakness at the inspected date, not proof of an incorrect calendar window.
+
+The live plant-details panel identified Ruby Slippers oakleaf hydrangea, mature size, light, moisture, USDA range and bloom/retention range. It explicitly labeled representative timing with low date confidence and stated that exact bounds are visual interpolation for Chicago/Zone 6a, rather than observed local phenology or a forecast. This is appropriate uncertainty communication.
+
+Botanical reference check: [NC State Extension's oakleaf hydrangea record](https://plants.ces.ncsu.edu/plants/hydrangea-quercifolia/) describes large oak-shaped leaves, pyramidal white flower clusters aging pink and brown, and textured/exfoliating mature stems. Those distinctive organs are present in outline, but the artifact does not yet convey their surface character convincingly. [NC State's dogwood record](https://plants.ces.ncsu.edu/plants/cornus-sericea/) is the relevant species reference. The user's required lighting/material dimensions remain those in [Twinmotion's foliage documentation](https://dev.epicgames.com/documentation/en-us/twinmotion/foliage-materials); this is a visual judgment, not a demand to use that engine.
+
+### Responsive behavior and live checks
+
+- All twelve 390px phone captures show a single visible bed with sender, plant labels, readable date, seasonal sentence and Play. No squeezed four-up layout occurs.
+- Three-plant frames provide the clearest individual plant comparison. Five-plant frames add the evergreen foreground role. Seven-plant frames preserve the repeated layout but reduce individual-organ readability and expose cloned habits.
+- `tablet-5-135.png` preserves all four purposeful views, readable controls and unobstructed captions. Its main bed occupies a comparatively small band amid large empty space; it is less visually dominant than the desktop bed.
+- Fresh desktop keyboard interaction advanced the slider from day 200 to 201.
+- Fresh phone Play on the seven-plant link advanced the rendered parked day from 15 to 62 after approximately two seconds; pausing committed day 63. One canvas was present. The range input value is not the correct live-play measurement; the timeline's `data-parked-day` is.
+- Fresh live production loading and plant-details interaction produced no page errors during the inspected session.
+
+### Safeguards, provenance and measured limits
+
+Actual GLB sizes match the manifest: fothergilla 869,704 bytes; hydrangea 2,118,004; dogwood 1,038,440; boxwood 881,048. Total: **4,907,196 bytes (4.91 MB decimal)**. The manifest separates branches, leaves and blooms, plus dogwood fruit. `public/models/LICENSE.md` records original project geometry and original baked hydrangea maps, with no downloaded third-party assets. This supports the original-asset boundary; this review is not an external legal audit.
+
+`captures.json` records three model requests for the three-plant bed, four for five/seven, no photographic requests for pure-model layouts, and no recorded errors. Desktop/tablet use four canvases; phone uses one.
+
+`browser-checks.json` records zero changed image channels for photo-default phone frames at days 15 and 200 against the baseline; Play advancing from 15 to 121 without history writes; zero repeat-cycle buffer uploads; successful keyboard input; peek changing the view and returning to exact rest; context loss/restore; five winterberry texture requests in the mixed renderer case; and caption clearance across the recorded widths/dates. It records no errors.
+
+The phone-emulation render intervals are approximately 33.3 ms median and 50.3 ms at p95. They are useful local evidence, but neither those values nor capture elapsed times prove performance on a physical tablet or the three-second meaningful-scene requirement over 10 Mbps. All twelve monthly states, all input methods, full non-WebGL startup behavior and exhaustive compatibility filters were not independently audited here. These limits do not prevent a visual LOSE because the primary defect is directly inspectable.
+
+## LARGEST GAP
+
+At normal desktop bed and seasonal-detail size, the leaf-bearing canopy still looks assembled from repeated smooth plates and leaf fans, especially the central oakleaf hydrangea and right-hand dogwood. Broad flattened blades, abrupt dark faces and regular repeated arrangements overwhelm the subtle surface detail and keep the living bed below the required botanical/PBR fidelity bar.
+
+## FIXED WHEN
+
+A fresh critic can inspect the unchanged 1440×900 three-, five- and seven-plant compositions at days 135, 200 and 290, plus each species' actual seasonal-detail panel, and see supple irregular leaves with readable species-specific margins and surface character, plausible backface light response, and connected organically varied canopy depth without conspicuous plate stacks, dark polygon faces or repeated leaf-fan shelves. Recheck January structure and the full 390px seasonal matrix while retaining the shared studio light, approximately 5 MB four-asset total and existing safeguards. Smaller framing, extra blur, or a successful isolated leaf close-up do not close the gap.

@@ -1,19 +1,28 @@
 # Model provenance and rights
 
-The four `.glb` files are original procedural geometry authored for
-`kbo4sho/garden-through-time`, reproducible with
-`scripts/generate-plant-models.mjs`. They are interpretive botanical models,
-not scans or reconstructions of photographs. There are no downloaded meshes,
-image textures, image-derived lighting, or third-party asset-service outputs.
-Leaf coordinates support original procedural vein pigmentation in the shared
-runtime material; the glTFs contain no third-party surface maps.
+The four `.glb` files are original geometry authored for
+`kbo4sho/garden-through-time`. `scripts/generate-plant-models.mjs` assembles
+the plants, including a Blender-authored oakleaf hydrangea organ. They are
+interpretive botanical models, not scans or reconstructions of photographs.
+There are no downloaded meshes, photograph-derived maps, image-derived
+lighting, or third-party asset-service outputs.
+
+The hydrangea's original tangent normal, neutral albedo and roughness maps are
+baked in Cycles from a detailed original leaf surface. The albedo carries tissue
+and vein variation; the existing seasonal material supplies chlorophyll and fall
+color. Direct and indirect illumination are excluded from the color bake, so
+all four species respond to the same runtime studio lighting. The other three
+assets retain geometric organs and procedural runtime vein pigmentation.
+See `authoring/hydrangea/provenance.json`, the packed `.blend` source, and
+`scripts/author-hydrangea-blender.py` for the authoring record.
 
 The assets belong to this project. This note does not grant a separate
 redistribution license or dedicate the assets to the public domain; permission
 for use outside the project rests with the repository owner.
 
-The offline generator uses Three.js, glTF Transform, and meshoptimizer (MIT
-licensed tooling). Their library licenses remain with their respective packages.
+The offline generator uses Blender and Cycles, plus Three.js, glTF Transform,
+and meshoptimizer (MIT licensed JavaScript tooling). Tool licenses remain with
+their respective packages; no bundled example assets are used.
 The botanical references below inform morphology and seasonal behavior; no
 photographs or text from those sites are embedded in the assets.
 

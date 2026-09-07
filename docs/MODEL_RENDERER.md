@@ -16,9 +16,19 @@ Living Framework is offered only in model mode. Selecting seven plants in this m
 
 Four original, procedurally authored binary glTF assets: fothergilla, Ruby Slippers oakleaf hydrangea, Arctic Fire redtwig dogwood, and Green Velvet boxwood. These are interpretive botanical models, not scanned specimens. No seasonal plant images or splats are used for these four in model mode. No third-party mesh or texture content is included.
 
-`npm run models:generate` regenerates the GLBs and `public/models/manifest.json` deterministically. Geometry is authored offline with Three.js and compressed with `EXT_meshopt_compression`; drei supplies the decoder locally in the optional model chunk. No Draco CDN or runtime model-generation service is involved. The generation dependencies are development-only.
+`npm run models:generate` regenerates the GLBs and `public/models/manifest.json` from the checked-in organ source and seeded assembly. Hydrangea's organ is authored in Blender; the other organs and plant scaffolds are authored offline with Three.js. `EXT_meshopt_compression` reduces delivery size; drei supplies the decoder locally in the optional model chunk. No Draco CDN or runtime model-generation service is involved. The generation dependencies are development-only.
 
-Each GLB contains merged `branches`, `leaves`, `blooms`, and (dogwood only) `fruit` meshes. `_ANCHOR` is the organ's attachment point and `_PHASE` is its stable emergence/abscission order. Positions and anchors remain in the same coordinate system during compression. Vertex shaders grow or contract organs around their anchors. No branch topology or geometry is rebuilt on a day tick; no large translucent seasonal meshes are sorted over one another.
+To rebuild the hydrangea organ and its maps, run Blender 5.2 LTS with
+`--background --factory-startup --python scripts/author-hydrangea-blender.py`,
+then `npm run models:generate`. `authoring/hydrangea/` retains the packed `.blend`,
+prototype GLB, maps and provenance. A detailed 33,153-vertex source bakes onto an
+185-vertex delivery leaf. Embedded maps are 512² tangent normals, 256² neutral
+albedo and 128² roughness. They contain original tissue and vein detail, with no
+baked lighting. These source files are development artifacts; only the four
+assembled GLBs are served to the browser. The geometry and maps are shared by
+all hydrangea instances within each renderer.
+
+Each GLB contains merged `branches`, `leaves`, `blooms`, and (dogwood only) `fruit` meshes. `_ANCHOR` is the organ's attachment point and `_PHASE` is its stable emergence/abscission order. Positions and anchors use the same signed 16-bit grid (1/1024 model unit). A shared glTF node scale decodes both; visible and depth materials preserve that transform, including the world-scale term in dried-floret normals. Vertex shaders grow or contract organs around their anchors. No branch topology or geometry is rebuilt on a day tick; no large translucent seasonal meshes are sorted over one another.
 
 The GLTF cache owns geometry; repeats and views share it. Each mounted instance owns and disposes its seasonal materials. Repeats rotate the same scaffold using the stable planting-position ID. Scene framing uses the full-year bounds, so leaf drop does not move the camera. Authored positions and profile scales remain in force; the native fothergilla option rescales the same model.
 
@@ -65,10 +75,13 @@ cross-sections, restrained midrib pigmentation and varied inclinations.
 Inflorescences vary in size and tilt. All four use the same opaque PBR material
 family, with organ-specific roughness and a restrained leaf-back transmission
 term responding to the common key. There are no photograph-derived color or
-lighting targets and no image textures inside the GLBs.
+lighting targets. Hydrangea uses its original Blender surface maps; the other
+species retain the shared material family's procedural surface variation.
 
 The key casts a bounded shadow map (1024 in the portrait, 512 in supporting
-views). The depth material uses the same seasonal organ deformation and uniforms
+views). Model mode uses PCF filtering so the key's three-texel penumbra actually
+applies, with restrained shadow intensity across the whole bed. Photo mode keeps
+its existing shadow configuration. The depth material uses the same seasonal organ deformation and uniforms
 as its visible material; dropping foliage does not leave a full-leaf shadow.
 Owned depth and visible materials are both disposed on unmount. Existing soft
 contact textures, ambient life and the limited peek stay mounted. Studio fog

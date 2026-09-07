@@ -33,7 +33,7 @@ export function modelSeason(profile: PlantProfile, day: number) {
     : state.fall;
   // Reflectance authored for the common studio, independent of photographic assets.
   const studioGreens: Record<string, string> = {
-    fothergilla: "#738953", hydrangea: "#657c49", dogwood: "#6c8855", boxwood: "#536f43",
+    fothergilla: "#738953", hydrangea: "#798b57", dogwood: "#6c8855", boxwood: "#536f43",
   };
   const leafColor = new THREE.Color(studioGreens[profile.id] ?? profile.leaf.summer);
   const fallColor = new THREE.Color(profile.leaf.fall);
