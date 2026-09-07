@@ -47,3 +47,33 @@ Exact days remain the existing Chicago representative-year interpolation, not a 
 - Model download budget: 5 MB total for the four unique assets. Decoded attribute budget: 24 MB, shared across repeats within one renderer. First encounters with previously hidden seasonal layers may upload their buffers once; subsequent cycles must not allocate more GPU buffers/textures.
 
 Browser evidence and device limitations are recorded in the PR. Desktop browser emulation does not establish that physical iPhone Safari meets the same performance bar.
+
+## Editorial studio pass — September 2026
+
+The four model assets now use a fixed warm key, cool fill and soft rim, with a
+neutral continuous ground. Lighting and ground pigment are constant across the
+year, so the changed color and density come from the plants. The photographic
+CSS wash is disabled only for `model3d`; photo and paper views retain their
+existing treatment. This deliberately follows the new shared-studio brief in
+preference to the product brief's earlier natural-atmosphere wording.
+
+Geometry is original project work; see [asset provenance and rights](../public/models/LICENSE.md).
+Fothergilla has a spreading, ramified scaffold; hydrangea has curved lobed blades
+and irregular papery florets; dogwood has independently rooted red canes;
+boxwood uses a separate rounded evergreen crown. Broad leaves have curved
+cross-sections, restrained midrib pigmentation and varied inclinations.
+Inflorescences vary in size and tilt. All four use the same opaque PBR material
+family, with organ-specific roughness and a restrained leaf-back transmission
+term responding to the common key. There are no photograph-derived color or
+lighting targets and no image textures inside the GLBs.
+
+The key casts a bounded shadow map (1024 in the portrait, 512 in supporting
+views). The depth material uses the same seasonal organ deformation and uniforms
+as its visible material; dropping foliage does not leave a full-leaf shadow.
+Owned depth and visible materials are both disposed on unmount. Existing soft
+contact textures, ambient life and the limited peek stay mounted. Studio fog
+blends the distant ground into the backdrop, outside the composition.
+
+See [review evidence](evidence/editorial-gltf/README.md) for captures, measured
+asset sizes, browser checks, and independent visual-review results. This is an
+opt-in evaluation branch; passing the automated checks is not a visual verdict.

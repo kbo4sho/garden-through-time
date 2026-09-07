@@ -1,0 +1,35 @@
+{
+  "photo": [
+    {
+      "day": 15,
+      "changedChannels": 0,
+      "channels": 987480
+    },
+    {
+      "day": 200,
+      "changedChannels": 0,
+      "channels": 987480
+    }
+  ],
+  "play": {
+    "start": 15,
+    "advanced": 119,
+    "historyWritesDuringPlay": 0,
+    "canvases": 1,
+    "renderIntervalP50Ms": 33.29999999999973,
+    "renderIntervalP95Ms": 50
+  },
+  "repeatCycleBufferUploads": 0,
+  "keyboard": true,
+  "peek": {
+    "changesView": true,
+    "returnsToRest": true,
+    "meanChannelDifference": 0
+  },
+  "contextLossRestore": true,
+  "mixed": {
+    "renderer": "model3d",
+    "winterberryTextures": 5
+  },
+  "errors": []
+}

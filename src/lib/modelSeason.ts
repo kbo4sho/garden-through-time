@@ -28,7 +28,11 @@ export function modelSeason(profile: PlantProfile, day: number) {
     ? Math.max(state.fall, 1 - smoothstep(55, profile.bloom.window[0], day)) *
       0.32
     : state.fall;
-  const leafColor = new THREE.Color(profile.leaf.summer);
+  // Reflectance authored for the common studio, independent of photographic assets.
+  const studioGreens: Record<string, string> = {
+    fothergilla: "#738953", hydrangea: "#657c49", dogwood: "#6c8855", boxwood: "#536f43",
+  };
+  const leafColor = new THREE.Color(studioGreens[profile.id] ?? profile.leaf.summer);
   const fallColor = new THREE.Color(profile.leaf.fall);
   const flowerColor = new THREE.Color(profile.bloom.color);
   if (profile.id === "hydrangea") {
@@ -37,7 +41,7 @@ export function modelSeason(profile: PlantProfile, day: number) {
       smoothstep(bloomStart + 18, bloomEnd - 4, day),
     );
   }
-  flowerColor.lerp(new THREE.Color("#927653"), aged);
+  flowerColor.lerp(new THREE.Color("#bca888"), aged);
   return {
     leaves: state.leaves,
     fall,

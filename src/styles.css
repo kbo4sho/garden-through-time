@@ -3092,3 +3092,9 @@ input:focus-visible {
     padding-block: 10px;
   }
 }
+
+/* Meshes share real studio light; a photographic wash would obscure that shading. */
+.experience-shell[data-renderer="model3d"] .scene-frame.is-primary .atmosphere,
+.experience-shell[data-renderer="model3d"] .scene-frame .atmosphere {
+  background: none;
+}

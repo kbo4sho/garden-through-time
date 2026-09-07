@@ -1712,10 +1712,10 @@ function Ground({ day, visualStyle }: { day: number; visualStyle: VisualStyle })
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[96, 96]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow={visualStyle === "model3d"}>
+        <planeGeometry args={visualStyle === "model3d" ? [2000, 2000] : [96, 96]} />
         <meshPhysicalMaterial
-          color={winter ? "#d8d4ca" : "#d1d4c6"}
+          color={visualStyle === "model3d" ? "#b9b6ab" : winter ? "#d8d4ca" : "#d1d4c6"}
           roughness={1}
           clearcoat={0}
         />
@@ -1740,7 +1740,7 @@ function Scene({
     (1 + Math.cos(((day - 188) / 365) * Math.PI * 2)) / 2;
   const editorial = visualStyle === "editorial";
   const winter = day < 85 || day > 335;
-  const sky = new THREE.Color(winter ? "#d8d4ca" : "#d1d4c6");
+  const sky = new THREE.Color(visualStyle === "model3d" ? "#dedbd2" : winter ? "#d8d4ca" : "#d1d4c6");
   const haze = sky.clone();
   const focus = instances.find((instance) => instance.profile.id === selectedId) ?? instances[0];
   const peekGesture = useRef(createPeekGesture());
@@ -1755,7 +1755,7 @@ function Scene({
   return (
     <>
       {!editorial && <color attach="background" args={[sky]} />}
-      {!editorial && visualStyle !== "model3d" && <fog attach="fog" args={[haze, 13.5, 27]} />}
+      {!editorial && <fog attach="fog" args={visualStyle === "model3d" ? [haze, 22, 65] : [haze, 13.5, 27]} />}
       <LimitedPeek
         enabled={!editorial}
         reducedMotion={reducedMotion}
@@ -1768,10 +1768,24 @@ function Scene({
         instances={visibleInstances}
         peekGesture={peekGesture}
       />
-      {editorial ? null : (
+      {editorial ? null : visualStyle === "model3d" ? (
+        <>
+          {/* One fixed softbox language for every species, season and view. */}
+          <hemisphereLight args={["#f4f5f2", "#777366", 1.15]} />
+          <directionalLight position={[-4.5, 7.8, 5.2]} color="#fff2df" intensity={2.65}
+            castShadow shadow-mapSize-width={primary ? 1024 : 512}
+            shadow-mapSize-height={primary ? 1024 : 512}
+            shadow-camera-left={-7} shadow-camera-right={7}
+            shadow-camera-top={7} shadow-camera-bottom={-7}
+            shadow-camera-near={.5} shadow-camera-far={24}
+            shadow-bias={-.0004} shadow-normalBias={.025} shadow-radius={3} />
+          <directionalLight position={[5, 3, 2]} color="#dce7ed" intensity={.6} />
+          <directionalLight position={[1.5, 5, -5]} color="#fff7e9" intensity={1.4} />
+        </>
+      ) : (
         <>
           <hemisphereLight
-            args={["#fffaf0", "#9d9b8d", (visualStyle === "model3d" ? 1.9 : 1.3) + seasonalWarmth * 0.12]}
+            args={["#fffaf0", "#9d9b8d", 1.3 + seasonalWarmth * 0.12]}
           />
           <directionalLight
             position={[-4.5, 7.8, 5.2]}
