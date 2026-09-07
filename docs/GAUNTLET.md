@@ -12,6 +12,14 @@ The sellable artifact is a shareable living-bed link: a designer or nursery park
 
 ## Reference bar
 
+For the editorial glTF slice, the user's
+[fidelity reference hierarchy](FIDELITY_REFERENCES.md) governs visual judgment:
+Lumion fine-detail nature, Twinmotion + Quixel Megascans, and SpeedTree seasonal
+assets, under shared studio/PBR lighting with Enscape-like coherence. VizTerra
+is the designer-presentation reference. Plant photographs may verify botanical
+traits; existing PNG billboards must not be used as lighting or appearance
+targets. AR toys, photo cutouts and conspicuous foliage cards lose this slice.
+
 - [Garden Sketchbook](https://www.gardensketchbook.com/) establishes the closest browser-based, true-to-scale seasonal garden baseline. This project must exceed it in continuous seasonal storytelling and visual finish.
 - [Twinmotion foliage materials](https://dev.epicgames.com/documentation/twinmotion/foliage-materials?lang=en-US) establishes the visual comparison for vegetation materials, depth, translucency, and lifecycle behavior.
 - [RhinoLands seasonal displays](https://rhinolands.com/support/tip/assign-the-seasonal-display-to-plant-species/) establishes the precedent for species-specific seasonal states rather than one global seasonal effect.

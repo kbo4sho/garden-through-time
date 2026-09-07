@@ -51,6 +51,14 @@ Seasonal events are ranges, not universal dates. A representative-year visualiza
 
 ## Visual direction
 
+The editorial glTF fidelity hierarchy is recorded in
+[Fidelity and presentation references](FIDELITY_REFERENCES.md): Lumion fine-detail
+nature, Twinmotion + Quixel Megascans, and SpeedTree seasonal assets set plant
+quality; Enscape informs shared scene lighting; VizTerra informs the designer
+pitch. Shared studio lighting governs this opt-in slice. Existing photographic
+billboards/PNGs are not its appearance or lighting targets. Avoid AR toys,
+photo-cutout plant apps and visible game-foliage cards.
+
 Calm, cinematic, tactile, and observant. Natural light, believable atmosphere, grounded plants, varied material response, and enough stillness to study the composition. Avoid generic dashboard styling, game-like reward language, glossy plastic foliage, or ornamental controls that compete with the garden.
 
 Present the composition as an editorial contact sheet rather than a freely orbiting
