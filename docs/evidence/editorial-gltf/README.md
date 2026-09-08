@@ -51,10 +51,19 @@ continuity, geometry, 3/5/7 share round-trips and the existing #5/#10/#11 checks
 The browser capture manifest verifies that the shortlist templates request no
 photographic plant assets. Winterberry is intentionally a photographic fallback.
 
-Local browser frame pacing is diagnostic; it is not a throttled-network or
-physical-tablet benchmark. A 4.91 MB cold asset payload alone takes about 3.9
-seconds over 10 Mbps before protocol overhead. The historical three-second
-cold-load Gauntlet target therefore remains unproven and is not claimed here.
+Local browser frame pacing is diagnostic; it is not a physical-device benchmark.
+A new [cold-load measurement](network/network-checks.json) uses 10 Mbps, 40 ms
+latency, disabled HTTP cache, blocked service workers and one fresh Chrome
+context per case. Scene readiness took **4.22–5.29 seconds** across phone and
+desktop 3/5/7 cases; **all six missed the three-second target**. Each case is one
+trial, with no CPU throttle, against the local production preview. This does not
+certify physical iPhone/tablet performance or deployed-server behavior.
+
+Reproduce with `node scripts/measure-editorial-gltf-network.mjs`, setting
+`PLAYWRIGHT_MODULE` as above. `PREVIEW_URL` defaults to port 4179 and `EVIDENCE_DIR`
+defaults to `tmp/phone-gauntlet`. Readiness requires the primary scene to report
+two frames drawing geometry. The diagnostic records misses instead of hiding
+them behind a passing assertion.
 
 
 ## Asset measurements
@@ -74,12 +83,15 @@ model decoder or runtime generation service is required. [Provenance and rights]
 
 ## Independent visual verdict
 
-**LOSE — editorial visual acceptance remains open.** The fresh critic sees
-repeated smooth leaf plates and fan-like arrangements in hydrangea and dogwood,
-with abrupt dark faces at ordinary desktop portrait and detail size. The
-observable closure is supple, irregular, species-specific foliage and organic
-canopy depth across spring, summer and autumn in all three layouts, while
-retaining the phone budget and safeguards. See the [full review](INDEPENDENT_REVIEW.md).
+**LOSE — the fresh phone/desktop Gauntlet did not clear the editorial bar.**
+The critic's largest gap is stiff hydrangea/dogwood foliage and repeated
+horizontal tiers at normal desktop garden and detail size. Closure requires
+irregularly curved leaves, plausible transmitted light and connected canopy
+depth on days 135/200/227 at 1440×900, followed by coherent 390px 3/5/7 seasonal
+checks. The critic also inspected twelve monthly views and live keyboard/Play
+behavior, and incorporated the cold-load measurements above. See the
+[full independent review](INDEPENDENT_REVIEW.md) and its
+[retained live captures](gauntlet-phone/).
 
 This pass retains the original Blender leaf, its editable source and surface
 bakes, alongside the four integrated seasonal plant assets. The model coordinate
