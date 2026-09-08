@@ -1,4 +1,9 @@
-# Independent current-artifact Gauntlet
+# Independent full-product Gauntlet — pre-branch snapshot
+
+Reviewed code/assets: `47a4191`. This is a historical full-product review.
+The current main capture matrix may show a later branch checkpoint; the
+[reviewed matrix](https://github.com/kbo4sho/garden-through-time/tree/47a4191/docs/evidence/editorial-gltf)
+and retained `gauntlet-phone/` images identify this review’s artifact.
 
 VERDICT: LOSE
 

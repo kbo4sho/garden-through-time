@@ -7,7 +7,7 @@
       "size": 3,
       "day": 15,
       "path": "docs/evidence/editorial-gltf/phone-3-15.png",
-      "elapsedMs": 1363,
+      "elapsedMs": 1074,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -21,7 +21,7 @@
       "size": 3,
       "day": 135,
       "path": "docs/evidence/editorial-gltf/phone-3-135.png",
-      "elapsedMs": 1178,
+      "elapsedMs": 1009,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -35,7 +35,7 @@
       "size": 3,
       "day": 200,
       "path": "docs/evidence/editorial-gltf/phone-3-200.png",
-      "elapsedMs": 973,
+      "elapsedMs": 1004,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -49,7 +49,7 @@
       "size": 3,
       "day": 290,
       "path": "docs/evidence/editorial-gltf/phone-3-290.png",
-      "elapsedMs": 1017,
+      "elapsedMs": 1015,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -63,7 +63,7 @@
       "size": 5,
       "day": 15,
       "path": "docs/evidence/editorial-gltf/phone-5-15.png",
-      "elapsedMs": 1014,
+      "elapsedMs": 1016,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -78,7 +78,7 @@
       "size": 5,
       "day": 135,
       "path": "docs/evidence/editorial-gltf/phone-5-135.png",
-      "elapsedMs": 1016,
+      "elapsedMs": 1017,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -93,7 +93,7 @@
       "size": 5,
       "day": 200,
       "path": "docs/evidence/editorial-gltf/phone-5-200.png",
-      "elapsedMs": 1015,
+      "elapsedMs": 1016,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -108,7 +108,7 @@
       "size": 5,
       "day": 290,
       "path": "docs/evidence/editorial-gltf/phone-5-290.png",
-      "elapsedMs": 1000,
+      "elapsedMs": 1017,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -123,7 +123,7 @@
       "size": 7,
       "day": 15,
       "path": "docs/evidence/editorial-gltf/phone-7-15.png",
-      "elapsedMs": 1016,
+      "elapsedMs": 1030,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -138,7 +138,7 @@
       "size": 7,
       "day": 135,
       "path": "docs/evidence/editorial-gltf/phone-7-135.png",
-      "elapsedMs": 997,
+      "elapsedMs": 1012,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -153,7 +153,7 @@
       "size": 7,
       "day": 200,
       "path": "docs/evidence/editorial-gltf/phone-7-200.png",
-      "elapsedMs": 999,
+      "elapsedMs": 1015,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -168,7 +168,7 @@
       "size": 7,
       "day": 290,
       "path": "docs/evidence/editorial-gltf/phone-7-290.png",
-      "elapsedMs": 1017,
+      "elapsedMs": 1036,
       "canvases": 1,
       "models": [
         "fothergilla.glb",
@@ -183,7 +183,7 @@
       "size": 3,
       "day": 15,
       "path": "docs/evidence/editorial-gltf/desktop-3-15.png",
-      "elapsedMs": 1074,
+      "elapsedMs": 1088,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -197,7 +197,7 @@
       "size": 3,
       "day": 135,
       "path": "docs/evidence/editorial-gltf/desktop-3-135.png",
-      "elapsedMs": 1073,
+      "elapsedMs": 1090,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -211,7 +211,7 @@
       "size": 3,
       "day": 200,
       "path": "docs/evidence/editorial-gltf/desktop-3-200.png",
-      "elapsedMs": 1088,
+      "elapsedMs": 1077,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -225,7 +225,7 @@
       "size": 3,
       "day": 290,
       "path": "docs/evidence/editorial-gltf/desktop-3-290.png",
-      "elapsedMs": 1095,
+      "elapsedMs": 1088,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -239,7 +239,7 @@
       "size": 5,
       "day": 15,
       "path": "docs/evidence/editorial-gltf/desktop-5-15.png",
-      "elapsedMs": 1088,
+      "elapsedMs": 1073,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -254,7 +254,7 @@
       "size": 5,
       "day": 135,
       "path": "docs/evidence/editorial-gltf/desktop-5-135.png",
-      "elapsedMs": 1096,
+      "elapsedMs": 1085,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -269,7 +269,7 @@
       "size": 5,
       "day": 200,
       "path": "docs/evidence/editorial-gltf/desktop-5-200.png",
-      "elapsedMs": 1108,
+      "elapsedMs": 1084,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -284,7 +284,7 @@
       "size": 5,
       "day": 290,
       "path": "docs/evidence/editorial-gltf/desktop-5-290.png",
-      "elapsedMs": 1108,
+      "elapsedMs": 1074,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -299,7 +299,7 @@
       "size": 7,
       "day": 15,
       "path": "docs/evidence/editorial-gltf/desktop-7-15.png",
-      "elapsedMs": 1098,
+      "elapsedMs": 1088,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -314,7 +314,7 @@
       "size": 7,
       "day": 135,
       "path": "docs/evidence/editorial-gltf/desktop-7-135.png",
-      "elapsedMs": 1093,
+      "elapsedMs": 1084,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -329,7 +329,7 @@
       "size": 7,
       "day": 200,
       "path": "docs/evidence/editorial-gltf/desktop-7-200.png",
-      "elapsedMs": 1112,
+      "elapsedMs": 1084,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -344,7 +344,7 @@
       "size": 7,
       "day": 290,
       "path": "docs/evidence/editorial-gltf/desktop-7-290.png",
-      "elapsedMs": 1100,
+      "elapsedMs": 1075,
       "canvases": 4,
       "models": [
         "fothergilla.glb",
@@ -359,7 +359,7 @@
       "size": 5,
       "day": 135,
       "path": "docs/evidence/editorial-gltf/tablet-5-135.png",
-      "elapsedMs": 1066,
+      "elapsedMs": 1049,
       "canvases": 4,
       "models": [
         "fothergilla.glb",

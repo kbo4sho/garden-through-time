@@ -20,13 +20,22 @@ Four original, procedurally authored binary glTF assets: fothergilla, Ruby Slipp
 
 To rebuild the hydrangea organ and its maps, run Blender 5.2 LTS with
 `--background --factory-startup --python scripts/author-hydrangea-blender.py`,
-then `npm run models:generate`. `authoring/hydrangea/` retains the packed `.blend`,
-prototype GLB, maps and provenance. A detailed 33,153-vertex source bakes onto an
+then run `scripts/author-hydrangea-branches.py` the same way, followed by
+`npm run models:generate`. `authoring/hydrangea/` retains both packed `.blend`
+sources, prototype GLBs, maps and provenance. A detailed 33,153-vertex source bakes onto an
 185-vertex delivery leaf. Embedded maps are 512² tangent normals, 256² neutral
 albedo and 128² roughness. They contain original tissue and vein detail, with no
 baked lighting. These source files are development artifacts; only the four
 assembled GLBs are served to the browser. The geometry and maps are shared by
 all hydrangea instances within each renderer.
+
+The hydrangea scaffold comes from three explicitly authored branch forms, placed
+at uneven junctions on seven curved woody stems. Inward-growing shoots connect
+the exterior sprays into the canopy. Blade and petiole meshes share a parent
+attachment and growth phase; the generator preserves their world transforms and
+smooth source normals when merging the delivery layers. Terminal nodes identify
+where the existing seasonal flower geometry attaches. The full model is still
+one persistent shrub across the year, with no runtime topology rebuilding.
 
 Each GLB contains merged `branches`, `leaves`, `blooms`, and (dogwood only) `fruit` meshes. `_ANCHOR` is the organ's attachment point and `_PHASE` is its stable emergence/abscission order. Positions and anchors use the same signed 16-bit grid (1/1024 model unit). A shared glTF node scale decodes both; visible and depth materials preserve that transform, including the world-scale term in dried-floret normals. Vertex shaders grow or contract organs around their anchors. No branch topology or geometry is rebuilt on a day tick; no large translucent seasonal meshes are sorted over one another.
 

@@ -52,9 +52,9 @@ The browser capture manifest verifies that the shortlist templates request no
 photographic plant assets. Winterberry is intentionally a photographic fallback.
 
 Local browser frame pacing is diagnostic; it is not a physical-device benchmark.
-A new [cold-load measurement](network/network-checks.json) uses 10 Mbps, 40 ms
+The current branch [cold-load measurement](branch-network/network-checks.json) uses 10 Mbps, 40 ms
 latency, disabled HTTP cache, blocked service workers and one fresh Chrome
-context per case. Scene readiness took **4.22–5.29 seconds** across phone and
+context per case. Scene readiness took **4.23–5.26 seconds** across phone and
 desktop 3/5/7 cases; **all six missed the three-second target**. Each case is one
 trial, with no CPU throttle, against the local production preview. This does not
 certify physical iPhone/tablet performance or deployed-server behavior.
@@ -71,30 +71,50 @@ them behind a passing assertion.
 | GLB | Bytes |
 | --- | ---: |
 | Fothergilla | 869,704 |
-| Oakleaf hydrangea | 2,118,004 |
+| Oakleaf hydrangea | 1,940,956 |
 | Redtwig dogwood | 1,038,440 |
 | Boxwood | 881,048 |
-| **Total** | **4,907,196** |
+| **Total** | **4,730,148** |
 
-Decoded vertex attributes total **9,153,644 bytes**, shared across repeated
+Decoded vertex attributes total **9,057,950 bytes**, shared across repeated
 instances. The hydrangea maps add roughly 1.84 MB of RGBA8 texture storage including
 mipmaps per WebGL context; this is separate from the geometry count. No remote
 model decoder or runtime generation service is required. [Provenance and rights](../../../public/models/LICENSE.md).
 
-## Independent visual verdict
+## Full-product review (before branch checkpoint)
 
-**LOSE — the fresh phone/desktop Gauntlet did not clear the editorial bar.**
+**LOSE — the full-product Gauntlet at `47a4191` did not clear the editorial bar.**
 The critic's largest gap is stiff hydrangea/dogwood foliage and repeated
 horizontal tiers at normal desktop garden and detail size. Closure requires
 irregularly curved leaves, plausible transmitted light and connected canopy
 depth on days 135/200/227 at 1440×900, followed by coherent 390px 3/5/7 seasonal
 checks. The critic also inspected twelve monthly views and live keyboard/Play
-behavior, and incorporated the cold-load measurements above. See the
+behavior, and incorporated the [pre-branch cold-load measurements](network/network-checks.json). See the
 [full independent review](INDEPENDENT_REVIEW.md) and its
 [retained live captures](gauntlet-phone/).
 
-This pass retains the original Blender leaf, its editable source and surface
-bakes, alongside the four integrated seasonal plant assets. The model coordinate
-packing was checked against all four dated desktop frames before changing the
-organ; those comparisons were pixel-identical. Browser safeguards were then
-rerun on the complete geometry and studio-lighting change.
+The current branch checkpoint retains three original Blender branch forms, a
+curated seven-stem shrub, 562 connected blades and 15 flower attachments. The
+shared lighting, leaf maps and other species are unchanged. The editable branch
+study and assembled source accompany the four seasonal delivery assets. Each blade now has an independently curved midrib, varied transverse cupping
+and longitudinal twist. Delivery geometry is checked for attachment proximity
+to the persistent wood. The branch checkpoint does not replace the full-product
+Gauntlet verdict or certify the remaining species.
+
+
+## Current hydrangea branch checkpoint
+
+**LOSE — this bounded checkpoint does not clear the leaf-realism bar.** The fresh
+critic finds connected branching and irregular placement, but exposed leaves
+still read as rigid, opaque lobed plates at normal desktop size. Closure requires
+continuous uneven cupping, twist, varied droop and soft backface shading in the
+day-135/200 portrait, selected detail and limited peek, preserving winter wood
+and phone presentation. See the [checkpoint report](BRANCH_CHECKPOINT_REVIEW.md)
+and [independent raw captures](branch-checkpoint/). This is not a new full-product
+Gauntlet or an approval to extend the same leaf treatment to the other species.
+
+The current 25-frame matrix and browser checks cover this exact delivery asset.
+Photo defaults match main pixel-for-pixel at days 15/200; Play, keyboard, peek,
+context restoration, winterberry fallback and caption clearance pass. The
+Blender-to-delivery pipeline regenerates all four GLBs and manifest byte-for-byte.
+The other three species and runtime lighting are unchanged by this checkpoint.

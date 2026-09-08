@@ -26,14 +26,7 @@ globalThis.FileReader = FileReader;
 const out = new URL("../public/models/", import.meta.url);
 await mkdir(out, { recursive: true });
 const authored = new URL('../authoring/hydrangea/', import.meta.url);
-const leafDocument = await new NodeIO().readBinary(new Uint8Array(await readFile(new URL('hydrangea-leaf.glb', authored))));
-const leafPrimitive = leafDocument.getRoot().listMeshes()[0].listPrimitives()[0];
-const oakleaf = {
-  positions: leafPrimitive.getAttribute('POSITION').getArray(),
-  normals: leafPrimitive.getAttribute('NORMAL').getArray(),
-  uvs: leafPrimitive.getAttribute('TEXCOORD_0').getArray(),
-  indices: leafPrimitive.getIndices().getArray(),
-};
+const oakleafDocument = await new NodeIO().readBinary(new Uint8Array(await readFile(new URL('hydrangea-branches.glb', authored))));
 const configs = {
   fothergilla: {
     seed: 71,
@@ -74,6 +67,7 @@ const manifest = {
   provenance: "Original project assets; no third-party mesh or texture content",
   generator: "scripts/generate-plant-models.mjs",
   organSource: "authoring/hydrangea/provenance.json",
+  branchSource: "authoring/hydrangea/branch-provenance.json",
   models: {},
 };
 for (const [id, c] of Object.entries(configs)) {
@@ -139,18 +133,6 @@ for (const [id, c] of Object.entries(configs)) {
   // Rounded oakleaf lobes, a curved midrib and a gently relaxed blade surface.
   // All colour is organ pigmentation; studio direction is exclusively runtime light.
   function leafShape(length) {
-    if (id === 'hydrangea') {
-      const g = mergeVertices(new T.BufferGeometry()
-        .setAttribute('position', new T.Float32BufferAttribute(oakleaf.positions, 3))
-        .setAttribute('normal', new T.Float32BufferAttribute(oakleaf.normals, 3))
-        .setAttribute('uv', new T.Float32BufferAttribute(oakleaf.uvs, 2))
-        .setIndex(Array.from(oakleaf.indices)));
-      const spread = .85 + r()*.30, bend = (r()-.5)*.14;
-      const p = g.getAttribute('position');
-      for (let i=0;i<p.count;i++) p.setXYZ(i,p.getX(i)*spread,p.getY(i),p.getZ(i)+bend*(p.getY(i)**2+2*p.getX(i)*p.getY(i)));
-      g.computeVertexNormals(); g.scale(length,length,length);
-      return g;
-    }
     const box = id === "boxwood";
     const rows = box ? 4 : 8;
     const points = [], indices = [], tones = [], uvs = [];
@@ -225,6 +207,26 @@ for (const [id, c] of Object.entries(configs)) {
   const isBox = id === "boxwood";
   const isDog = id === "dogwood";
   const isOak = id === "hydrangea";
+  if (isOak) {
+    for (const node of oakleafDocument.getRoot().listNodes()) {
+      const extras = node.getExtras();
+      const matrix = new T.Matrix4().fromArray(node.getWorldMatrix());
+      if (extras.flowerTerminal) terminals.push(v().setFromMatrixPosition(matrix));
+      if (!node.getMesh() || !['branches', 'leaves'].includes(extras.layer)) continue;
+      let anchorNode = node.getParentNode();
+      while (anchorNode && !anchorNode.getExtras().organAnchor) anchorNode = anchorNode.getParentNode();
+      const anchor = anchorNode ? v().setFromMatrixPosition(new T.Matrix4().fromArray(anchorNode.getWorldMatrix())) : v();
+      for (const primitive of node.getMesh().listPrimitives()) {
+        const g = new T.BufferGeometry()
+          .setAttribute('position', new T.Float32BufferAttribute(primitive.getAttribute('POSITION').getArray(),3))
+          .setAttribute('normal', new T.Float32BufferAttribute(primitive.getAttribute('NORMAL').getArray(),3))
+          .setIndex(Array.from(primitive.getIndices().getArray()));
+        if (extras.layer === 'leaves') g.setAttribute('uv',new T.Float32BufferAttribute(primitive.getAttribute('TEXCOORD_0').getArray(),2));
+        g.applyMatrix4(matrix);
+        add(extras.layer,g,anchor,new T.Color().setRGB(...extras.tint),extras.phase);
+      }
+    }
+  }
   function shoot(start, end, radius, count, terminal = false) {
     const mid = start.clone().lerp(end, .5).add(v((r()-.5)*.08, .025, (r()-.5)*.08));
     twig(start, mid, radius);
@@ -263,7 +265,7 @@ for (const [id, c] of Object.entries(configs)) {
       }
     }
   }
-  for (let stem = 0; !isBox && stem < c.stems; stem++) {
+  for (let stem = 0; !isBox && !isOak && stem < c.stems; stem++) {
     const angle = stem * 2.39996 + (r()-.5)*.55;
     const radial = Math.sqrt((stem + .5) / c.stems);
     const reach = c.w * radial * (isDog ? .82 : 1.04);
@@ -305,7 +307,7 @@ for (const [id, c] of Object.entries(configs)) {
   terminals.forEach((at, i) => {
     const firstPart = layers.blooms.length;
     const phase = r();
-    if (id === "hydrangea" && i % 4 === 0) {
+    if (id === "hydrangea") {
       const top = at.clone().add(v(0.04, 0.37, 0));
       twig(at, top, 0.008, "blooms", at, "#b9ab83");
       for (let j = 0; j < 88; j++) {

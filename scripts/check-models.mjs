@@ -134,6 +134,25 @@ for (const [id, info] of Object.entries(manifest.models)) {
       assert(texture.getSize().every(dimension => dimension <= 512));
     }
     assert.equal(material.getMetallicFactor(), 0);
+    // A detached attachment transforms an otherwise valid seasonal organ into
+    // floating foliage. Check proximity to the actual delivered wood surface.
+    const layer = name => doc.getRoot().listNodes().find(node => node.getName() === name).getMesh().listPrimitives()[0];
+    const wood = layer('branches').getAttribute('POSITION').getArray();
+    const anchors = layer('leaves').getAttribute('_ANCHOR').getArray();
+    const junctions = new Map();
+    for (let i = 0; i < anchors.length; i += 3) {
+      const point = [anchors[i], anchors[i+1], anchors[i+2]];
+      junctions.set(point.join(','), point);
+    }
+    for (const point of junctions.values()) {
+      let distanceSquared = Infinity;
+      for (let i = 0; i < wood.length; i += 3)
+        distanceSquared = Math.min(distanceSquared,
+          (point[0]-wood[i])**2 + (point[1]-wood[i+1])**2 + (point[2]-wood[i+2])**2);
+      // The nearest sampled ring may lie between the attachment and the next
+      // curve sample; allow 0.04 model unit for that sampling and stem radius.
+      assert(Math.sqrt(distanceSquared) / 1024 < .04, 'Hydrangea leaf junction detached from wood');
+    }
   }
   const names = doc
     .getRoot()

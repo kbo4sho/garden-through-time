@@ -13,8 +13,12 @@ and vein variation; the existing seasonal material supplies chlorophyll and fall
 color. Direct and indirect illumination are excluded from the color bake, so
 all four species respond to the same runtime studio lighting. The other three
 assets retain geometric organs and procedural runtime vein pigmentation.
-See `authoring/hydrangea/provenance.json`, the packed `.blend` source, and
-`scripts/author-hydrangea-blender.py` for the authoring record.
+The original branch library uses explicitly authored curve points, opposite leaf
+poses, connected petioles and curated scaffold junctions. See
+`authoring/hydrangea/provenance.json`, `branch-provenance.json`, the packed
+`.blend` sources, and `scripts/author-hydrangea-{blender,branches}.py` for the
+authoring record. No botanical reference photographs are embedded in these
+sources or maps.
 
 The assets belong to this project. This note does not grant a separate
 redistribution license or dedicate the assets to the public domain; permission
