@@ -91,11 +91,15 @@ def leaf_pair(parent, points, t, azimuth, length, inclination, roll, label):
         rise = rng.uniform(.045,.14)
         width = rng.uniform(.74,1.05)
         for vertex in mesh.vertices:
-            x,t,_ = vertex.co
-            x *= width
+            x,t,z = vertex.co
+            # Retain the authored central trough and inflated lobe shoulders.
+            # The branch pose changes the midrib, not the blade's cross-section.
+            lamina = z - .105*math.sin(math.pi*t) + .23*t*t*t
+            asymmetry = .08*math.sin(t*15+phase*math.tau)*(1 if x>0 else -.6)
+            x *= width*(1+asymmetry)
             y = math.sin(bend*t)/bend
             midrib = (math.cos(bend*t)-1)/bend + rise*math.sin(math.pi*t)
-            cross_z = cup*x*x + .045*x*math.sin(t*17+side)
+            cross_z = lamina + cup*x*x + .045*x*math.sin(t*17+side)
             angle_t = twist*math.sin(t*math.pi*.85)
             vertex.co = (x*math.cos(angle_t)-cross_z*math.sin(angle_t), y,
                          midrib+x*math.sin(angle_t)+cross_z*math.cos(angle_t))

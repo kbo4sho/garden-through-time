@@ -1,0 +1,96 @@
+{
+  "browser": "151.0.7922.176",
+  "downloadMbps": 10,
+  "latencyMs": 40,
+  "method": "One fresh browser context per case, HTTP cache disabled, service workers blocked, no CPU throttle. Ready means the primary scene has reported two frames drawing geometry. CSS phone emulation is not physical-device certification. One trial per case; diagnostic, not a distribution.",
+  "records": [
+    {
+      "device": "desktop",
+      "size": 3,
+      "readyMs": 4786,
+      "meetsThreeSecondTarget": false,
+      "canvases": 4,
+      "modelRequests": [
+        "http://127.0.0.1:4179/models/fothergilla.glb",
+        "http://127.0.0.1:4179/models/hydrangea.glb",
+        "http://127.0.0.1:4179/models/dogwood.glb"
+      ],
+      "errors": [],
+      "path": "docs/evidence/editorial-gltf/leaf-form-network/network-desktop-3.png"
+    },
+    {
+      "device": "desktop",
+      "size": 5,
+      "readyMs": 5241,
+      "meetsThreeSecondTarget": false,
+      "canvases": 4,
+      "modelRequests": [
+        "http://127.0.0.1:4179/models/fothergilla.glb",
+        "http://127.0.0.1:4179/models/hydrangea.glb",
+        "http://127.0.0.1:4179/models/dogwood.glb",
+        "http://127.0.0.1:4179/models/boxwood.glb"
+      ],
+      "errors": [],
+      "path": "docs/evidence/editorial-gltf/leaf-form-network/network-desktop-5.png"
+    },
+    {
+      "device": "desktop",
+      "size": 7,
+      "readyMs": 5233,
+      "meetsThreeSecondTarget": false,
+      "canvases": 4,
+      "modelRequests": [
+        "http://127.0.0.1:4179/models/fothergilla.glb",
+        "http://127.0.0.1:4179/models/hydrangea.glb",
+        "http://127.0.0.1:4179/models/dogwood.glb",
+        "http://127.0.0.1:4179/models/boxwood.glb"
+      ],
+      "errors": [],
+      "path": "docs/evidence/editorial-gltf/leaf-form-network/network-desktop-7.png"
+    },
+    {
+      "device": "phone",
+      "size": 3,
+      "readyMs": 4242,
+      "meetsThreeSecondTarget": false,
+      "canvases": 1,
+      "modelRequests": [
+        "http://127.0.0.1:4179/models/fothergilla.glb",
+        "http://127.0.0.1:4179/models/hydrangea.glb",
+        "http://127.0.0.1:4179/models/dogwood.glb"
+      ],
+      "errors": [],
+      "path": "docs/evidence/editorial-gltf/leaf-form-network/network-phone-3.png"
+    },
+    {
+      "device": "phone",
+      "size": 5,
+      "readyMs": 5234,
+      "meetsThreeSecondTarget": false,
+      "canvases": 1,
+      "modelRequests": [
+        "http://127.0.0.1:4179/models/fothergilla.glb",
+        "http://127.0.0.1:4179/models/hydrangea.glb",
+        "http://127.0.0.1:4179/models/dogwood.glb",
+        "http://127.0.0.1:4179/models/boxwood.glb"
+      ],
+      "errors": [],
+      "path": "docs/evidence/editorial-gltf/leaf-form-network/network-phone-5.png"
+    },
+    {
+      "device": "phone",
+      "size": 7,
+      "readyMs": 4742,
+      "meetsThreeSecondTarget": false,
+      "canvases": 1,
+      "modelRequests": [
+        "http://127.0.0.1:4179/models/fothergilla.glb",
+        "http://127.0.0.1:4179/models/hydrangea.glb",
+        "http://127.0.0.1:4179/models/dogwood.glb",
+        "http://127.0.0.1:4179/models/boxwood.glb"
+      ],
+      "errors": [],
+      "path": "docs/evidence/editorial-gltf/leaf-form-network/network-phone-7.png"
+    }
+  ]
+}

@@ -37,18 +37,21 @@ def width(t):
     m0=(b[1]-prev[1])/max(.001,b[0]-prev[0]);m1=(nxt[1]-a[1])/max(.001,nxt[0]-a[0])
     return max(0,(2*u**3-3*u*u+1)*a[1]+(u**3-2*u*u+u)*m0*d+(-2*u**3+3*u*u)*b[1]+(u**3-u*u)*m1*d)
 
-# Veins follow curved paths from the midrib to individual lobes.
+# Each vein is one continuous ridge; adjoining line segments must not add
+# their heights together at a junction and bake a row of artificial bumps.
 veins=[]
 for side in [-1,1]:
     for start,tip,w in [(.08,.235,.305),(.265,.455,.44),(.465,.70,.31),(.67,.865,.15)]:
+        primary=[]
         last=(0,start)
         for j in range(1,9):
             u=j/8; p=(side*w*u, start+(tip-start)*(u*.7+.3*u*u))
-            veins.append((last,p,.007*(1-.7*u)))
+            primary.append((last,p,.008*(1-.7*u)))
             if j in [3,5,7]:
                 end=(p[0]+side*.047, min(.98,p[1]+.08))
-                veins.append((p,end,.0022))
+                veins.append(([(p,end,.0022)],.0010))
             last=p
+        veins.append((primary,.0028))
 
 def segment_distance(x,y,a,b):
     dx,dy=b[0]-a[0],b[1]-a[1]
@@ -56,9 +59,9 @@ def segment_distance(x,y,a,b):
     return math.hypot(x-a[0]-u*dx,y-a[1]-u*dy)
 
 def vein_height(x,t):
-    h=.0032*(1-.75*t)*math.exp(-abs(x)/(.009*(1-.65*t)))
-    for a,b,w in veins:
-        h+=.0018*(w/.007)*math.exp(-(segment_distance(x,t,a,b)/w)**2)
+    h=.0045*(1-.75*t)*math.exp(-abs(x)/(.011*(1-.65*t)))
+    for segments,amplitude in veins:
+        h+=amplitude*max((w/.008)*math.exp(-(segment_distance(x,t,a,b)/w)**2) for a,b,w in segments)
     return h
 
 def point(t,s,detail=False):
@@ -68,14 +71,20 @@ def point(t,s,detail=False):
     x=s*w*(edge if detail else 1)
     x += .017*t*t
     # Curvature uses physical cross-leaf distance. It cannot pinch at lobe sinuses.
-    z=.105*math.sin(math.pi*t)-.23*t*t*t-.42*x*x+.15*x*math.sin(t*math.pi)+.025*x*math.sin(t*math.pi*5)
+    # Soft central trough, inflated lobe shoulders and relaxed margins belong
+    # to the delivery geometry. Fine vascular relief alone belongs to the bake.
+    central=.18*(math.sqrt(x*x+.012**2)-.012)
+    shoulder=sum(.034*math.exp(-((t-peak)/.068)**2) for peak in [.22,.455,.71])
+    shoulder*=math.sin(math.pi*abs(s)/2)**2
+    lamina=central+shoulder-.20*x*x+.12*x*math.sin(t*math.pi)
+    z=.105*math.sin(math.pi*t)-.23*t*t*t+lamina
     if detail:
         z+=vein_height(x-.017*t*t,t)
-        z+=.0012*math.sin(x*89+t*21)*math.sin(t*93)*math.sin(math.pi*t)
     return x,t,z
 
-def leaf(name,rows,cols,detail):
-    verts=[point(i/rows,2*j/(cols-1)-1,detail) for i in range(rows+1) for j in range(cols)]
+def leaf(name,times,cols,detail):
+    rows=len(times)-1
+    verts=[point(t,2*j/(cols-1)-1,detail) for t in times for j in range(cols)]
     faces=[]
     for i in range(rows):
         for j in range(cols-1):
@@ -94,8 +103,11 @@ def leaf(name,rows,cols,detail):
     obj=bpy.data.objects.new(name,mesh);scene.collection.objects.link(obj)
     return obj
 
-low=leaf('Oakleaf delivery organ',36,5,False)
-high=leaf('Oakleaf detailed source',256,129,True)
+# Put lengthwise samples on lobe shoulders and sinuses, leaving more of the
+# phone budget for the seven-vertex cross-section instead of redundant rows.
+delivery_rows=sorted([t for t,_ in outline]+[(a[0]+b[0])/2 for a,b in zip(outline,outline[1:])])
+low=leaf('Oakleaf delivery organ',delivery_rows,7,False)
+high=leaf('Oakleaf detailed source',[i/256 for i in range(257)],129,True)
 mat=bpy.data.materials.new('Original leaf tissue');mat.use_nodes=True
 nodes=mat.node_tree.nodes;links=mat.node_tree.links
 bsdf=nodes.get('Principled BSDF');bsdf.inputs['Roughness'].default_value=.72
@@ -121,7 +133,19 @@ links.new(noise.outputs['Fac'],rough.inputs['Value']);links.new(rough.outputs['R
 high.data.materials.append(mat)
 target=bpy.data.materials.new('Delivery baked leaf');target.use_nodes=True;low.data.materials.append(target)
 image_node=target.node_tree.nodes.new('ShaderNodeTexImage');target.node_tree.nodes.active=image_node
-bpy.ops.object.select_all(action='DESELECT');high.select_set(True);low.select_set(True);bpy.context.view_layer.objects.active=low
+# The normal map must contain vein/tissue relief only. Baking a curved high
+# source onto a differently tessellated low source also records broad facet
+# compensation; that compensation becomes wrong when branch assembly bends it.
+flat_low=low.copy();flat_low.data=low.data.copy();flat_low.name='Detail-only flat bake target'
+flat_high=high.copy();flat_high.data=high.data.copy();flat_high.name='Detail-only flat bake source'
+scene.collection.objects.link(flat_low);scene.collection.objects.link(flat_high)
+for vertex in flat_low.data.vertices: vertex.co.z=0
+for vertex in flat_high.data.vertices:
+    x,t,_=vertex.co
+    vertex.co.z=vein_height(x-.017*t*t,t)
+flat_low.data.update();flat_high.data.update()
+for obj in [low,high]: obj.hide_render=True;obj.hide_set(True)
+bpy.ops.object.select_all(action='DESELECT');flat_high.select_set(True);flat_low.select_set(True);bpy.context.view_layer.objects.active=flat_low
 
 for name,kind,size in [('normal','NORMAL',512),('albedo','DIFFUSE',256),('roughness','ROUGHNESS',128)]:
     img=bpy.data.images.new('hydrangea-'+name,width=size,height=size,alpha=False)
@@ -136,7 +160,8 @@ for name,kind,size in [('normal','NORMAL',512),('albedo','DIFFUSE',256),('roughn
     print('BAKED',name,flush=True)
 
 # Keep an inspectable source file, with the high-detail source hidden initially.
-high.hide_render=True;high.hide_set(True)
+for obj in [flat_low,flat_high]: obj.hide_render=True;obj.hide_set(True)
+low.hide_render=False;low.hide_set(False)
 bsdf=target.node_tree.nodes.get('Principled BSDF')
 for slot,name in [('Base Color','albedo'),('Roughness','roughness')]:
     n=target.node_tree.nodes.new('ShaderNodeTexImage');n.image=bpy.data.images['hydrangea-'+name]
@@ -148,5 +173,5 @@ for img in bpy.data.images:
 bpy.ops.object.select_all(action='DESELECT');low.select_set(True);bpy.context.view_layer.objects.active=low
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT/'hydrangea-leaf.blend'),compress=True)
 bpy.ops.export_scene.gltf(filepath=str(OUT/'hydrangea-leaf.glb'),use_selection=True,export_format='GLB',export_yup=False)
-(OUT/'provenance.json').write_text(json.dumps({'authoring':'Original project geometry and procedural tissue; no third-party images or meshes','blender':bpy.app.version_string,'generator':'scripts/author-hydrangea-blender.py','bake':'Cycles selected-to-active tangent normal, color-only diffuse, roughness; no illumination baked','low_vertices':len(low.data.vertices),'high_vertices':len(high.data.vertices)},indent=2)+'\n')
+(OUT/'provenance.json').write_text(json.dumps({'authoring':'Original project geometry and procedural tissue; no third-party images or meshes','blender':bpy.app.version_string,'generator':'scripts/author-hydrangea-blender.py','bake':'Cycles selected-to-active on flat proxies: vein/tissue-only tangent normal, color-only diffuse and roughness; no macro-curvature compensation or illumination baked','low_vertices':len(low.data.vertices),'high_vertices':len(high.data.vertices)},indent=2)+'\n')
 print('AUTHORING_COMPLETE',flush=True)

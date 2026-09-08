@@ -22,8 +22,8 @@ To rebuild the hydrangea organ and its maps, run Blender 5.2 LTS with
 `--background --factory-startup --python scripts/author-hydrangea-blender.py`,
 then run `scripts/author-hydrangea-branches.py` the same way, followed by
 `npm run models:generate`. `authoring/hydrangea/` retains both packed `.blend`
-sources, prototype GLBs, maps and provenance. A detailed 33,153-vertex source bakes onto an
-185-vertex delivery leaf. Embedded maps are 512² tangent normals, 256² neutral
+sources, prototype GLBs, maps and provenance. A detailed 33,153-vertex source supplies detail to a
+217-vertex delivery leaf. Embedded maps are 512² tangent normals, 256² neutral
 albedo and 128² roughness. They contain original tissue and vein detail, with no
 baked lighting. These source files are development artifacts; only the four
 assembled GLBs are served to the browser. The geometry and maps are shared by
@@ -83,7 +83,7 @@ boxwood uses a separate rounded evergreen crown. Broad leaves have curved
 cross-sections, restrained midrib pigmentation and varied inclinations.
 Inflorescences vary in size and tilt. All four use the same opaque PBR material
 family, with organ-specific roughness and a restrained leaf-back transmission
-term responding to the common key. There are no photograph-derived color or
+term responding to the common key, fill and rim. There are no photograph-derived color or
 lighting targets. Hydrangea uses its original Blender surface maps; the other
 species retain the shared material family's procedural surface variation.
 
@@ -115,3 +115,15 @@ and occlusion checks using the same `makeMaterial` function as the bed.
 `scripts/check-leaf-lighting.mjs` runs these in Chrome. See the
 [controlled evidence](evidence/editorial-gltf/leaf-lighting/README.md); botanical
 appearance still requires an independent integrated visual review.
+
+
+### Hydrangea leaf cross-section and bake
+
+The 217-vertex organ places 31 rows on outline knots/midpoints and uses seven
+vertices across the blade. Its central trough and lobe shoulders survive branch
+assembly; the midrib can bend without replacing the authored cross-section.
+The source file retains flat bake proxies for vascular and fine-tissue detail.
+Those proxies exclude broad curvature compensation from the normal map, and
+the former repeating sinusoidal ripple is removed. This leaves large-scale form
+in actual geometry and fine detail in the maps. Lighting and shader behavior
+are unchanged by this pass.

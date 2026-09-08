@@ -52,9 +52,9 @@ The browser capture manifest verifies that the shortlist templates request no
 photographic plant assets. Winterberry is intentionally a photographic fallback.
 
 Local browser frame pacing is diagnostic; it is not a physical-device benchmark.
-The preceding branch checkpoint’s [cold-load measurement](branch-network/network-checks.json) uses 10 Mbps, 40 ms
+The current leaf-form [cold-load measurement](leaf-form-network/network-checks.json) uses 10 Mbps, 40 ms
 latency, disabled HTTP cache, blocked service workers and one fresh Chrome
-context per case. Scene readiness took **4.23–5.26 seconds** across phone and
+context per case. Scene readiness took **4.24–5.24 seconds** across phone and
 desktop 3/5/7 cases; **all six missed the three-second target**. Each case is one
 trial, with no CPU throttle, against the local production preview. This does not
 certify physical iPhone/tablet performance or deployed-server behavior.
@@ -71,12 +71,12 @@ them behind a passing assertion.
 | GLB | Bytes |
 | --- | ---: |
 | Fothergilla | 869,704 |
-| Oakleaf hydrangea | 1,940,956 |
+| Oakleaf hydrangea | 2,147,008 |
 | Redtwig dogwood | 1,038,440 |
 | Boxwood | 881,048 |
-| **Total** | **4,730,148** |
+| **Total** | **4,936,200** |
 
-Decoded vertex attributes total **9,057,950 bytes**, shared across repeated
+Decoded vertex attributes total **9,472,065 bytes**, shared across repeated
 instances. The hydrangea maps add roughly 1.84 MB of RGBA8 texture storage including
 mipmaps per WebGL context; this is separate from the geometry count. No remote
 model decoder or runtime generation service is required. [Provenance and rights](../../../public/models/LICENSE.md).
@@ -120,16 +120,16 @@ Blender-to-delivery pipeline regenerates all four GLBs and manifest byte-for-byt
 The other three species and runtime lighting are unchanged by this checkpoint.
 
 
-## Current leaf-material checkpoint
+## Leaf-material checkpoint at `26bbc23`
 
 The leaf shader now evaluates approximate thin-tissue response from each studio
 light’s shadow-attenuated incident color. An isolated delivery-organ test verifies
 that unlit leaves do not glow, stronger backlighting increases their response,
 and an opaque blocker removes it. The old shader failed those checks. See the
-[controlled comparison and reproduction](leaf-lighting/README.md). All four GLBs
-and the studio rig are unchanged; the current 25-frame matrix and browser checks
-cover the integrated material correction. Cold loads have not been remeasured
-since the branch checkpoint above; that unresolved failure is not claimed fixed.
+[controlled comparison and reproduction](leaf-lighting/README.md). At that checkpoint, all four GLBs
+and the studio rig were unchanged. Its independent captures remain in
+`leaf-response/`; the main capture matrix now shows the later leaf-form pass. Cold loads were not remeasured during that material-only pass; its earlier
+measurements remain in `branch-network/`.
 
 **LOSE — a fresh independent foliage-material review still rejects the visual
 bar.** Hydrangea leaves read as stiff, opaque lobed plates in normal portrait and
@@ -139,8 +139,34 @@ drag, retaining phone coherence. See the [fresh report](LEAF_RESPONSE_REVIEW.md)
 and [raw live evidence](leaf-response/). This is a material checkpoint, not a
 replacement full-product Gauntlet or a botanical-fidelity approval.
 
-The next visual gate is one exposed hydrangea shoot with convincing individual
+The leaf-material review set the next visual gate: one exposed hydrangea shoot with convincing individual
 leaf shape and surface detail under the fixed material and rig, inspected at
 ordinary desktop portrait/detail size before propagating changes through the
 canopy or another species. Passing the light-response probe alone cannot close
 that gate.
+
+
+## Current leaf form and surface checkpoint
+
+The hydrangea delivery leaf now has 217 vertices, with seven samples across
+31 rows positioned at lobe control points and midpoints. Branch posing retains
+the central trough and lobe shoulders. Continuous vascular ridges are baked
+through flat proxies, excluding broad surface compensation and the former
+periodic corrugation from the normal map. The original editable sources, proxies
+and maps are retained. See the [organ study](leaf-form-study/README.md).
+
+**LOSE — the fresh leaf-form review still rejects botanical/editorial fidelity.**
+Exposed hydrangea leaves read as angular thin sheets with abrupt tonal facets in
+normal portrait, selected detail and both peek directions. Closure requires
+irregular blade curvature, botanical margins, readable veins and coherent
+highlights/undersides in May/July normal-size views, retaining seasonal phone
+continuity. See the [full report](LEAF_FORM_REVIEW.md) and
+[independent raw captures](leaf-form/). This bounded review does not supersede
+the full-product Gauntlet or approve extending this leaf treatment to dogwood.
+
+All four delivery GLBs and manifest regenerate byte-identically through both
+Blender scripts and Node assembly. The light-response probe and browser
+safeguards pass on this exact candidate. Photo defaults remain pixel-identical
+to main at days 15/200. Materials, lighting, other species and UI are unchanged
+by this leaf-form pass. The main 25-frame matrix and current cold-load
+measurements above show this candidate.

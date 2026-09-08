@@ -13,10 +13,10 @@
   ],
   "play": {
     "start": 15,
-    "advanced": 120,
+    "advanced": 122,
     "historyWritesDuringPlay": 0,
     "canvases": 1,
-    "renderIntervalP50Ms": 33,
+    "renderIntervalP50Ms": 33.29999999999973,
     "renderIntervalP95Ms": 50
   },
   "repeatCycleBufferUploads": 0,

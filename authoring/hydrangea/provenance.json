@@ -2,7 +2,7 @@
   "authoring": "Original project geometry and procedural tissue; no third-party images or meshes",
   "blender": "5.2.1 LTS",
   "generator": "scripts/author-hydrangea-blender.py",
-  "bake": "Cycles selected-to-active tangent normal, color-only diffuse, roughness; no illumination baked",
-  "low_vertices": 185,
+  "bake": "Cycles selected-to-active on flat proxies: vein/tissue-only tangent normal, color-only diffuse and roughness; no macro-curvature compensation or illumination baked",
+  "low_vertices": 217,
   "high_vertices": 33153
 }

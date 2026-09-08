@@ -11,7 +11,9 @@ try {
  const page=await browser.newPage({viewport:{width:512,height:512}}),errors=[],results={};
  page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.goto(base+(process.env.STUDY_PATH??'/authoring/leaf-lighting.html'));
- await page.waitForFunction(()=>window.probe?.ready);
+ await page.waitForFunction(()=>window.probe?.ready).catch(error=>{
+  throw new Error(`Leaf probe did not initialize: ${errors.join('; ') || error.message}`);
+ });
  for(const mode of ['dark','back-half','back','back-blocked','studio']){
   await page.evaluate(m=>window.probe.render(m),mode);
   const png=await page.screenshot();await writeFile(`${output}/${mode}.png`,png);
