@@ -52,7 +52,7 @@ The browser capture manifest verifies that the shortlist templates request no
 photographic plant assets. Winterberry is intentionally a photographic fallback.
 
 Local browser frame pacing is diagnostic; it is not a physical-device benchmark.
-The current branch [cold-load measurement](branch-network/network-checks.json) uses 10 Mbps, 40 ms
+The preceding branch checkpoint’s [cold-load measurement](branch-network/network-checks.json) uses 10 Mbps, 40 ms
 latency, disabled HTTP cache, blocked service workers and one fresh Chrome
 context per case. Scene readiness took **4.23–5.26 seconds** across phone and
 desktop 3/5/7 cases; **all six missed the three-second target**. Each case is one
@@ -102,7 +102,7 @@ to the persistent wood. The branch checkpoint does not replace the full-product
 Gauntlet verdict or certify the remaining species.
 
 
-## Current hydrangea branch checkpoint
+## Hydrangea branch checkpoint at `da59d3c`
 
 **LOSE — this bounded checkpoint does not clear the leaf-realism bar.** The fresh
 critic finds connected branching and irregular placement, but exposed leaves
@@ -113,8 +113,34 @@ and phone presentation. See the [checkpoint report](BRANCH_CHECKPOINT_REVIEW.md)
 and [independent raw captures](branch-checkpoint/). This is not a new full-product
 Gauntlet or an approval to extend the same leaf treatment to the other species.
 
-The current 25-frame matrix and browser checks cover this exact delivery asset.
+The branch checkpoint used the delivery asset retained in this revision.
 Photo defaults match main pixel-for-pixel at days 15/200; Play, keyboard, peek,
 context restoration, winterberry fallback and caption clearance pass. The
 Blender-to-delivery pipeline regenerates all four GLBs and manifest byte-for-byte.
 The other three species and runtime lighting are unchanged by this checkpoint.
+
+
+## Current leaf-material checkpoint
+
+The leaf shader now evaluates approximate thin-tissue response from each studio
+light’s shadow-attenuated incident color. An isolated delivery-organ test verifies
+that unlit leaves do not glow, stronger backlighting increases their response,
+and an opaque blocker removes it. The old shader failed those checks. See the
+[controlled comparison and reproduction](leaf-lighting/README.md). All four GLBs
+and the studio rig are unchanged; the current 25-frame matrix and browser checks
+cover the integrated material correction. Cold loads have not been remeasured
+since the branch checkpoint above; that unresolved failure is not claimed fixed.
+
+**LOSE — a fresh independent foliage-material review still rejects the visual
+bar.** Hydrangea leaves read as stiff, opaque lobed plates in normal portrait and
+selected detail. Closure requires soft irregular curvature, continuous shading,
+plausible backlit portions and interior depth at days 135/200 during limited
+drag, retaining phone coherence. See the [fresh report](LEAF_RESPONSE_REVIEW.md)
+and [raw live evidence](leaf-response/). This is a material checkpoint, not a
+replacement full-product Gauntlet or a botanical-fidelity approval.
+
+The next visual gate is one exposed hydrangea shoot with convincing individual
+leaf shape and surface detail under the fixed material and rig, inspected at
+ordinary desktop portrait/detail size before propagating changes through the
+canopy or another species. Passing the light-response probe alone cannot close
+that gate.

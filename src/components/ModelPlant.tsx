@@ -7,7 +7,7 @@ import { modelSeason } from "../lib/modelSeason";
 
 type LayerName = "branches" | "leaves" | "blooms" | "fruit";
 
-function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, coordinateScale: number) {
+export function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, coordinateScale: number) {
   const bakedLeaf = name === "leaves" && Boolean(source.normalMap);
   const material = source.clone();
   const depthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, side: THREE.DoubleSide });
@@ -83,15 +83,28 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, coord
         `}
       `,
       );
-      // A restrained backlit lift, retaining standard PBR directional shading.
+      // Thin tissue receives light from either side. Use the actual incident
+      // radiance (including shadow attenuation) for every studio light; an
+      // outgoing-color lift would keep glowing even with the lights switched off.
       shader.fragmentShader = shader.fragmentShader.replace(
-        "#include <opaque_fragment>",
+        "#include <lights_physical_pars_fragment>",
         `
-        // Thin-leaf transmission responds to the shared key, not a baked glow.
-        vec3 keyDirection = normalize((viewMatrix * vec4(-4.5, 7.8, 5.2, 0.0)).xyz);
-        float through = pow(max(0.0, dot(-normal, keyDirection)), 1.5);
-        outgoingLight += diffuseColor.rgb * through * .48;
-        #include <opaque_fragment>
+        #include <lights_physical_pars_fragment>
+        void RE_Direct_Leaf(const in IncidentLight directLight,
+          const in vec3 geometryPosition, const in vec3 geometryNormal,
+          const in vec3 geometryViewDir, const in vec3 geometryClearcoatNormal,
+          const in PhysicalMaterial material, inout ReflectedLight reflectedLight) {
+          RE_Direct_Physical(directLight, geometryPosition, geometryNormal,
+            geometryViewDir, geometryClearcoatNormal, material, reflectedLight);
+          float facing = dot(geometryNormal, directLight.direction);
+          float back = pow(max(0.0, -facing), .8);
+          float shoulder = max(0.0, (facing + .35) / 1.35) - max(0.0, facing);
+          reflectedLight.directDiffuse += directLight.color
+            * BRDF_Lambert(material.diffuseColor)
+            * (.55 * back + .24 * shoulder);
+        }
+        #undef RE_Direct
+        #define RE_Direct RE_Direct_Leaf
       `,
       );
     }
@@ -105,7 +118,7 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, coord
       `);
     }
   };
-  material.customProgramCacheKey = () => `seasonal-gltf-studio-v7-${name}-${bakedLeaf}`;
+  material.customProgramCacheKey = () => `seasonal-gltf-studio-v8-${name}-${bakedLeaf}`;
   depthMaterial.customProgramCacheKey = () => `seasonal-gltf-depth-v4-${name}`;
   if (name === "leaves") material.color.set("#ffffff");
   return { material, depthMaterial, uniforms };

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Leaf lighting diagnostic</title><link rel="icon" href="data:,">
+<style>body{margin:0;background:#000}canvas{display:block}</style>
+<script type="module">
+// Development-only material probe, using one connected organ from the delivery GLB.
+// Run Vite and open /authoring/leaf-lighting.html. No alternate product renderer.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { makeMaterial } from '/src/components/ModelPlant.tsx';
+const renderer = new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(512,512);renderer.setPixelRatio(1);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
+document.body.append(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#000000');
+const camera=new THREE.OrthographicCamera(-.2,.2,.2,-.2,.001,20);
+const gltf=await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('/models/hydrangea.glb');
+gltf.scene.updateMatrixWorld(true);
+let source;gltf.scene.traverse(o=>{if(o.isMesh&&o.name==='leaves')source=o;});
+const g=source.geometry.clone(),anchor=g.getAttribute('_anchor'),phase=g.getAttribute('_phase');
+const key=i=>[anchor.getX(i),anchor.getY(i),anchor.getZ(i),phase.getX(i)].join(',');
+const groups=new Map();
+for(let i=0;i<g.index.count;i+=3){const ids=[0,1,2].map(j=>g.index.getX(i+j));const k=key(ids[0]);const list=groups.get(k)||[];list.push(...ids);groups.set(k,list);}
+const indices=[...groups.values()].find(a=>a.length>900);
+g.setIndex(indices);
+const organ=g.toNonIndexed();g.dispose();
+// Decode packed attributes before baking the glTF node transform into vertices.
+for(const name of ['position','normal']){const a=organ.getAttribute(name),values=[];
+ for(let i=0;i<a.count;i++)values.push(a.getX(i),a.getY(i),a.getZ(i));
+ organ.setAttribute(name,new THREE.Float32BufferAttribute(values,3));}
+organ.applyMatrix4(source.matrixWorld);
+const center=new THREE.Box3().setFromBufferAttribute(organ.getAttribute('position')).getCenter(new THREE.Vector3());
+organ.translate(-center.x,-center.y,-center.z);
+const a=organ.getAttribute('_anchor');const values=[];
+for(let i=0;i<a.count;i++){const p=new THREE.Vector3(a.getX(i),a.getY(i),a.getZ(i)).applyMatrix4(source.matrixWorld).sub(center);values.push(p.x,p.y,p.z);}
+organ.setAttribute('_anchor',new THREE.Float32BufferAttribute(values,3));
+const {material,depthMaterial,uniforms}=makeMaterial('leaves',source.material,1);
+uniforms.summerColor.value.set('#6a8842');uniforms.fallColor.value.set('#984d36');
+const leaf=new THREE.Mesh(organ,material);leaf.customDepthMaterial=depthMaterial;leaf.receiveShadow=true;
+scene.add(leaf);
+// Orient the actual curved blade toward the camera; retain its geometry/normals.
+const n=organ.getAttribute('normal');const average=new THREE.Vector3();
+for(let i=0;i<n.count;i++)average.add(new THREE.Vector3(n.getX(i),n.getY(i),n.getZ(i)));
+leaf.quaternion.setFromUnitVectors(average.normalize(),new THREE.Vector3(0,0,1));
+leaf.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),1));
+const box=new THREE.Box3().setFromObject(leaf),extent=box.getSize(new THREE.Vector3());
+const half=Math.max(extent.x,extent.y)*.7;
+camera.left=-half;camera.right=half;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();
+camera.position.set(0,0,2);camera.lookAt(0,0,0);
+const keyLight=new THREE.DirectionalLight('#fff2df',0);keyLight.position.set(-4.5,7.8,5.2);scene.add(keyLight);
+const fill=new THREE.DirectionalLight('#dce7ed',0);fill.position.set(5,3,2);scene.add(fill);
+const rim=new THREE.DirectionalLight('#fff7e9',0);rim.position.set(1.5,5,-5);scene.add(rim);
+rim.castShadow=true;rim.shadow.mapSize.set(512,512);
+rim.shadow.camera.left=-1;rim.shadow.camera.right=1;rim.shadow.camera.top=1;rim.shadow.camera.bottom=-1;
+rim.shadow.camera.near=.1;rim.shadow.camera.far=20;rim.shadow.bias=-.0001;
+const blocker=new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.MeshBasicMaterial({color:0,side:THREE.DoubleSide}));
+blocker.position.z=-.3;blocker.castShadow=true;scene.add(blocker);
+window.probe={
+ render(mode){keyLight.intensity=0;fill.intensity=0;rim.intensity=0;blocker.visible=false;
+  if(mode==='studio'){keyLight.intensity=2.65;fill.intensity=.6;rim.intensity=1.4;}
+  if(mode==='back')rim.intensity=1.4;
+  if(mode==='back-half')rim.intensity=.7;
+  if(mode==='back-blocked'){rim.intensity=1.4;blocker.visible=true;}
+  renderer.render(scene,camera);
+ },
+ ready:true,
+};
+window.probe.render('studio');
+</script></html>

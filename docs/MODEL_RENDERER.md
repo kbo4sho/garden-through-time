@@ -99,3 +99,19 @@ blends the distant ground into the backdrop, outside the composition.
 See [review evidence](evidence/editorial-gltf/README.md) for captures, measured
 asset sizes, browser checks, and independent visual-review results. This is an
 opt-in evaluation branch; passing the automated checks is not a visual verdict.
+
+
+### Leaf light response
+
+The opaque leaf material adds an approximate thin-tissue contribution inside
+the direct-light evaluation. It uses each light’s actual incident color after
+shadow attenuation, including the shared key, fill and rim. A small wrapped
+diffuse term softens the angular transition; a back-facing term responds to
+light through the blade. Standard PBR reflection remains in place. The leaf
+shader no longer adds a fixed glow after the lighting calculation.
+
+`authoring/leaf-lighting.html` isolates a delivery organ for light-off, intensity
+and occlusion checks using the same `makeMaterial` function as the bed.
+`scripts/check-leaf-lighting.mjs` runs these in Chrome. See the
+[controlled evidence](evidence/editorial-gltf/leaf-lighting/README.md); botanical
+appearance still requires an independent integrated visual review.
