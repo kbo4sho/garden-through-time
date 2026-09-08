@@ -16,9 +16,28 @@ Living Framework is offered only in model mode. Selecting seven plants in this m
 
 Four original, procedurally authored binary glTF assets: fothergilla, Ruby Slippers oakleaf hydrangea, Arctic Fire redtwig dogwood, and Green Velvet boxwood. These are interpretive botanical models, not scanned specimens. No seasonal plant images or splats are used for these four in model mode. No third-party mesh or texture content is included.
 
-`npm run models:generate` regenerates the GLBs and `public/models/manifest.json` deterministically. Geometry is authored offline with Three.js and compressed with `EXT_meshopt_compression`; drei supplies the decoder locally in the optional model chunk. No Draco CDN or runtime model-generation service is involved. The generation dependencies are development-only.
+`npm run models:generate` regenerates the GLBs and `public/models/manifest.json` from the checked-in organ source and seeded assembly. Hydrangea's organ is authored in Blender; the other organs and plant scaffolds are authored offline with Three.js. `EXT_meshopt_compression` reduces delivery size; drei supplies the decoder locally in the optional model chunk. No Draco CDN or runtime model-generation service is involved. The generation dependencies are development-only.
 
-Each GLB contains merged `branches`, `leaves`, `blooms`, and (dogwood only) `fruit` meshes. `_ANCHOR` is the organ's attachment point and `_PHASE` is its stable emergence/abscission order. Positions and anchors remain in the same coordinate system during compression. Vertex shaders grow or contract organs around their anchors. No branch topology or geometry is rebuilt on a day tick; no large translucent seasonal meshes are sorted over one another.
+To rebuild the hydrangea organ and its maps, run Blender 5.2 LTS with
+`--background --factory-startup --python scripts/author-hydrangea-blender.py`,
+then run `scripts/author-hydrangea-branches.py` the same way, followed by
+`npm run models:generate`. `authoring/hydrangea/` retains both packed `.blend`
+sources, prototype GLBs, maps and provenance. A detailed 33,153-vertex source supplies detail to a
+217-vertex delivery leaf. Embedded maps are 512² tangent normals, 256² neutral
+albedo and 128² roughness. They contain original tissue and vein detail, with no
+baked lighting. These source files are development artifacts; only the four
+assembled GLBs are served to the browser. The geometry and maps are shared by
+all hydrangea instances within each renderer.
+
+The hydrangea scaffold comes from three explicitly authored branch forms, placed
+at uneven junctions on seven curved woody stems. Inward-growing shoots connect
+the exterior sprays into the canopy. Blade and petiole meshes share a parent
+attachment and growth phase; the generator preserves their world transforms and
+smooth source normals when merging the delivery layers. Terminal nodes identify
+where the existing seasonal flower geometry attaches. The full model is still
+one persistent shrub across the year, with no runtime topology rebuilding.
+
+Each GLB contains merged `branches`, `leaves`, `blooms`, and (dogwood only) `fruit` meshes. `_ANCHOR` is the organ's attachment point and `_PHASE` is its stable emergence/abscission order. Positions and anchors use the same signed 16-bit grid (1/1024 model unit). A shared glTF node scale decodes both; visible and depth materials preserve that transform, including the world-scale term in dried-floret normals. Vertex shaders grow or contract organs around their anchors. No branch topology or geometry is rebuilt on a day tick; no large translucent seasonal meshes are sorted over one another.
 
 The GLTF cache owns geometry; repeats and views share it. Each mounted instance owns and disposes its seasonal materials. Repeats rotate the same scaffold using the stable planting-position ID. Scene framing uses the full-year bounds, so leaf drop does not move the camera. Authored positions and profile scales remain in force; the native fothergilla option rescales the same model.
 
@@ -47,3 +66,64 @@ Exact days remain the existing Chicago representative-year interpolation, not a 
 - Model download budget: 5 MB total for the four unique assets. Decoded attribute budget: 24 MB, shared across repeats within one renderer. First encounters with previously hidden seasonal layers may upload their buffers once; subsequent cycles must not allocate more GPU buffers/textures.
 
 Browser evidence and device limitations are recorded in the PR. Desktop browser emulation does not establish that physical iPhone Safari meets the same performance bar.
+
+## Editorial studio pass — September 2026
+
+The four model assets now use a fixed warm key, cool fill and soft rim, with a
+neutral continuous ground. Lighting and ground pigment are constant across the
+year, so the changed color and density come from the plants. The photographic
+CSS wash is disabled only for `model3d`; photo and paper views retain their
+existing treatment. This deliberately follows the new shared-studio brief in
+preference to the product brief's earlier natural-atmosphere wording.
+
+Geometry is original project work; see [asset provenance and rights](../public/models/LICENSE.md).
+Fothergilla has a spreading, ramified scaffold; hydrangea has curved lobed blades
+and irregular papery florets; dogwood has independently rooted red canes;
+boxwood uses a separate rounded evergreen crown. Broad leaves have curved
+cross-sections, restrained midrib pigmentation and varied inclinations.
+Inflorescences vary in size and tilt. All four use the same opaque PBR material
+family, with organ-specific roughness and a restrained leaf-back transmission
+term responding to the common key, fill and rim. There are no photograph-derived color or
+lighting targets. Hydrangea uses its original Blender surface maps; the other
+species retain the shared material family's procedural surface variation.
+
+The key casts a bounded shadow map (1024 in the portrait, 512 in supporting
+views). Model mode uses PCF filtering so the key's three-texel penumbra actually
+applies, with restrained shadow intensity across the whole bed. Photo mode keeps
+its existing shadow configuration. The depth material uses the same seasonal organ deformation and uniforms
+as its visible material; dropping foliage does not leave a full-leaf shadow.
+Owned depth and visible materials are both disposed on unmount. Existing soft
+contact textures, ambient life and the limited peek stay mounted. Studio fog
+blends the distant ground into the backdrop, outside the composition.
+
+See [review evidence](evidence/editorial-gltf/README.md) for captures, measured
+asset sizes, browser checks, and independent visual-review results. This is an
+opt-in evaluation branch; passing the automated checks is not a visual verdict.
+
+
+### Leaf light response
+
+The opaque leaf material adds an approximate thin-tissue contribution inside
+the direct-light evaluation. It uses each light’s actual incident color after
+shadow attenuation, including the shared key, fill and rim. A small wrapped
+diffuse term softens the angular transition; a back-facing term responds to
+light through the blade. Standard PBR reflection remains in place. The leaf
+shader no longer adds a fixed glow after the lighting calculation.
+
+`authoring/leaf-lighting.html` isolates a delivery organ for light-off, intensity
+and occlusion checks using the same `makeMaterial` function as the bed.
+`scripts/check-leaf-lighting.mjs` runs these in Chrome. See the
+[controlled evidence](evidence/editorial-gltf/leaf-lighting/README.md); botanical
+appearance still requires an independent integrated visual review.
+
+
+### Hydrangea leaf cross-section and bake
+
+The 217-vertex organ places 31 rows on outline knots/midpoints and uses seven
+vertices across the blade. Its central trough and lobe shoulders survive branch
+assembly; the midrib can bend without replacing the authored cross-section.
+The source file retains flat bake proxies for vascular and fine-tissue detail.
+Those proxies exclude broad curvature compensation from the normal map, and
+the former repeating sinusoidal ripple is removed. This leaves large-scale form
+in actual geometry and fine detail in the maps. Lighting and shader behavior
+are unchanged by this pass.

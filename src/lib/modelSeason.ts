@@ -21,14 +21,21 @@ export function modelSeason(profile: PlantProfile, day: number) {
       day,
     );
     bloom = Math.max(oldHeads, retained);
-    aged = day < bloomStart ? 1 : smoothstep(bloomEnd - 20, bloomEnd + 48, day);
+    aged = Math.max(
+      1 - smoothstep(previousHeadsEnd, bloomStart, day),
+      smoothstep(bloomEnd - 20, bloomEnd + 48, day),
+    );
   }
   // Evergreen winter bronzing crosses New Year and recedes with spring growth.
   const fall = profile.evergreen
     ? Math.max(state.fall, 1 - smoothstep(55, profile.bloom.window[0], day)) *
       0.32
     : state.fall;
-  const leafColor = new THREE.Color(profile.leaf.summer);
+  // Reflectance authored for the common studio, independent of photographic assets.
+  const studioGreens: Record<string, string> = {
+    fothergilla: "#738953", hydrangea: "#798b57", dogwood: "#6c8855", boxwood: "#536f43",
+  };
+  const leafColor = new THREE.Color(studioGreens[profile.id] ?? profile.leaf.summer);
   const fallColor = new THREE.Color(profile.leaf.fall);
   const flowerColor = new THREE.Color(profile.bloom.color);
   if (profile.id === "hydrangea") {
@@ -37,7 +44,7 @@ export function modelSeason(profile: PlantProfile, day: number) {
       smoothstep(bloomStart + 18, bloomEnd - 4, day),
     );
   }
-  flowerColor.lerp(new THREE.Color("#927653"), aged);
+  flowerColor.lerp(new THREE.Color("#bca888"), aged);
   return {
     leaves: state.leaves,
     fall,
@@ -46,5 +53,6 @@ export function modelSeason(profile: PlantProfile, day: number) {
     leafColor,
     fallColor,
     flowerColor,
+    aged,
   };
 }

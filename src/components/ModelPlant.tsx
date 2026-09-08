@@ -7,21 +7,26 @@ import { modelSeason } from "../lib/modelSeason";
 
 type LayerName = "branches" | "leaves" | "blooms" | "fruit";
 
-function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial) {
+export function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial, coordinateScale: number) {
+  const bakedLeaf = name === "leaves" && Boolean(source.normalMap);
   const material = source.clone();
+  const depthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, side: THREE.DoubleSide });
   const uniforms = {
     growth: { value: 1 },
     fall: { value: 0 },
+    dry: { value: 0 },
+    coordinateScale: { value: coordinateScale },
     summerColor: { value: new THREE.Color() },
     fallColor: { value: new THREE.Color() },
   };
-  material.roughness = name === "fruit" ? 0.65 : 0.88;
-  // Opaque folded geometry avoids sorted alpha layers and mobile overdraw.
+  material.roughness = bakedLeaf ? 1 : name === "fruit" ? .56 : name === "leaves" ? .72 : .94;
+  // Opaque curved organs avoid sorted alpha layers and mobile overdraw.
   material.side = THREE.DoubleSide;
-  material.onBeforeCompile = (shader) => {
+  const deform: THREE.MeshStandardMaterial["onBeforeCompile"] = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader =
       `attribute vec3 _anchor; attribute float _phase;
+      ${name === "blooms" ? "attribute float _petal; uniform float dry; uniform float coordinateScale;" : ""}
       uniform float growth; varying float vSeasonPhase;\n` +
       shader.vertexShader;
     shader.vertexShader = shader.vertexShader.replace(
@@ -33,36 +38,90 @@ function makeMaterial(name: LayerName, source: THREE.MeshStandardMaterial) {
         name === "branches"
           ? ""
           : `float size = smoothstep(_phase * 0.65, _phase * 0.65 + 0.35, growth);
-      transformed = _anchor + (position - _anchor) * size;`
+      transformed = _anchor + (position - _anchor) * size;
+      ${name === "blooms" ? `
+        transformed = mix(transformed, _anchor + (transformed - _anchor) * .70, dry * _petal);
+        transformed += normal * length(position - _anchor) * dry * _petal * .32 * size;
+      ` : ""}`
       }
     `,
     );
+    if (name === "blooms") shader.vertexShader = shader.vertexShader.replace(
+      "#include <beginnormal_vertex>",
+      `#include <beginnormal_vertex>
+      objectNormal = normalize(objectNormal + (position - _anchor) * coordinateScale * dry * _petal * 8.0);`,
+    );
+  };
+  depthMaterial.onBeforeCompile = deform;
+  material.onBeforeCompile = (shader, renderer) => {
+    deform(shader, renderer);
     if (name === "leaves") {
+      shader.vertexShader = "#define USE_UV\n" + shader.vertexShader;
       shader.fragmentShader =
-        `uniform float fall; uniform vec3 summerColor; uniform vec3 fallColor;
+        `#define USE_UV
+        uniform float fall; uniform vec3 summerColor; uniform vec3 fallColor;
         varying float vSeasonPhase;\n` + shader.fragmentShader;
       shader.fragmentShader = shader.fragmentShader.replace(
         "#include <color_fragment>",
         `
         #include <color_fragment>
         float autumn = smoothstep(vSeasonPhase * .35, .65 + vSeasonPhase * .35, fall);
-        vec3 autumnColor = mix(fallColor, fallColor * vec3(1.14, .83, .62), vSeasonPhase);
+        vec3 autumnColor = mix(fallColor * vec3(.82, .63, .74), fallColor * vec3(1.18, 1.30, .68), vSeasonPhase);
+        if (!gl_FrontFacing) diffuseColor.rgb *= vec3(1.06, 1.12, 1.01);
         diffuseColor.rgb *= mix(summerColor, autumnColor, autumn);
+        ${bakedLeaf ? "" : `
+        // Blade-local pigmentation follows its midrib and paired lateral veins.
+        // Derivative filtering removes subpixel vein shimmer during phone Play.
+        float across = abs(vUv.x - .5);
+        float aa = max(fwidth(vUv.x), .003);
+        float midrib = 1.0 - smoothstep(.004, .008 + aa, across);
+        float veinDistance = abs(fract(vUv.y * 6.0 - across * 3.2 + .5) - .5);
+        float veinAA = max(fwidth(veinDistance), .02);
+        float veins = (1.0 - smoothstep(.018, .025 + veinAA, veinDistance)) * (1.0 - across);
+        float mottling = sin(vUv.x * 31.0 + sin(vUv.y * 17.0)) * sin(vUv.y * 39.0);
+        diffuseColor.rgb *= 1.0 + .10 * midrib + .065 * veins + .025 * mottling;
+        `}
       `,
       );
-      // A restrained backlit lift, retaining standard PBR directional shading.
+      // Thin tissue receives light from either side. Use the actual incident
+      // radiance (including shadow attenuation) for every studio light; an
+      // outgoing-color lift would keep glowing even with the lights switched off.
       shader.fragmentShader = shader.fragmentShader.replace(
-        "#include <opaque_fragment>",
+        "#include <lights_physical_pars_fragment>",
         `
-        outgoingLight += diffuseColor.rgb * 0.075;
-        #include <opaque_fragment>
+        #include <lights_physical_pars_fragment>
+        void RE_Direct_Leaf(const in IncidentLight directLight,
+          const in vec3 geometryPosition, const in vec3 geometryNormal,
+          const in vec3 geometryViewDir, const in vec3 geometryClearcoatNormal,
+          const in PhysicalMaterial material, inout ReflectedLight reflectedLight) {
+          RE_Direct_Physical(directLight, geometryPosition, geometryNormal,
+            geometryViewDir, geometryClearcoatNormal, material, reflectedLight);
+          float facing = dot(geometryNormal, directLight.direction);
+          float back = pow(max(0.0, -facing), .8);
+          float shoulder = max(0.0, (facing + .35) / 1.35) - max(0.0, facing);
+          reflectedLight.directDiffuse += directLight.color
+            * BRDF_Lambert(material.diffuseColor)
+            * (.55 * back + .24 * shoulder);
+        }
+        #undef RE_Direct
+        #define RE_Direct RE_Direct_Leaf
       `,
       );
     }
+    if (name === "blooms") {
+      shader.fragmentShader = "uniform float dry;\n" + shader.fragmentShader;
+      shader.fragmentShader = shader.fragmentShader.replace("#include <opaque_fragment>", `
+        vec3 keyDirection = normalize((viewMatrix * vec4(-4.5, 7.8, 5.2, 0.0)).xyz);
+        float through = max(0.0, dot(-normal, keyDirection));
+        outgoingLight += diffuseColor.rgb * through * .17 * (1.0 - dry * .6);
+        #include <opaque_fragment>
+      `);
+    }
   };
-  material.customProgramCacheKey = () => `seasonal-gltf-v1-${name}`;
+  material.customProgramCacheKey = () => `seasonal-gltf-studio-v8-${name}-${bakedLeaf}`;
+  depthMaterial.customProgramCacheKey = () => `seasonal-gltf-depth-v4-${name}`;
   if (name === "leaves") material.color.set("#ffffff");
-  return { material, uniforms };
+  return { material, depthMaterial, uniforms };
 }
 
 export default function ModelPlant({
@@ -84,9 +143,12 @@ export default function ModelPlant({
     const result: {
       name: LayerName;
       geometry: THREE.BufferGeometry;
+      matrix: THREE.Matrix4;
       material: THREE.MeshStandardMaterial;
+      depthMaterial: THREE.MeshDepthMaterial;
       uniforms: ReturnType<typeof makeMaterial>["uniforms"];
     }[] = [];
+    gltf.scene.updateMatrixWorld(true);
     gltf.scene.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
       const name = object.name as LayerName;
@@ -99,7 +161,8 @@ export default function ModelPlant({
       result.push({
         name,
         geometry: object.geometry,
-        ...makeMaterial(name, object.material as THREE.MeshStandardMaterial),
+        matrix: object.matrixWorld.clone(),
+        ...makeMaterial(name, object.material as THREE.MeshStandardMaterial, object.getWorldScale(new THREE.Vector3()).x),
       });
     });
     if (!result.some((layer) => layer.name === "branches"))
@@ -119,14 +182,18 @@ export default function ModelPlant({
               ? state.fruit
               : 1;
       uniforms.fall.value = state.fall;
+      uniforms.dry.value = state.aged;
       uniforms.summerColor.value.copy(state.leafColor);
       uniforms.fallColor.value.copy(state.fallColor);
-      if (name === "blooms") material.color.copy(state.flowerColor);
+      if (name === "blooms") {
+        material.color.copy(state.flowerColor);
+        material.roughness = THREE.MathUtils.lerp(.82, .98, state.aged);
+      }
     }
   }, [layers, state]);
   useEffect(
     () => () => {
-      layers.forEach(({ material }) => material.dispose());
+      layers.forEach(({ material, depthMaterial }) => { material.dispose(); depthMaterial.dispose(); });
     },
     [layers],
   );
@@ -135,12 +202,17 @@ export default function ModelPlant({
       rotation={[0, variation * 2.39996, 0]}
       scale={profile.photoHeight / modelHeight(profile.id)}
     >
-      {layers.map(({ name, geometry, material }) => (
+      {layers.map(({ name, geometry, material, depthMaterial, matrix }) => (
         <mesh
           key={name}
           name={`model-${profile.id}-${name}`}
           geometry={geometry}
+          matrix={matrix}
+          matrixAutoUpdate={false}
           material={material}
+          customDepthMaterial={depthMaterial}
+          castShadow
+          receiveShadow
           dispose={null}
           visible={
             name === "branches" ||

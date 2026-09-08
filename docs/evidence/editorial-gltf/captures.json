@@ -1,0 +1,374 @@
+{
+  "browser": "151.0.7922.176",
+  "emulation": "Desktop Chrome with CSS viewport emulation; reduced motion; local production build. Elapsed time includes network idle and screenshot, not a device performance claim.",
+  "records": [
+    {
+      "device": "phone",
+      "size": 3,
+      "day": 15,
+      "path": "docs/evidence/editorial-gltf/phone-3-15.png",
+      "elapsedMs": 1091,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 3,
+      "day": 135,
+      "path": "docs/evidence/editorial-gltf/phone-3-135.png",
+      "elapsedMs": 1008,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 3,
+      "day": 200,
+      "path": "docs/evidence/editorial-gltf/phone-3-200.png",
+      "elapsedMs": 996,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 3,
+      "day": 290,
+      "path": "docs/evidence/editorial-gltf/phone-3-290.png",
+      "elapsedMs": 1006,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 5,
+      "day": 15,
+      "path": "docs/evidence/editorial-gltf/phone-5-15.png",
+      "elapsedMs": 1032,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 5,
+      "day": 135,
+      "path": "docs/evidence/editorial-gltf/phone-5-135.png",
+      "elapsedMs": 1044,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 5,
+      "day": 200,
+      "path": "docs/evidence/editorial-gltf/phone-5-200.png",
+      "elapsedMs": 1033,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 5,
+      "day": 290,
+      "path": "docs/evidence/editorial-gltf/phone-5-290.png",
+      "elapsedMs": 1015,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 7,
+      "day": 15,
+      "path": "docs/evidence/editorial-gltf/phone-7-15.png",
+      "elapsedMs": 1031,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 7,
+      "day": 135,
+      "path": "docs/evidence/editorial-gltf/phone-7-135.png",
+      "elapsedMs": 1035,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 7,
+      "day": 200,
+      "path": "docs/evidence/editorial-gltf/phone-7-200.png",
+      "elapsedMs": 1028,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "phone",
+      "size": 7,
+      "day": 290,
+      "path": "docs/evidence/editorial-gltf/phone-7-290.png",
+      "elapsedMs": 1032,
+      "canvases": 1,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 3,
+      "day": 15,
+      "path": "docs/evidence/editorial-gltf/desktop-3-15.png",
+      "elapsedMs": 1088,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 3,
+      "day": 135,
+      "path": "docs/evidence/editorial-gltf/desktop-3-135.png",
+      "elapsedMs": 1083,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 3,
+      "day": 200,
+      "path": "docs/evidence/editorial-gltf/desktop-3-200.png",
+      "elapsedMs": 1065,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 3,
+      "day": 290,
+      "path": "docs/evidence/editorial-gltf/desktop-3-290.png",
+      "elapsedMs": 1085,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 5,
+      "day": 15,
+      "path": "docs/evidence/editorial-gltf/desktop-5-15.png",
+      "elapsedMs": 1094,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 5,
+      "day": 135,
+      "path": "docs/evidence/editorial-gltf/desktop-5-135.png",
+      "elapsedMs": 1102,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 5,
+      "day": 200,
+      "path": "docs/evidence/editorial-gltf/desktop-5-200.png",
+      "elapsedMs": 1082,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 5,
+      "day": 290,
+      "path": "docs/evidence/editorial-gltf/desktop-5-290.png",
+      "elapsedMs": 1084,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 7,
+      "day": 15,
+      "path": "docs/evidence/editorial-gltf/desktop-7-15.png",
+      "elapsedMs": 1077,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 7,
+      "day": 135,
+      "path": "docs/evidence/editorial-gltf/desktop-7-135.png",
+      "elapsedMs": 1087,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 7,
+      "day": 200,
+      "path": "docs/evidence/editorial-gltf/desktop-7-200.png",
+      "elapsedMs": 1082,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "desktop",
+      "size": 7,
+      "day": 290,
+      "path": "docs/evidence/editorial-gltf/desktop-7-290.png",
+      "elapsedMs": 1094,
+      "canvases": 4,
+      "models": [
+        "fothergilla.glb",
+        "hydrangea.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    },
+    {
+      "device": "tablet",
+      "size": 5,
+      "day": 135,
+      "path": "docs/evidence/editorial-gltf/tablet-5-135.png",
+      "elapsedMs": 1057,
+      "canvases": 4,
+      "models": [
+        "hydrangea.glb",
+        "fothergilla.glb",
+        "dogwood.glb",
+        "boxwood.glb"
+      ],
+      "photoRequests": []
+    }
+  ],
+  "errors": []
+}

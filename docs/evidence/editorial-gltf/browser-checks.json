@@ -1,0 +1,137 @@
+{
+  "photo": [
+    {
+      "day": 15,
+      "changedChannels": 0,
+      "channels": 987480
+    },
+    {
+      "day": 200,
+      "changedChannels": 0,
+      "channels": 987480
+    }
+  ],
+  "play": {
+    "start": 15,
+    "advanced": 122,
+    "historyWritesDuringPlay": 0,
+    "canvases": 1,
+    "renderIntervalP50Ms": 33.29999999999973,
+    "renderIntervalP95Ms": 50
+  },
+  "repeatCycleBufferUploads": 0,
+  "keyboard": true,
+  "peek": {
+    "changesView": true,
+    "returnsToRest": true,
+    "meanChannelDifference": 0
+  },
+  "contextLossRestore": true,
+  "mixed": {
+    "renderer": "model3d",
+    "winterberryTextures": 5
+  },
+  "caption": [
+    {
+      "width": 768,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 768,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 768,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 768,
+      "day": 290,
+      "clear": true
+    },
+    {
+      "width": 834,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 834,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 834,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 834,
+      "day": 290,
+      "clear": true
+    },
+    {
+      "width": 1080,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 1080,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 1080,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 1080,
+      "day": 290,
+      "clear": true
+    },
+    {
+      "width": 1127,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 1127,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 1127,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 1127,
+      "day": 290,
+      "clear": true
+    },
+    {
+      "width": 1440,
+      "day": 15,
+      "clear": true
+    },
+    {
+      "width": 1440,
+      "day": 135,
+      "clear": true
+    },
+    {
+      "width": 1440,
+      "day": 200,
+      "clear": true
+    },
+    {
+      "width": 1440,
+      "day": 290,
+      "clear": true
+    }
+  ],
+  "errors": []
+}

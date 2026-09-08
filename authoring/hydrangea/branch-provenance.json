@@ -1,0 +1,15 @@
+{
+  "authoring": "Original explicitly authored branch control points, opposite leaf pairs, connected petioles and curated scaffold poses; no third-party content",
+  "generator": "scripts/author-hydrangea-branches.py",
+  "blender": "5.2.1 LTS",
+  "forms": [
+    "upright",
+    "arching",
+    "forked"
+  ],
+  "persistent_stems": 7,
+  "branch_instances": 32,
+  "blades": 562,
+  "flower_attachments": 15,
+  "botanical_reference": "https://plants.ces.ncsu.edu/plants/hydrangea-quercifolia/"
+}

@@ -81,7 +81,7 @@ const get = (id, day) =>
 for (const id of Object.keys(manifest.models))
   for (let day = 1; day <= 365; day++) {
     const state = get(id, day);
-    for (const key of ["leaves", "fall", "bloom", "fruit"])
+    for (const key of ["leaves", "fall", "bloom", "fruit", "aged"])
       assert(
         Number.isFinite(state[key]) && state[key] >= 0 && state[key] <= 1,
         `${id} ${day} ${key}`,
@@ -89,7 +89,7 @@ for (const id of Object.keys(manifest.models))
     if (id === "boxwood") assert.equal(state.leaves, 1);
     else if (day === 1 || day === 365) assert.equal(state.leaves, 0);
     if (day < 365)
-      for (const key of ["leaves", "fall", "bloom", "fruit"])
+      for (const key of ["leaves", "fall", "bloom", "fruit", "aged"])
         assert(
           Math.abs(state[key] - get(id, day + 1)[key]) < 0.2,
           `${id} abrupt ${key} at ${day}`,
@@ -108,6 +108,9 @@ for (const day of [245, 270, 300, 315, 350, 1, 50])
     "No missing or respawning aged heads",
   );
 assert(get("hydrangea", 105).bloom === 0);
+assert.equal(get("hydrangea", 15).aged, 1);
+assert(get("hydrangea", 200).aged < .25);
+assert.equal(get("hydrangea", 365).aged, get("hydrangea", 1).aged);
 assert(get("boxwood", 365).fall === get("boxwood", 1).fall);
 await MeshoptDecoder.ready;
 const io = new NodeIO()
@@ -122,13 +125,51 @@ for (const [id, info] of Object.entries(manifest.models)) {
   bytes += binary.length;
   assert.equal(binary.length, info.bytes);
   const doc = await io.readBinary(binary);
-  assert.equal(doc.getRoot().listTextures().length, 0);
+  assert.equal(doc.getRoot().listTextures().length, id === 'hydrangea' ? 3 : 0);
+  if (id === 'hydrangea') {
+    const material = doc.getRoot().listNodes().find(node=>node.getName()==='leaves').getMesh().listPrimitives()[0].getMaterial();
+    for (const texture of [material.getBaseColorTexture(), material.getNormalTexture(), material.getMetallicRoughnessTexture()]) {
+      assert(texture, 'Blender leaf must retain all three baked PBR channels');
+      assert.equal(texture.getMimeType(), 'image/png');
+      assert(texture.getSize().every(dimension => dimension <= 512));
+    }
+    assert.equal(material.getMetallicFactor(), 0);
+    // A detached attachment transforms an otherwise valid seasonal organ into
+    // floating foliage. Check proximity to the actual delivered wood surface.
+    const layer = name => doc.getRoot().listNodes().find(node => node.getName() === name).getMesh().listPrimitives()[0];
+    const wood = layer('branches').getAttribute('POSITION').getArray();
+    const anchors = layer('leaves').getAttribute('_ANCHOR').getArray();
+    const junctions = new Map();
+    for (let i = 0; i < anchors.length; i += 3) {
+      const point = [anchors[i], anchors[i+1], anchors[i+2]];
+      junctions.set(point.join(','), point);
+    }
+    for (const point of junctions.values()) {
+      let distanceSquared = Infinity;
+      for (let i = 0; i < wood.length; i += 3)
+        distanceSquared = Math.min(distanceSquared,
+          (point[0]-wood[i])**2 + (point[1]-wood[i+1])**2 + (point[2]-wood[i+2])**2);
+      // The nearest sampled ring may lie between the attachment and the next
+      // curve sample; allow 0.04 model unit for that sampling and stem radius.
+      assert(Math.sqrt(distanceSquared) / 1024 < .04, 'Hydrangea leaf junction detached from wood');
+    }
+  }
   const names = doc
     .getRoot()
     .listNodes()
     .map((n) => n.getName());
   for (const layer of ["branches", "leaves", "blooms"])
     assert(names.includes(layer));
+  for (const node of doc.getRoot().listNodes().filter((node) => node.getName() === "leaves")) {
+    for (const primitive of node.getMesh().listPrimitives()) {
+      const uv = primitive.getAttribute("TEXCOORD_0");
+      assert(uv, `${id} missing blade coordinates for the shared leaf material`);
+      assert.equal(uv.getCount(), primitive.getAttribute("POSITION").getCount());
+    }
+  }
+  for (const node of doc.getRoot().listNodes().filter((node) => node.getName() === "blooms"))
+    for (const primitive of node.getMesh().listPrimitives())
+      assert(primitive.getAttribute("_PETAL"), `${id} missing petal aging mask`);
   for (const mesh of doc.getRoot().listMeshes())
     for (const prim of mesh.listPrimitives()) {
       const position = prim.getAttribute("POSITION"),
@@ -137,6 +178,22 @@ for (const [id, info] of Object.entries(manifest.models)) {
       assert(position && anchor && phase);
       assert.equal(position.getCount(), anchor.getCount());
       assert.equal(position.getCount(), phase.getCount());
+      // The visible surface and its attachment point must decode through the
+      // same node transform, otherwise seasonal growth detaches from the stems.
+      assert(position.getArray() instanceof Int16Array);
+      assert(anchor.getArray() instanceof Int16Array);
+      assert(!position.getNormalized() && !anchor.getNormalized());
+      const node = doc.getRoot().listNodes().find(node => node.getMesh() === mesh);
+      assert.deepEqual(node.getScale(), [1 / 1024, 1 / 1024, 1 / 1024]);
+      for (let axis = 0; axis < 3; axis++) {
+        const values = position.getArray().filter((_, i) => i % 3 === axis);
+        assert(values.every(value => value / 1024 >= info.bounds.min[axis] - .002 && value / 1024 <= info.bounds.max[axis] + .002));
+      }
+      // Growth phases are normalized bytes; omitting normalization would keep
+      // almost every organ hidden even at full summer growth.
+      assert(phase.getNormalized(), `${id} growth phases must decode to [0,1]`);
+      for (let i = 0; i < phase.getCount(); i++)
+        assert(phase.getScalar(i) >= 0 && phase.getScalar(i) <= 1);
       for (const semantic of prim.listSemantics()) {
         const a = prim.getAttribute(semantic).getArray();
         decoded += a.byteLength;

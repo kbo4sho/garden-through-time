@@ -1,0 +1,25 @@
+{
+  "results": {
+    "dark": {
+      "mean": 0,
+      "max": 0
+    },
+    "back-half": {
+      "mean": 0.2619679768880208,
+      "max": 21
+    },
+    "back": {
+      "mean": 0.7697321573893229,
+      "max": 42
+    },
+    "back-blocked": {
+      "mean": 0,
+      "max": 0
+    },
+    "studio": {
+      "mean": 4.342263539632161,
+      "max": 119
+    }
+  },
+  "errors": []
+}
